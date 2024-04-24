@@ -1,13 +1,12 @@
 #include "HzDesktopMgr.h"
 
-HzDesktopMgr::HzDesktopMgr(QWidget *parent)
-    : QWidget(parent)
-    , ui(new Ui::HzDesktopMgrClass())
+HzDesktopMgr::HzDesktopMgr()
 {
-    ui->setupUi(this);
+    m_desktopViewMgr = new DesktopViewMgr();
+
+    // 
 }
 
 HzDesktopMgr::~HzDesktopMgr()
 {
-    delete ui;
 }

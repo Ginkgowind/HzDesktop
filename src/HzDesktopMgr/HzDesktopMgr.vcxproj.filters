@@ -1,14 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>qml;cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
-    </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>qrc;rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
@@ -21,24 +13,58 @@
       <UniqueIdentifier>{639EADAA-A684-42e4-A9AD-28FC9BCB8F7C}</UniqueIdentifier>
       <Extensions>ts</Extensions>
     </Filter>
+    <Filter Include="view">
+      <UniqueIdentifier>{a9751eec-c270-4890-b8ca-cb23dfcd2209}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="config">
+      <UniqueIdentifier>{93d08307-7050-47ce-b590-2d0aa51c998c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="view\showItem">
+      <UniqueIdentifier>{f70da471-8966-45a6-9eac-8e8f03073bd0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="HzDesktopMgr.qrc">
       <Filter>Resource Files</Filter>
     </QtRcc>
-    <QtUic Include="HzDesktopMgr.ui">
-      <Filter>Form Files</Filter>
-    </QtUic>
-    <QtMoc Include="HzDesktopMgr.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <ClCompile Include="HzDesktopMgr.cpp">
-      <Filter>Source Files</Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="HzDesktopMgr.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="view\DesktopBackgroundView.cpp">
+      <Filter>view</Filter>
+    </ClCompile>
+    <ClCompile Include="view\DesktopViewMgr.cpp">
+      <Filter>view</Filter>
+    </ClCompile>
+    <ClCompile Include="view\HzIconView.cpp">
+      <Filter>view</Filter>
+    </ClCompile>
+    <ClCompile Include="view\showItem\HzFileItem.cpp">
+      <Filter>view\showItem</Filter>
+    </ClCompile>
+    <ClCompile Include="view\HzSystemTray.cpp">
+      <Filter>view</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
+    <ClInclude Include="HzDesktopMgr.h" />
+    <ClInclude Include="view\DesktopViewMgr.h">
+      <Filter>view</Filter>
+    </ClInclude>
+    <ClInclude Include="view\showItem\HzFileItem.h">
+      <Filter>view\showItem</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="view\DesktopBackgroundView.h">
+      <Filter>view</Filter>
+    </QtMoc>
+    <QtMoc Include="view\HzIconView.h">
+      <Filter>view</Filter>
+    </QtMoc>
+    <QtMoc Include="view\HzSystemTray.h">
+      <Filter>view</Filter>
+    </QtMoc>
   </ItemGroup>
 </Project>

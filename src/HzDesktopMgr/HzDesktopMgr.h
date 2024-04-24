@@ -1,20 +1,13 @@
 #pragma once
 
-#include <QtWidgets/QWidget>
-#include "ui_HzDesktopMgr.h"
+#include "view/DesktopViewMgr.h"
 
-QT_BEGIN_NAMESPACE
-namespace Ui { class HzDesktopMgrClass; };
-QT_END_NAMESPACE
-
-class HzDesktopMgr : public QWidget
+class HzDesktopMgr
 {
-    Q_OBJECT
-
 public:
-    HzDesktopMgr(QWidget *parent = nullptr);
+    HzDesktopMgr();
     ~HzDesktopMgr();
 
 private:
-    Ui::HzDesktopMgrClass *ui;
+    DesktopViewMgr* m_desktopViewMgr = nullptr;
 };

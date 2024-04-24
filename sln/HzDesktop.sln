@@ -5,6 +5,8 @@ VisualStudioVersion = 17.9.34723.18
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HzDesktopMgr", "..\src\HzDesktopMgr\HzDesktopMgr.vcxproj", "{674F17EA-75A9-46E2-A621-2990A38AE852}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SettingCenter", "..\src\SettingCenter\SettingCenter.vcxproj", "{2B882B00-E96B-40A6-8A6F-DB1166479E9F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -15,6 +17,10 @@ Global
 		{674F17EA-75A9-46E2-A621-2990A38AE852}.Debug|x64.Build.0 = Debug|x64
 		{674F17EA-75A9-46E2-A621-2990A38AE852}.Release|x64.ActiveCfg = Release|x64
 		{674F17EA-75A9-46E2-A621-2990A38AE852}.Release|x64.Build.0 = Release|x64
+		{2B882B00-E96B-40A6-8A6F-DB1166479E9F}.Debug|x64.ActiveCfg = Debug|x64
+		{2B882B00-E96B-40A6-8A6F-DB1166479E9F}.Debug|x64.Build.0 = Debug|x64
+		{2B882B00-E96B-40A6-8A6F-DB1166479E9F}.Release|x64.ActiveCfg = Release|x64
+		{2B882B00-E96B-40A6-8A6F-DB1166479E9F}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

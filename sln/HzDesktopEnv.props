@@ -5,6 +5,7 @@
     <COMMON_INCLUDE_DIR>$(SolutionDir)..\include</COMMON_INCLUDE_DIR>
     <BUILD_OUT_DIR>$(SolutionDir)..\build</BUILD_OUT_DIR>
     <LOG_OUT_DIR>$(SolutionDir)..\logs</LOG_OUT_DIR>
+    <PREBUILD_DIR>$(SolutionDir)..\prebuild</PREBUILD_DIR>
   </PropertyGroup>
   <PropertyGroup />
   <ItemDefinitionGroup />
@@ -17,6 +18,9 @@
     </BuildMacro>
     <BuildMacro Include="LOG_OUT_DIR">
       <Value>$(LOG_OUT_DIR)</Value>
+    </BuildMacro>
+    <BuildMacro Include="PREBUILD_DIR">
+      <Value>$(PREBUILD_DIR)</Value>
     </BuildMacro>
   </ItemGroup>
 </Project>
