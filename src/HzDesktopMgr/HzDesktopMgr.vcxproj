@@ -42,7 +42,7 @@
     <QtBuildConfig>debug</QtBuildConfig>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="QtSettings">
-    <QtInstall>6.7.0_msvc2019_64</QtInstall>
+    <QtInstall>5.14.2_msvc2017_64</QtInstall>
     <QtModules>core;gui;widgets</QtModules>
     <QtBuildConfig>release</QtBuildConfig>
   </PropertyGroup>
@@ -72,14 +72,15 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(COMMON_INCLUDE_DIR)\third-party;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(COMMON_INCLUDE_DIR)\third-party;$(COMMON_INCLUDE_DIR)\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <PostBuildEvent>
       <Command>rmdir /s /q x64</Command>
       <Message>删除Qt的一些未找到指定路径的生成文件</Message>
     </PostBuildEvent>
     <Link>
-      <AdditionalDependencies>fmt.lib;spdlog.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>fmt.lib;spdlog.lib;Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(PREBUILD_DIR)\spdlog-v2.x;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -108,11 +109,24 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\include\common\CommonTools.cpp" />
+    <ClCompile Include="..\..\include\common\StringConv.cpp" />
+    <ClCompile Include="..\..\include\windows\FileInfoGather.cpp" />
+    <ClCompile Include="..\..\include\windows\tools.cpp" />
+    <ClCompile Include="..\..\include\windows\UiOperation.cpp" />
+    <ClCompile Include="control\PathFilesMgr.cpp" />
     <ClCompile Include="view\DesktopBackgroundView.cpp" />
     <ClCompile Include="view\DesktopViewMgr.cpp" />
     <ClCompile Include="view\HzIconView.cpp" />
     <ClCompile Include="view\HzSystemTray.cpp" />
     <ClCompile Include="view\showItem\HzFileItem.cpp" />
+    <ClInclude Include="..\..\include\common\CommonTools.h" />
+    <ClInclude Include="..\..\include\common\StringConv.h" />
+    <ClInclude Include="..\..\include\windows\EnsureCleanup.h" />
+    <ClInclude Include="..\..\include\windows\FileInfoGather.h" />
+    <ClInclude Include="..\..\include\windows\tools.h" />
+    <ClInclude Include="..\..\include\windows\UiOperation.h" />
+    <ClInclude Include="control\PathFilesMgr.h" />
     <ClInclude Include="view\DesktopViewMgr.h" />
     <QtMoc Include="view\HzSystemTray.h" />
     <ClInclude Include="view\showItem\HzFileItem.h" />

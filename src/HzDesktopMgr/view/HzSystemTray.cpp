@@ -28,7 +28,6 @@ HzSystemTray::HzSystemTray(QWidget* parent)
 	setContextMenu(trayIconMenu);
 	setIcon(QIcon(":/HzDesktopMgr/view/qrc/test/bad.png"));
 
-	// 已经设置了父对象，为什么还要调用show？
 	show();
 }
 

@@ -5,10 +5,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>qrc;rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Form Files">
-      <UniqueIdentifier>{99349809-55BA-4b9d-BF79-8FDBB0286EB3}</UniqueIdentifier>
-      <Extensions>ui</Extensions>
-    </Filter>
     <Filter Include="Translation Files">
       <UniqueIdentifier>{639EADAA-A684-42e4-A9AD-28FC9BCB8F7C}</UniqueIdentifier>
       <Extensions>ts</Extensions>
@@ -21,6 +17,18 @@
     </Filter>
     <Filter Include="view\showItem">
       <UniqueIdentifier>{f70da471-8966-45a6-9eac-8e8f03073bd0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{778ffb16-df24-4c13-9ac1-339d8cba2a50}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\windows">
+      <UniqueIdentifier>{8997addc-f058-4a4d-8426-7f920097b044}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="control">
+      <UniqueIdentifier>{8d2b9853-2739-451c-b547-bd09bf070e4a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\common">
+      <UniqueIdentifier>{58d5b3b1-c688-483b-ae8d-b553cf007aea}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -46,6 +54,24 @@
     <ClCompile Include="view\HzSystemTray.cpp">
       <Filter>view</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\include\windows\UiOperation.cpp">
+      <Filter>include\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\common\CommonTools.cpp">
+      <Filter>include\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\common\StringConv.cpp">
+      <Filter>include\common</Filter>
+    </ClCompile>
+    <ClCompile Include="control\PathFilesMgr.cpp">
+      <Filter>control</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\windows\FileInfoGather.cpp">
+      <Filter>include\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\windows\tools.cpp">
+      <Filter>include\windows</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HzDesktopMgr.h" />
@@ -54,6 +80,27 @@
     </ClInclude>
     <ClInclude Include="view\showItem\HzFileItem.h">
       <Filter>view\showItem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\windows\UiOperation.h">
+      <Filter>include\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\windows\EnsureCleanup.h">
+      <Filter>include\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\common\CommonTools.h">
+      <Filter>include\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\common\StringConv.h">
+      <Filter>include\common</Filter>
+    </ClInclude>
+    <ClInclude Include="control\PathFilesMgr.h">
+      <Filter>control</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\windows\FileInfoGather.h">
+      <Filter>include\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\windows\tools.h">
+      <Filter>include\windows</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
