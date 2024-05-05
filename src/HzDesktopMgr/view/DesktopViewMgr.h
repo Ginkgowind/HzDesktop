@@ -1,7 +1,7 @@
 #pragma once
 
 #include "DesktopBackgroundView.h"
-#include "HzIconView.h"
+#include "HzDesktopIconView.h"
 #include "HzSystemTray.h"
 
 class DesktopViewMgr
@@ -13,7 +13,7 @@ public:
 
 private:
 	DesktopBackgroundView* m_bkgView = nullptr;
-	HzIconView* m_iconView = nullptr;
+	HzDesktopIconView* m_desktopIconView = nullptr;
 	HzSystemTray* m_systemTray = nullptr;
 };
 

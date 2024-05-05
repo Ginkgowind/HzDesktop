@@ -4,26 +4,14 @@
 
 namespace HZ
 {
-	std::wstring getUserDesktopPath()
+	QString getPublicDesktopPath()
 	{
-		WCHAR path[MAX_PATH] = { 0 };
-		HRESULT hr = SHGetFolderPathW(NULL, CSIDL_DESKTOPDIRECTORY, NULL, 0, path);
-		if (!SUCCEEDED(hr))
+		char path[MAX_PATH] = { 0 };
+		HRESULT hr = SHGetFolderPathA(NULL, CSIDL_COMMON_DESKTOPDIRECTORY, NULL, 0, path);
+		if (FAILED(hr))
 		{
 			//LOG_ERROR_W("SHGetFolderPathW index(%d) failed hr(0x%x), err(%d).", i, hr, GetLastError());
-			return L"";
-		}
-
-		return path;
-	}
-	std::wstring getPublicDesktopPath()
-	{
-		WCHAR path[MAX_PATH] = { 0 };
-		HRESULT hr = SHGetFolderPathW(NULL, CSIDL_COMMON_DESKTOPDIRECTORY, NULL, 0, path);
-		if (!SUCCEEDED(hr))
-		{
-			//LOG_ERROR_W("SHGetFolderPathW index(%d) failed hr(0x%x), err(%d).", i, hr, GetLastError());
-			return L"";
+			return "";
 		}
 
 		return path;

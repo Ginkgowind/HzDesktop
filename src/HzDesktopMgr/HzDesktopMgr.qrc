@@ -1,7 +1,5 @@
 <RCC>
     <qresource prefix="/HzDesktopMgr">
-        <file>view/qrc/test/bad.png</file>
         <file>view/qrc/test/heart.png</file>
-        <file>view/qrc/test/trash.png</file>
     </qresource>
 </RCC>

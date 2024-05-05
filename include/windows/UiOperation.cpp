@@ -2,67 +2,122 @@
 #include <shlobj.h>
 #include <objbase.h>
 
+#include <QMimeData>
+#include <QUrl>
+
 #include "spdlog/spdlog.h"
 #include "UiOperation.h"
+
+//RAII机制
+
+class FItemIdListReleaser {
+public:
+	explicit FItemIdListReleaser(ITEMIDLIST* idList) : m_idList(idList) {}
+	~FItemIdListReleaser() { if (m_idList) CoTaskMemFree(m_idList); }
+private:
+	ITEMIDLIST* m_idList;
+};
+
+class FComInterfaceReleaser {
+public:
+	explicit FComInterfaceReleaser(IUnknown* i) : m_ptr(i) {}
+	~FComInterfaceReleaser() { if (m_ptr) m_ptr->Release(); }
+private:
+	IUnknown* m_ptr;
+};
+
+class FItemIdListVectorReleaser {
+public:
+	explicit FItemIdListVectorReleaser(const std::vector<ITEMIDLIST*>& idArray) : m_array(idArray) {}
+	~FItemIdListVectorReleaser() {
+		for (ITEMIDLIST* item : m_array)
+			CoTaskMemFree(item);
+	}
+	FItemIdListVectorReleaser& operator=(const FItemIdListVectorReleaser&) = delete;
+private:
+	const std::vector<ITEMIDLIST*>& m_array;
+};
 
 namespace HZ
 {
 	bool showContentMenuWin10(
 		WId ownerWId,
-		const QString& filePath,
-		int x,
-		int y)
+		const QStringList& pathList,
+		int showX,
+		int showY)
 	{
 		bool bRet = false;
 		HRESULT hRet = S_OK;
 
 		HWND hOwnerWnd = reinterpret_cast<HWND>(ownerWId);
-		IShellItem* pShellItem = nullptr;
 		IContextMenu* pContextMenu = nullptr;
 		HMENU hMenu = nullptr;
 
 		do
 		{
-			hRet = SHCreateItemFromParsingName(
-				filePath.toStdWString().c_str(),
-				nullptr,
-				IID_PPV_ARGS(&pShellItem)
-			);
-			if (FAILED(hRet)) {
+			if (pathList.empty()) {
 				break;
 			}
 
-			hRet = pShellItem->BindToHandler(nullptr, BHID_SFUIObject, IID_PPV_ARGS(&pContextMenu));
-			if (FAILED(hRet)) {
+			std::vector<ITEMIDLIST*> idvec;
+			std::vector<LPCITEMIDLIST> idChildvec;
+			IShellFolder* ifolder = nullptr;
+			
+			for (QString path : pathList) {
+				std::wstring windowsPath = path.toStdWString();
+				std::replace(windowsPath.begin(), windowsPath.end(), '/', '\\');
+				ITEMIDLIST* id = nullptr;
+				HRESULT res = SHParseDisplayName(windowsPath.c_str(), nullptr, &id, 0, nullptr);   //路径转PIDL
+				if (!SUCCEEDED(res) || !id) {
+					continue;
+				}
+				idvec.push_back(id);
+				idChildvec.push_back(nullptr);
+				res = SHBindToParent(id, IID_IShellFolder, (void**)&ifolder, &idChildvec.back());   //获取ishellfolder
+				if (!SUCCEEDED(res) || !idChildvec.back())
+					idChildvec.pop_back();
+				else if (path.compare(pathList.back()) != 0 && ifolder) {
+					ifolder->Release();
+					ifolder = nullptr;
+				}
+			}
+			FItemIdListVectorReleaser vecReleaser(idvec);
+			FComInterfaceReleaser ifolderReleaser(ifolder);
+			if (ifolder == nullptr || idChildvec.empty()) {
 				break;
 			}
 
+			IContextMenu* pContextMenu = nullptr;
+			HRESULT res = ifolder->GetUIObjectOf(hOwnerWnd, (UINT)idChildvec.size(),
+				(const ITEMIDLIST**)idChildvec.data(),     //获取右键UI按钮
+				IID_IContextMenu, nullptr, (void**)&pContextMenu);//放到pContextMenu中
+			if (FAILED(res)) {
+				break;
+			}
+
+			FComInterfaceReleaser menuReleaser(pContextMenu);
 			hMenu = CreatePopupMenu();
 			if (!hMenu) {
 				break;
 			}
 
-			hRet = pContextMenu->QueryContextMenu(hMenu, 0, 1, 0x7FFF, CMF_NORMAL);
-			if (FAILED(hRet)) {
-				break;
-			}
-
-			int res = TrackPopupMenu(hMenu, TPM_RETURNCMD | TPM_NONOTIFY, x, y, 0, hOwnerWnd, nullptr);
-			if (res > 0) {
-				CMINVOKECOMMANDINFO info = { 0 };
-				info.cbSize = sizeof(CMINVOKECOMMANDINFO);
-				info.hwnd = hOwnerWnd;
-				info.lpVerb = MAKEINTRESOURCEA(res - 1);	// 查看这个值的含义
-				info.nShow = SW_SHOWNORMAL;
-				pContextMenu->InvokeCommand(&info);
+			if (SUCCEEDED(pContextMenu->QueryContextMenu(hMenu, 0, 1, 0x7FFF, CMF_NORMAL))) {    //默认选项
+				int iCmd = TrackPopupMenuEx(hMenu, TPM_RETURNCMD, showX,
+					showY, hOwnerWnd, nullptr);
+				if (iCmd > 0) {   //执行菜单命令
+					CMINVOKECOMMANDINFOEX info = { 0 };
+					info.cbSize = sizeof(info);
+					info.fMask = CMIC_MASK_UNICODE;
+					info.hwnd = hOwnerWnd;
+					info.lpVerb = MAKEINTRESOURCEA(iCmd - 1);
+					info.lpVerbW = MAKEINTRESOURCEW(iCmd - 1);
+					info.nShow = SW_SHOWNORMAL;
+					pContextMenu->InvokeCommand((LPCMINVOKECOMMANDINFO)&info);
+				}
 			}
 
 			bRet = true;
 		} while (false);
-
-		if (pShellItem) {
-			pShellItem->Release();
-		}
 
 		if (pContextMenu) {
 			pContextMenu->Release();
@@ -73,5 +128,50 @@ namespace HZ
 		}
 
 		return bRet;
+	}
+
+	QByteArray ConvertToQByteArray(const std::vector<LPCITEMIDLIST>& idChildvec) {
+		QByteArray result;
+		for (const auto& pidl : idChildvec) {
+			UINT size = ILGetSize(pidl); // 获取ITEMIDLIST的大小
+			result.append(reinterpret_cast<const char*>(pidl), size);
+		}
+		return result;
+	}
+
+	QMimeData* multiDrag(const QStringList& pathList)
+	{
+		if (pathList.empty()) return false;
+		std::vector<ITEMIDLIST*> idvec;
+		std::vector<LPCITEMIDLIST> idChildvec;
+		QList<QUrl> urls;
+		IShellFolder* ifolder = nullptr;
+		for (QString path : pathList) {
+			urls.append(QUrl::fromLocalFile(path));
+			std::wstring windowsPath = path.toStdWString();
+			std::replace(windowsPath.begin(), windowsPath.end(), '/', '\\');
+			ITEMIDLIST* id = nullptr;
+			HRESULT res = SHParseDisplayName(windowsPath.c_str(), nullptr, &id, 0, nullptr);   //路径转PIDL
+			if (!SUCCEEDED(res) || !id) continue;
+			idvec.push_back(id);
+			idChildvec.push_back(nullptr);
+			res = SHBindToParent(id, IID_IShellFolder, (void**)&ifolder, &idChildvec.back());   //获取ishellfolder
+			if (!SUCCEEDED(res) || !idChildvec.back())
+				idChildvec.pop_back();
+			else if (path.compare(pathList.back()) != 0 && ifolder) {
+				ifolder->Release();
+				ifolder = nullptr;
+			}
+		}
+		FItemIdListVectorReleaser vecReleaser(idvec);
+		FComInterfaceReleaser ifolderReleaser(ifolder);
+		if (ifolder == nullptr || idChildvec.empty()) return false;
+		
+		QMimeData* mimeData = new QMimeData;
+		mimeData->setUrls(urls);
+		mimeData->setData("application/x-qt-windows-mime;value=\"Shell IDList Array\"", 
+			ConvertToQByteArray(idChildvec));
+
+		return mimeData;
 	}
 }

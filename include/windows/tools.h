@@ -2,11 +2,10 @@
 
 #include <windows.h>
 #include <string>
+#include <QString>
 
 namespace HZ
 {
-	std::wstring getUserDesktopPath();
-
-	std::wstring getPublicDesktopPath();
+	QString getPublicDesktopPath();
 }
 

@@ -30,6 +30,9 @@
     <Filter Include="include\common">
       <UniqueIdentifier>{58d5b3b1-c688-483b-ae8d-b553cf007aea}</UniqueIdentifier>
     </Filter>
+    <Filter Include="view\menu">
+      <UniqueIdentifier>{bd755291-42c4-4c63-914f-834722770df7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="HzDesktopMgr.qrc">
@@ -45,7 +48,7 @@
     <ClCompile Include="view\DesktopViewMgr.cpp">
       <Filter>view</Filter>
     </ClCompile>
-    <ClCompile Include="view\HzIconView.cpp">
+    <ClCompile Include="view\HzDesktopIconView.cpp">
       <Filter>view</Filter>
     </ClCompile>
     <ClCompile Include="view\showItem\HzFileItem.cpp">
@@ -63,14 +66,20 @@
     <ClCompile Include="..\..\include\common\StringConv.cpp">
       <Filter>include\common</Filter>
     </ClCompile>
-    <ClCompile Include="control\PathFilesMgr.cpp">
-      <Filter>control</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\include\windows\FileInfoGather.cpp">
       <Filter>include\windows</Filter>
     </ClCompile>
     <ClCompile Include="..\..\include\windows\tools.cpp">
       <Filter>include\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="view\showItem\HzDesktopItemModel.cpp">
+      <Filter>view\showItem</Filter>
+    </ClCompile>
+    <ClCompile Include="view\menu\HzItemMenu.cpp">
+      <Filter>view\menu</Filter>
+    </ClCompile>
+    <ClCompile Include="view\showItem\HzDesktopItemModel_p.cpp">
+      <Filter>view\showItem</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -93,9 +102,6 @@
     <ClInclude Include="..\..\include\common\StringConv.h">
       <Filter>include\common</Filter>
     </ClInclude>
-    <ClInclude Include="control\PathFilesMgr.h">
-      <Filter>control</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\windows\FileInfoGather.h">
       <Filter>include\windows</Filter>
     </ClInclude>
@@ -107,11 +113,20 @@
     <QtMoc Include="view\DesktopBackgroundView.h">
       <Filter>view</Filter>
     </QtMoc>
-    <QtMoc Include="view\HzIconView.h">
+    <QtMoc Include="view\HzDesktopIconView.h">
       <Filter>view</Filter>
     </QtMoc>
     <QtMoc Include="view\HzSystemTray.h">
       <Filter>view</Filter>
+    </QtMoc>
+    <QtMoc Include="view\menu\HzItemMenu.h">
+      <Filter>view\menu</Filter>
+    </QtMoc>
+    <QtMoc Include="view\showItem\HzDesktopItemModel.h">
+      <Filter>view\showItem</Filter>
+    </QtMoc>
+    <QtMoc Include="view\showItem\HzDesktopItemModel_p.h">
+      <Filter>view\showItem</Filter>
     </QtMoc>
   </ItemGroup>
 </Project>
