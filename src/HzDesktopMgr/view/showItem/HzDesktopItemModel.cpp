@@ -28,7 +28,8 @@ QString HzDesktopItemModel::filePath(const QModelIndex& aindex) const
 
 	switch (itemType) {
 	case HzDesktopItemModelPrivate::SystemAppItem:
-		return hzd_func()->getSystemAppInfoList().at(bindex.row()).clsidPath;
+		// 此处要拼接"::"，目前filePath仅供右键菜单时使用
+		return "::" + hzd_func()->getSystemAppInfoList().at(bindex.row()).clsidValue;
 	case HzDesktopItemModelPrivate::NormalFileItem:
 		return hzd_func()->getFileItemInfoList().at(bindex.row()).filePath();
 	}

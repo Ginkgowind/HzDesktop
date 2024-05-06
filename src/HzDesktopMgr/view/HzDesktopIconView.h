@@ -45,5 +45,4 @@ private:
 	QSortFilterProxyModel* m_itemProxyModel;
 	HzDesktopItemModel* m_itemModel;
 	MenuShowStyle m_menuShowStyle;
-	QMimeData* m_testData;
 };

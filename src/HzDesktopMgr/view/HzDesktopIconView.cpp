@@ -59,11 +59,10 @@ HzDesktopIconView::~HzDesktopIconView()
 
 void HzDesktopIconView::startDrag(Qt::DropActions supportedActions)
 {
-	m_testData = HZ::multiDrag(getSelectedPaths());
+	QMimeData* dragMimeData = HZ::multiDrag(getSelectedPaths());
 
 	QDrag* drag = new QDrag(this);
-	//drag->setMimeData(mimeData);
-	drag->setMimeData(m_testData);
+	drag->setMimeData(dragMimeData);
 	//drag->setPixmap(item->icon().pixmap(iconSize()));
 	drag->setPixmap(QPixmap(":/HzDesktopMgr/view/qrc/test/heart.png"));
 	 //开始拖放操作
@@ -78,20 +77,6 @@ void HzDesktopIconView::dragEnterEvent(QDragEnterEvent* event)
 {
 	event->setDropAction(Qt::MoveAction);
 	event->accept();
-
-	auto strList = event->mimeData()->formats();
-	//for (int i = 0; i < strList.size(); i++) {
-	for (int i = 0; i < 2; i++) {
-		auto data = event->mimeData()->data(strList[i]);
-		//if (i >= 2) {
-		//	//qDebug() << strList[i] << " : " << data;
-		//	continue;
-		//}
-			
-		m_testData->setData(strList[i], data);
-
-		
-	}
 }
 
 //void HzDesktopIconView::dropEvent(QDropEvent* e)
@@ -109,9 +94,9 @@ QStringList HzDesktopIconView::getSelectedPaths()
 {
 	QStringList pathList;
 
-	// TODO 此处直接调用函数与复制变量，有什么区别？
+	// TODO 了解此处直接调用函数与复制变量，有什么区别？
 	QModelIndexList indexList = selectedIndexes();
-	for (const QModelIndex& index : selectedIndexes()) {
+	for (const QModelIndex& index : indexList) {
 		if (!pathList.contains(m_itemModel->filePath(index))) {
 			pathList.append(m_itemModel->filePath(index));
 		}

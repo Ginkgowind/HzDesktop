@@ -2,6 +2,7 @@
 #include <QDir>
 #include <shlwapi.h>
 #include <Shlobj.h>
+#include <QtWinExtras/QtWin>
 
 #include "HzDesktopItemModel_p.h"
 #include "windows/tools.h"
@@ -61,14 +62,14 @@ void DesktopSystemItemWatcher::refreshSystemAppsInfo()
 
 	m_systemAppList.clear();
 	QSettings settings(showStatusRegPath, QSettings::Registry64Format);
-	for (const QString& clsidValue : settings.childKeys() + QStringList("::{645FF040-5081-101B-9F08-00AA002F954E}")) {
+	QStringList clsidValueList = settings.childKeys() + QStringList("{645FF040-5081-101B-9F08-00AA002F954E}");
+	for (const QString& clsidValue : clsidValueList) {
 		bool bHidden = settings.value(clsidValue).toBool();
 		if (!bHidden) {
-			QString clsidPath = "::" + clsidValue;
 			m_systemAppList.push_back({
-				clsidPath,
-				getSystemAppDisplayName(clsidPath),
-				getSystemAppIcon(clsidPath)
+				clsidValue,
+				getSystemAppDisplayName("::" + clsidValue),
+				getSystemAppIcon(clsidValue)
 				});
 		}
 	}
@@ -165,43 +166,66 @@ bool DesktopSystemItemWatcher::setSystemAppDisplayName(const QString& clsidPath,
 	return bRet;
 }
 
-QIcon DesktopSystemItemWatcher::getSystemAppIcon(const QString& clsidPath)
+QIcon DesktopSystemItemWatcher::getSystemAppIcon(const QString& clsidValue)
 {
 	QIcon retIcon;
 
-	IShellFolder* desktopFolder = nullptr;
-	LPITEMIDLIST systemAppPidl = nullptr;
+	HICON hIcon = NULL;
+	HKEY hKey;
 
 	do
 	{
-		HRESULT hRet = SHGetDesktopFolder(&desktopFolder);
-		if (FAILED(hRet)) {
+		// 打开注册表键
+		std::string strSubKey = "CLSID\\" + clsidValue.toStdString() + "\\DefaultIcon";
+		LSTATUS lRet = RegOpenKeyExA(HKEY_CLASSES_ROOT,
+			strSubKey.c_str(),
+			0, KEY_READ, &hKey);
+		if (lRet != ERROR_SUCCESS) {
 			break;
 		}
 
-		hRet = desktopFolder->ParseDisplayName(
+		// 查询图标路径
+		char value[MAX_PATH];
+		DWORD valueLength = sizeof(value);
+		lRet = RegQueryValueExA(
+			hKey, NULL,	// 默认值
 			NULL, NULL,
-			(LPWSTR)clsidPath.toStdWString().c_str(),
-			NULL, &systemAppPidl, NULL
-		);
-		if (FAILED(hRet)) {
+			(LPBYTE)value,
+			&valueLength);
+		if (lRet != ERROR_SUCCESS) {
 			break;
 		}
 
-		//SHFILEINFOW fileInfo;
-		//SHGetFileInfoW((LPCWSTR)recycleBinPidl, 0, &fileInfo, sizeof(SHFILEINFOW), SHGFI_PIDL | SHGFI_ICON | SHGFI_LARGEICON);
-		//if (FAILED(hRet)) {
-		//	break;
-		//}
+		// 分离图标路径和图标索引
+		std::string regValue = value;
+		std::string iconPath;
+		int iconIndex = 0;
+		size_t commaPos = regValue.find_last_of(',');
+		if (commaPos != std::string::npos) {
+			iconPath = regValue.substr(0, commaPos);
+			iconIndex = std::stoi(regValue.substr(commaPos + 1));
+		}
+		else {
+			iconPath = regValue; // 如果没有逗号，整个字符串就是路径
+			iconIndex = 0;    // 默认图标索引为0
+		}
+
+		// 提取图标
+		hIcon = ExtractIconA(GetModuleHandleW(NULL), iconPath.c_str(), iconIndex);
+		if (hIcon == NULL) {
+			break;
+		}
+		
+		retIcon = QtWin::fromHICON(hIcon);
 
 	} while (false);
 
-	if (systemAppPidl) {
-		CoTaskMemFree(systemAppPidl);
+	if (hKey) {
+		RegCloseKey(hKey);
 	}
 
-	if (desktopFolder) {
-		desktopFolder->Release();
+	if (hIcon) {
+		DestroyIcon(hIcon);
 	}
 
 	return retIcon;

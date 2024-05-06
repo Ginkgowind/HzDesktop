@@ -15,7 +15,7 @@
 /**************************¼à¿ØÏµÍ³Í¼±ê************************/
 struct SystemAppInfo
 {
-	QString clsidPath;
+	QString clsidValue;
 	QString showName;
 	QIcon showIcon;
 };
