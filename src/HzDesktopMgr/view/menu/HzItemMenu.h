@@ -27,24 +27,33 @@ public:
 	void onExplorerMenu();
 
 private:
-	QAction* m_openAct;
 	QAction* m_openWithAct;
 	QAction* m_copyAct;
 	QAction* m_cutAct;
 	QAction* m_deleteAct;
 	QAction* m_renameAct;
-	QAction* m_explorerMenuAct;
 
 	QStringList m_selectedItemList;
 	QPoint m_showPos;
 	QWidget* m_parentWidget;
 };
 
-//class HzGridBlankMenu : public QMenu
-//{
-//	Q_OBJECT
-//
-//public:
-//	explicit HzGridBlankMenu(QObject* parent);
-//	~HzGridBlankMenu();
-//};
+class HzDesktopBlankMenu : public QMenu
+{
+	Q_OBJECT
+
+public:
+	explicit HzDesktopBlankMenu(QObject* parent);
+	~HzDesktopBlankMenu();
+
+private:
+	void setViewMode();
+
+	void switchAutoArrangeIcons();
+
+	void switchShowDesktopIcons();
+
+	void setSortMode();
+
+	void OnRefresh();
+};

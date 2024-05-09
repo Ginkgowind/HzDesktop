@@ -37,7 +37,7 @@ QString HzDesktopItemModel::filePath(const QModelIndex& aindex) const
 	return QString();
 }
 
-inline QString HzDesktopItemModel::fileName(const QModelIndex& aindex) const
+inline QString HzDesktopItemModel::showName(const QModelIndex& aindex) const
 {
 	const QModelIndex& bindex = hzd_func()->translateRealIndex(aindex);
 	// 根据内部指针来确定是哪个子模型
@@ -115,7 +115,7 @@ QVariant HzDesktopItemModel::data(const QModelIndex& index, int role) const
 	switch (role) {
 	case Qt::EditRole:
 	case Qt::DisplayRole:
-		return fileName(index);
+		return showName(index);
 	case Qt::DecorationRole:
 		return fileIcon(index);
 	}

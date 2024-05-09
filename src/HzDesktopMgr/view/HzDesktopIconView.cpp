@@ -27,6 +27,8 @@ HzDesktopIconView::HzDesktopIconView(QWidget *parent)
 {
 	setFixedSize(1200, 800);
 
+	m_desktopBlankMenu = new HzDesktopBlankMenu(this);
+
 	m_itemProxyModel = new QSortFilterProxyModel(this);
 	m_itemModel = new HzDesktopItemModel(m_itemProxyModel);
 	m_itemProxyModel->setSourceModel(m_itemModel);
@@ -87,7 +89,17 @@ void HzDesktopIconView::dragEnterEvent(QDragEnterEvent* event)
 
 void HzDesktopIconView::contextMenuEvent(QContextMenuEvent* event)
 {
-	HzItemMenu::instance().showMenu(this, getSelectedPaths());
+	QStringList selectedPathList = getSelectedPaths();
+
+	if (selectedPathList.empty()) {
+		m_desktopBlankMenu->exec(QCursor::pos());
+	}
+	else {
+		HzItemMenu::instance().showMenu(this, selectedPathList);
+	}
+
+	// TODO ÓÐ×÷ÓÃÂð
+	event->accept();
 }
 
 QStringList HzDesktopIconView::getSelectedPaths()

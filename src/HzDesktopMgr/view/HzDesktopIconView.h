@@ -12,6 +12,8 @@ class QStandardItemModel;
 class QFileSystemModel;
 QT_END_NAMESPACE
 
+class HzDesktopBlankMenu;
+
 enum MenuShowStyle
 {
 	HzStyle,
@@ -45,4 +47,5 @@ private:
 	QSortFilterProxyModel* m_itemProxyModel;
 	HzDesktopItemModel* m_itemModel;
 	MenuShowStyle m_menuShowStyle;
+	HzDesktopBlankMenu* m_desktopBlankMenu;
 };

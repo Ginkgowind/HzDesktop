@@ -61,7 +61,7 @@ struct DirObserver
 {
 	std::wstring watchPath;
 	CEnsureCloseFile hDirectory;
-	HANDLE hEvent;
+	CEnsureCloseHandle hEvent;
 	OVERLAPPED overlapped;
 	char* notifyDataBuf;
 };
@@ -80,26 +80,31 @@ signals:
 	// 因为是传递到主线程去处理，所以此处不传引用
 	void fileItemRefreshed(QFileInfoList fileItemList);
 
+protected:
+	void run() override;
+
 private:
-	bool initWatcher();
+	bool initWatcherDir();
+
+	bool initWatcher(DWORD dwNotifyFilter);
+
+	void uninitWatcher();
 
 	void refreshFileItem();
 
-	//void handleObserveResult(
-	//	const std::wstring& strWatchDirectory,
-	//	const FILE_NOTIFY_INFORMATION* pNotification
-	//);
+	void handleObserveResult(
+		const std::wstring& strWatchDirectory,
+		const FILE_NOTIFY_INFORMATION* pNotification
+	);
 
-	//void handleFileCreated(const std::wstring& filePath);
+	void handleFileCreated(const std::wstring& filePath);
 
-	//void handleFileDeleted(const std::wstring& filePath);
+	void handleFileDeleted(const std::wstring& filePath);
 
-	//void handleFileModified(const std::wstring& filePath);
+	void handleFileModified(const std::wstring& filePath);
 
-	//void handleFileRenamed(const std::wstring& oldPath, const std::wstring& newPath);
+	void handleFileRenamed(const std::wstring& oldPath, const std::wstring& newPath);
 
-protected:
-	void run() override;
 
 private:
 	// 各个目录监控所维护的数据结构，单线程中调用，不用处理同步问题

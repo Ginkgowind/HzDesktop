@@ -31,7 +31,7 @@ public:
 
 public:
 	QString filePath(const QModelIndex& index) const;
-	inline QString fileName(const QModelIndex& index) const;
+	inline QString showName(const QModelIndex& index) const;
 	inline QIcon fileIcon(const QModelIndex& index) const;
 
 protected:
