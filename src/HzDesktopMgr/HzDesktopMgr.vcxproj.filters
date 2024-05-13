@@ -15,9 +15,6 @@
     <Filter Include="config">
       <UniqueIdentifier>{93d08307-7050-47ce-b590-2d0aa51c998c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="view\showItem">
-      <UniqueIdentifier>{f70da471-8966-45a6-9eac-8e8f03073bd0}</UniqueIdentifier>
-    </Filter>
     <Filter Include="include">
       <UniqueIdentifier>{778ffb16-df24-4c13-9ac1-339d8cba2a50}</UniqueIdentifier>
     </Filter>
@@ -32,6 +29,9 @@
     </Filter>
     <Filter Include="view\menu">
       <UniqueIdentifier>{bd755291-42c4-4c63-914f-834722770df7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="view\model">
+      <UniqueIdentifier>{f70da471-8966-45a6-9eac-8e8f03073bd0}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -52,7 +52,7 @@
       <Filter>view</Filter>
     </ClCompile>
     <ClCompile Include="view\showItem\HzFileItem.cpp">
-      <Filter>view\showItem</Filter>
+      <Filter>view\model</Filter>
     </ClCompile>
     <ClCompile Include="view\HzSystemTray.cpp">
       <Filter>view</Filter>
@@ -73,13 +73,16 @@
       <Filter>include\windows</Filter>
     </ClCompile>
     <ClCompile Include="view\showItem\HzDesktopItemModel.cpp">
-      <Filter>view\showItem</Filter>
+      <Filter>view\model</Filter>
     </ClCompile>
     <ClCompile Include="view\menu\HzItemMenu.cpp">
       <Filter>view\menu</Filter>
     </ClCompile>
     <ClCompile Include="view\showItem\HzDesktopItemModel_p.cpp">
-      <Filter>view\showItem</Filter>
+      <Filter>view\model</Filter>
+    </ClCompile>
+    <ClCompile Include="view\showItem\HzItemDelegate.cpp">
+      <Filter>view\model</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -88,7 +91,7 @@
       <Filter>view</Filter>
     </ClInclude>
     <ClInclude Include="view\showItem\HzFileItem.h">
-      <Filter>view\showItem</Filter>
+      <Filter>view\model</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\windows\UiOperation.h">
       <Filter>include\windows</Filter>
@@ -123,10 +126,13 @@
       <Filter>view\menu</Filter>
     </QtMoc>
     <QtMoc Include="view\showItem\HzDesktopItemModel.h">
-      <Filter>view\showItem</Filter>
+      <Filter>view\model</Filter>
     </QtMoc>
     <QtMoc Include="view\showItem\HzDesktopItemModel_p.h">
-      <Filter>view\showItem</Filter>
+      <Filter>view\model</Filter>
+    </QtMoc>
+    <QtMoc Include="view\showItem\HzItemDelegate.h">
+      <Filter>view\model</Filter>
     </QtMoc>
   </ItemGroup>
 </Project>

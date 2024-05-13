@@ -4,22 +4,17 @@
 #include <QThread>
 #include <QFileIconProvider>
 #include <QFileInfo>
+#include <QStandardItem>
 
 #include <windows.h>
 #include <vector>
 #include <string>
+#include <functional>
 
 #include "HzDesktopItemModel.h"
 #include "windows/EnsureCleanup.h"
 
 /**************************监控系统图标************************/
-struct SystemAppInfo
-{
-	QString clsidValue;
-	QString showName;
-	QIcon showIcon;
-};
-typedef QList<SystemAppInfo> SystemAppInfoList;
 
 class DesktopSystemItemWatcher : public QThread
 {
@@ -31,14 +26,16 @@ public:
 
 	void init();
 
+	void refreshSystemAppsInfo();
+
 signals:
 	// 因为是传递到主线程去处理，所以此处不传引用
-	void systemAppRefreshed(SystemAppInfoList systemAppList);
+	void systemAppRefreshed(QList<QStandardItem*> systemAppList);
 
 private:
 	bool initWatcher();
 
-	void refreshSystemAppsInfo();
+	QStandardItem* genQStandardItem(const QString& clsidValue);
 
 	QString getSystemAppDisplayName(const QString& csidlPath);
 
@@ -52,7 +49,6 @@ protected:
 private:
 	CEnsureRegCloseKey m_monitorKey;
 	CEnsureCloseHandle m_monitorEvent;
-	SystemAppInfoList m_systemAppList;
 };
 
 /************************监控桌面普通图标**********************/
@@ -76,9 +72,11 @@ public:
 
 	void init();
 
+	void refreshFileItem();
+
 signals:
 	// 因为是传递到主线程去处理，所以此处不传引用
-	void fileItemRefreshed(QFileInfoList fileItemList);
+	void fileItemRefreshed(QList<QStandardItem*> fileItemList);
 
 protected:
 	void run() override;
@@ -90,7 +88,9 @@ private:
 
 	void uninitWatcher();
 
-	void refreshFileItem();
+	QStandardItem* genQStandardItem(const QFileInfo& fileInfo);
+
+	QIcon getUltimateIcon(const QFileInfo& fileInfo);
 
 	void handleObserveResult(
 		const std::wstring& strWatchDirectory,
@@ -105,6 +105,7 @@ private:
 
 	void handleFileRenamed(const std::wstring& oldPath, const std::wstring& newPath);
 
+	static std::function<bool(const QFileInfo& itInfo)> compMemberPath(const std::wstring& targetPath);
 
 private:
 	// 各个目录监控所维护的数据结构，单线程中调用，不用处理同步问题
@@ -112,7 +113,6 @@ private:
 
 	CEnsureRegCloseKey m_monitorKey;
 	CEnsureCloseHandle m_monitorEvent;
-	QFileInfoList m_fileItemList;
 };
 
 //QObjectPrivate未公开，故此处采用
@@ -133,20 +133,10 @@ public:
 
 	void init();
 
-	const SystemAppInfoList& getSystemAppInfoList() const;
-
-	const QFileInfoList& getFileItemInfoList() const;
-
-	const QModelIndex translateRealIndex(const QModelIndex& index) const;
-
 private:
 	DesktopSystemItemWatcher m_systemItemWatcher;
 	
 	DesktopFileItemWatcher m_fileItemWatcher;
-
-	SystemAppInfoList m_systemAppList;
-	
-	QFileInfoList m_fileItemList;
 
 	friend class HzDesktopItemModel;
 };

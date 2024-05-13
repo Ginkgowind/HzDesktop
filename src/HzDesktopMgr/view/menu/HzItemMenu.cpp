@@ -140,5 +140,5 @@ void HzDesktopBlankMenu::setSortMode()
 
 void HzDesktopBlankMenu::OnRefresh()
 {
-	qDebug() << "refresh";
+	emit refreshDesktopItemsSignal();
 }

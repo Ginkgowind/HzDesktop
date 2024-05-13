@@ -13,6 +13,7 @@ class QFileSystemModel;
 QT_END_NAMESPACE
 
 class HzDesktopBlankMenu;
+class HzItemDelegate;
 
 enum MenuShowStyle
 {
@@ -32,9 +33,9 @@ public:
 	~HzDesktopIconView();
 
 protected:
-	void startDrag(Qt::DropActions supportedActions) override;
+	//void startDrag(Qt::DropActions supportedActions) override;
 
-	void dragEnterEvent(QDragEnterEvent* event) override;
+	//void dragEnterEvent(QDragEnterEvent* event) override;
 
 	//void dropEvent(QDropEvent* e) override;
 
@@ -46,6 +47,8 @@ private:
 private:
 	QSortFilterProxyModel* m_itemProxyModel;
 	HzDesktopItemModel* m_itemModel;
+	HzItemDelegate* m_itemDelegate;
+
 	MenuShowStyle m_menuShowStyle;
 	HzDesktopBlankMenu* m_desktopBlankMenu;
 };

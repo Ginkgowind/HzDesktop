@@ -1,6 +1,5 @@
 #pragma once
 /* 自定义model实现对两个桌面目录以及系统图标的监控 */
-//#include <QAbstractItemModel>
 #include <QStandardItemModel>
 
 class HzDesktopItemModel;
@@ -19,33 +18,27 @@ public:
 	HzDesktopItemModel* hzq_ptr;
 };
 
-class HzDesktopItemModel  
-	//: public QAbstractItemModel
+class HzDesktopItemModel
 	: public QStandardItemModel
 {
 	Q_OBJECT
 
 public:
+	enum Roles {
+		FilePathRole = Qt::UserRole + 1,
+		FileNameRole = Qt::UserRole + 2
+	};
+
 	HzDesktopItemModel(QObject *parent);
 	~HzDesktopItemModel();
 
 public:
+	void refreshItems();
+
+public:
 	QString filePath(const QModelIndex& index) const;
-	inline QString showName(const QModelIndex& index) const;
-	inline QIcon fileIcon(const QModelIndex& index) const;
 
 protected:
-
-	virtual QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
-
-	virtual QModelIndex parent(const QModelIndex& child) const override;
-
-	virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override;
-
-	virtual int columnCount(const QModelIndex& parent = QModelIndex()) const override;
-
-	virtual QVariant data(const QModelIndex& index, 
-		int role = Qt::DisplayRole) const override;
 
 private:
 	QScopedPointer<HzDesktopItemDataMgr> hzd_ptr;

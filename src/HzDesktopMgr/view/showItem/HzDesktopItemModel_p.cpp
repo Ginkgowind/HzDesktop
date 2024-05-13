@@ -29,6 +29,25 @@ void DesktopSystemItemWatcher::init()
 	refreshSystemAppsInfo();
 }
 
+void DesktopSystemItemWatcher::refreshSystemAppsInfo()
+{
+	static const QString showStatusRegPath =
+		"HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\HideDesktopIcons\\NewStartPanel";
+
+	QList<QStandardItem*> systemItems;
+	QSettings settings(showStatusRegPath, QSettings::Registry64Format);
+	QStringList clsidValueList = settings.childKeys() + QStringList("{645FF040-5081-101B-9F08-00AA002F954E}");
+	for (const QString& clsidValue : clsidValueList) {
+		bool bHidden = settings.value(clsidValue).toBool();
+		if (!bHidden) {
+			QStandardItem* newItem = genQStandardItem(clsidValue);
+			systemItems.push_back(newItem);
+		}
+	}
+
+	emit systemAppRefreshed(systemItems);
+}
+
 bool DesktopSystemItemWatcher::initWatcher()
 {
 	LSTATUS bRet = false;
@@ -57,26 +76,14 @@ bool DesktopSystemItemWatcher::initWatcher()
 	return bRet;
 }
 
-void DesktopSystemItemWatcher::refreshSystemAppsInfo()
+QStandardItem* DesktopSystemItemWatcher::genQStandardItem(const QString& clsidValue)
 {
-	static const QString showStatusRegPath =
-		"HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\HideDesktopIcons\\NewStartPanel";
+	QStandardItem* newItem = new QStandardItem();
+	newItem->setIcon(getSystemAppIcon(clsidValue));
+	newItem->setText(getSystemAppDisplayName("::" + clsidValue));
+	newItem->setData("::" + clsidValue, HzDesktopItemModel::FilePathRole);
 
-	m_systemAppList.clear();
-	QSettings settings(showStatusRegPath, QSettings::Registry64Format);
-	QStringList clsidValueList = settings.childKeys() + QStringList("{645FF040-5081-101B-9F08-00AA002F954E}");
-	for (const QString& clsidValue : clsidValueList) {
-		bool bHidden = settings.value(clsidValue).toBool();
-		if (!bHidden) {
-			m_systemAppList.push_back({
-				clsidValue,
-				getSystemAppDisplayName("::" + clsidValue),
-				getSystemAppIcon(clsidValue)
-				});
-		}
-	}
-
-	emit systemAppRefreshed(m_systemAppList);
+	return newItem;
 }
 
 QString DesktopSystemItemWatcher::getSystemAppDisplayName(const QString& clsidPath)
@@ -283,6 +290,25 @@ void DesktopFileItemWatcher::init()
 	refreshFileItem();
 }
 
+void DesktopFileItemWatcher::refreshFileItem()
+{
+	QList<QStandardItem*> itemList;
+
+	for (const auto& info : m_observerInfos) {
+		QDir watchDir(QString::fromStdWString(info.watchPath));
+		QFileInfoList fileInfoList = watchDir.entryInfoList(
+			QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot
+		);
+
+		for (const QFileInfo& fileInfo : fileInfoList) {
+			QStandardItem* newItem = genQStandardItem(fileInfo);
+			itemList.push_back(newItem);
+		}
+	}
+
+	emit fileItemRefreshed(itemList);
+}
+
 void DesktopFileItemWatcher::run()
 {
 	// 每个目录关联一个事件以及句柄
@@ -444,18 +470,28 @@ void DesktopFileItemWatcher::uninitWatcher()
 	m_observerInfos.clear();
 }
 
-void DesktopFileItemWatcher::refreshFileItem()
+QStandardItem* DesktopFileItemWatcher::genQStandardItem(const QFileInfo& fileInfo)
 {
-	m_fileItemList.clear();
+	QStandardItem* newItem = new QStandardItem();
+	
+	newItem->setIcon(getUltimateIcon(fileInfo));
+	newItem->setText(fileInfo.fileName());
+	newItem->setData(fileInfo.absoluteFilePath(), HzDesktopItemModel::FilePathRole);
 
-	for (const auto& info : m_observerInfos) {
-		QDir watchDir(QString::fromStdWString(info.watchPath));
-		m_fileItemList.append(watchDir.entryInfoList(
-			QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot
-		));
+	return newItem;
+}
+
+QIcon DesktopFileItemWatcher::getUltimateIcon(const QFileInfo& fileInfo)
+{
+	if (fileInfo.isShortcut()) {
+		QFileInfo targetFileInfo(fileInfo.symLinkTarget());
+		return QFileIconProvider().icon(targetFileInfo);
+	}
+	else {
+		return QFileIconProvider().icon(fileInfo);
 	}
 
-	emit fileItemRefreshed(m_fileItemList);
+	return QIcon();
 }
 
 void DesktopFileItemWatcher::handleObserveResult(const std::wstring& strWatchDirectory, const FILE_NOTIFY_INFORMATION* pNotification)
@@ -525,16 +561,12 @@ void DesktopFileItemWatcher::handleObserveResult(const std::wstring& strWatchDir
 
 void DesktopFileItemWatcher::handleFileCreated(const std::wstring& filePath)
 {
-	//auto it = std::find_if(mVecAppLinkInfo.begin(), mVecAppLinkInfo.end(), _IsSpecifiedPath(filePath));
-	//if (it != mVecAppLinkInfo.end())    // 找到了说明出错
-	//{
-	//	//LOG_ERROR_W("_OnLnkFileCreated failed, lnk path already exist : %ws", filePath.c_str());
-	//	return;
-	//}
+
 }
 
 void DesktopFileItemWatcher::handleFileDeleted(const std::wstring& filePath)
 {
+
 }
 
 void DesktopFileItemWatcher::handleFileModified(const std::wstring& filePath)
@@ -543,6 +575,14 @@ void DesktopFileItemWatcher::handleFileModified(const std::wstring& filePath)
 
 void DesktopFileItemWatcher::handleFileRenamed(const std::wstring& oldPath, const std::wstring& newPath)
 {
+}
+
+std::function<bool(const QFileInfo& itInfo)> DesktopFileItemWatcher::compMemberPath(const std::wstring& targetPath)
+{
+	return [&targetPath](const QFileInfo& itInfo)
+		{
+			return itInfo.absoluteFilePath().toStdWString() == targetPath;
+		};
 }
 
 HzDesktopItemModelPrivate::HzDesktopItemModelPrivate()
@@ -556,14 +596,21 @@ void HzDesktopItemModelPrivate::init()
 {
 	connect(&m_systemItemWatcher,
 		&DesktopSystemItemWatcher::systemAppRefreshed,
-		this, [this](SystemAppInfoList infoList) {
-			m_systemAppList = std::move(infoList);
+		this, [this](QList<QStandardItem*> itemList) {
+			for (QStandardItem* item : itemList) {
+				hzq_ptr->appendRow(item);
+			}
+			// TODO 为什么下面这样不行？
+			//hzq_ptr->appendRow(itemList);
 		});
 
 	connect(&m_fileItemWatcher,
 		&DesktopFileItemWatcher::fileItemRefreshed,
-		this, [this](QFileInfoList infoList) {
-			m_fileItemList = std::move(infoList);
+		this, [this](QList<QStandardItem*> itemList) {
+			for (QStandardItem* item : itemList) {
+				hzq_ptr->appendRow(item);
+			}
+			//hzq_ptr->appendRow(itemList);
 		});
 
 	m_systemItemWatcher.init();
@@ -573,36 +620,7 @@ void HzDesktopItemModelPrivate::init()
 	m_systemItemWatcher.start();
 	m_fileItemWatcher.start();
 
-	const QModelIndex topLeft = hzq_ptr->createIndex(0, 0);
-	const QModelIndex bottomRight = hzq_ptr->createIndex(hzq_ptr->rowCount(), NumColumns - 1);
-	emit hzq_ptr->dataChanged(topLeft, bottomRight);
-}
-
-const SystemAppInfoList& HzDesktopItemModelPrivate::getSystemAppInfoList() const
-{
-	return m_systemAppList;
-}
-
-const QFileInfoList& HzDesktopItemModelPrivate::getFileItemInfoList() const
-{
-	return m_fileItemList;
-}
-
-const QModelIndex HzDesktopItemModelPrivate::translateRealIndex(const QModelIndex& index) const
-{
-	// 根据row，决定是来自哪个部分
-	const int& row = index.row();
-	const int& column = index.column();
-
-	if (column < HzDesktopItemModelPrivate::NumColumns) {
-		if (row < m_systemAppList.size()) {
-			return hzq_ptr->createIndex(row, column, SystemAppItem);
-		}
-		else if (row < m_systemAppList.size() + m_fileItemList.size()) {
-			int offsetRow = row - m_systemAppList.size();
-			return hzq_ptr->createIndex(offsetRow, column, NormalFileItem);;
-		}
-	}
-
-	return QModelIndex();
+	//const QModelIndex topLeft = hzq_ptr->createIndex(0, 0);
+	//const QModelIndex bottomRight = hzq_ptr->createIndex(hzq_ptr->rowCount(), NumColumns - 1);
+	//emit hzq_ptr->dataChanged(topLeft, bottomRight);
 }

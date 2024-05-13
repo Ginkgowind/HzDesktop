@@ -46,6 +46,9 @@ public:
 	explicit HzDesktopBlankMenu(QObject* parent);
 	~HzDesktopBlankMenu();
 
+signals:
+	void refreshDesktopItemsSignal();
+
 private:
 	void setViewMode();
 
