@@ -16,10 +16,12 @@
 #include "windows/UiOperation.h"
 #include "windows/tools.h"
 
-#define CUSTOM_ITEM_SIZE		108
 #define MAX_ICON_SIZE			108
 #define MEDIUM_ICON_SIZE		90
 #define MIN_ICON_SIZE			72
+#define ICON_MARGIN				5		// icon与周围边界的距离，固定不变
+
+#define TEXTEDIT_HEIGHT			20		// 
 #define ITEM_MIN_X_SPACE        10         // item之间的X方向的最小间隙
 #define ITEM_MIN_Y_SPACE        20        // item之间的Y方向的最小间隙
 
@@ -40,15 +42,16 @@ HzDesktopIconView::HzDesktopIconView(QWidget *parent)
 	setModel(m_itemModel);
 
 	m_itemDelegate = new HzItemDelegate(this);
-	m_itemDelegate->setItemSize(
-		QSize(CUSTOM_ITEM_SIZE, CUSTOM_ITEM_SIZE));
+	m_itemDelegate->setUiParam(
+		QSize(MEDIUM_ICON_SIZE, MEDIUM_ICON_SIZE), 
+		ICON_MARGIN, TEXTEDIT_HEIGHT);
 	setItemDelegate(m_itemDelegate);
 
 	// 图标模式
 	setViewMode(QListView::IconMode);
-	//setIconSize(QSize(MAX_ICON_SIZE, MAX_ICON_SIZE));
 
-	setGridSize(QSize(CUSTOM_ITEM_SIZE + ITEM_MIN_X_SPACE, CUSTOM_ITEM_SIZE + ITEM_MIN_Y_SPACE));
+	// TODO 通过计算得出gridsize
+	setGridSize(QSize(120, 140));
 	setUniformItemSizes(true);
 	setMovement(QListView::Snap); // 设置图标移动模式为对齐到网格
 	setDropIndicatorShown(true); // 显示拖放位置指示器

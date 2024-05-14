@@ -84,6 +84,9 @@
     <ClCompile Include="view\showItem\HzItemDelegate.cpp">
       <Filter>view\model</Filter>
     </ClCompile>
+    <ClCompile Include="view\showItem\HzItemTextEditor.cpp">
+      <Filter>view\model</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HzDesktopMgr.h" />
@@ -132,6 +135,9 @@
       <Filter>view\model</Filter>
     </QtMoc>
     <QtMoc Include="view\showItem\HzItemDelegate.h">
+      <Filter>view\model</Filter>
+    </QtMoc>
+    <QtMoc Include="view\showItem\HzItemTextEditor.h">
       <Filter>view\model</Filter>
     </QtMoc>
   </ItemGroup>

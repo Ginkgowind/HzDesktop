@@ -174,4 +174,51 @@ namespace HZ
 
 		return mimeData;
 	}
+
+	void correctPixmapIfIsInvalid(QIcon& icon)
+	{
+#define MAX_PIXMAP_SIZE (256)
+#define MIN_PIXMAP_COUNT (2)
+#define ICON_SIZE (90)
+
+
+		QPixmap pixmap = icon.pixmap(ICON_SIZE);
+		QSize currentPixmapSize = pixmap.size();
+
+		if (currentPixmapSize.width() != MAX_PIXMAP_SIZE) {
+			// 当前图片大小不是256的，不需要进行检测
+			return;
+		}
+
+		const QList<QSize>& avaliableSizeList = icon.availableSizes();
+		int avaliableSizeCount = avaliableSizeList.size();
+
+		if (avaliableSizeCount < MIN_PIXMAP_COUNT) {
+			// 可用大小小于2，非正常图标，直接使用原始大小
+			return;
+		}
+
+		QSize secondBigPixmapSize = avaliableSizeList[avaliableSizeCount - MIN_PIXMAP_COUNT];
+		if (currentPixmapSize.width() <= secondBigPixmapSize.width()) {
+			// 当前大小比第二大的图片还要小，说明包含了比256更大尺寸的图片，不是Qt合成的，不需要处理
+			return;
+		}
+
+		// 获取当前图片裁剪第二大尺寸后的右下角区域图片
+		QPixmap tempPixmap = pixmap.copy(
+			secondBigPixmapSize.width(), secondBigPixmapSize.height(),
+			currentPixmapSize.width() - secondBigPixmapSize.width(),
+			currentPixmapSize.height() - secondBigPixmapSize.width());
+
+		if (tempPixmap.toImage().allGray()) {
+			// 裁剪后的图片不包含有效像素，判定为无效图片，使用第二大尺寸的图片
+			icon = icon.pixmap(secondBigPixmapSize);
+		}
+
+		//return pixmap.scaled(
+		//	{ ICON_SIZE, ICON_SIZE },
+		//	Qt::KeepAspectRatio,
+		//	Qt::SmoothTransformation
+		//);;
+	}
 }

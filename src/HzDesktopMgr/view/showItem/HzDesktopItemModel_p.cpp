@@ -7,6 +7,7 @@
 #include "HzDesktopItemModel_p.h"
 #include "windows/tools.h"
 #include "common/CommonTools.h"
+#include "windows/UiOperation.h"
 
 // 控制系统图标的显示与隐藏，仿照腾讯桌面整理，此处从简，只监听显示与隐藏
 #define SYSTEM_ICON_REG_SUBPATH \
@@ -79,7 +80,9 @@ bool DesktopSystemItemWatcher::initWatcher()
 QStandardItem* DesktopSystemItemWatcher::genQStandardItem(const QString& clsidValue)
 {
 	QStandardItem* newItem = new QStandardItem();
-	newItem->setIcon(getSystemAppIcon(clsidValue));
+	QIcon itemIcon = getSystemAppIcon(clsidValue);
+	HZ::correctPixmapIfIsInvalid(itemIcon);
+	newItem->setIcon(itemIcon);
 	newItem->setText(getSystemAppDisplayName("::" + clsidValue));
 	newItem->setData("::" + clsidValue, HzDesktopItemModel::FilePathRole);
 
@@ -175,6 +178,7 @@ bool DesktopSystemItemWatcher::setSystemAppDisplayName(const QString& clsidPath,
 	return bRet;
 }
 
+// TODO 这里获得的icon尺寸偏小，导致显示出来的图片比较糊
 QIcon DesktopSystemItemWatcher::getSystemAppIcon(const QString& clsidValue)
 {
 	QIcon retIcon;
@@ -473,8 +477,12 @@ void DesktopFileItemWatcher::uninitWatcher()
 QStandardItem* DesktopFileItemWatcher::genQStandardItem(const QFileInfo& fileInfo)
 {
 	QStandardItem* newItem = new QStandardItem();
+
+	QString path = fileInfo.absoluteFilePath();
 	
-	newItem->setIcon(getUltimateIcon(fileInfo));
+	QIcon itemIcon = getUltimateIcon(fileInfo);
+	HZ::correctPixmapIfIsInvalid(itemIcon);
+	newItem->setIcon(itemIcon);
 	newItem->setText(fileInfo.fileName());
 	newItem->setData(fileInfo.absoluteFilePath(), HzDesktopItemModel::FilePathRole);
 
@@ -624,3 +632,4 @@ void HzDesktopItemModelPrivate::init()
 	//const QModelIndex bottomRight = hzq_ptr->createIndex(hzq_ptr->rowCount(), NumColumns - 1);
 	//emit hzq_ptr->dataChanged(topLeft, bottomRight);
 }
+
