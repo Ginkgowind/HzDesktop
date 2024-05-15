@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QStyledItemDelegate>
+#include <QPixmapCache>
 
 QT_BEGIN_NAMESPACE
 class QStandardItem;
@@ -16,8 +17,7 @@ public:
 
 	void setUiParam(
 		const QSize& iconSize,
-		const int iconMargin,
-		const int oneLineHeight
+		const int iconMargin
 	);
 
 protected:
@@ -32,10 +32,10 @@ protected:
 		const QModelIndex& index
 	) const override;
 
-	QWidget* createEditor(QWidget* parent,
-		const QStyleOptionViewItem& option,
-		const QModelIndex& index
-	) const override;
+	//QWidget* createEditor(QWidget* parent,
+	//	const QStyleOptionViewItem& option,
+	//	const QModelIndex& index
+	//) const override;
 
 private:
 	QStandardItem* getItemFromParam(
@@ -48,25 +48,30 @@ private:
 		const QStyleOptionViewItem& option
 	) const;
 
-	void paintIcon(
-		QPainter* painter,
-		const QStyleOptionViewItem& option,
-		QStandardItem* item
-	) const;
-
 	void paintText(
 		QPainter* painter,
 		const QStyleOptionViewItem& option,
 		QStandardItem* item
 	) const;
 
-	void setBackgroundPainter(
-		QPainter* painter,
-		const QStyleOptionViewItem& option
+	// 不用paint传来的painter，会有很多问题
+	QPixmap paintIconText(
+		const QStyleOptionViewItem& option,
+		QStandardItem* item
+	) const;
+
+	inline int calculateTextLine(
+		const QRect& rect,
+		const QString& text
 	) const;
 
 private:
+	QPixmapCache m_showPixmapCache;
+
+	QPainter* m_painter;
+
+	QFontMetrics* m_metrics;
+
 	QSize m_iconSize;
 	int m_iconMargin;
-	int m_oneLineHeight;
 };

@@ -21,7 +21,6 @@
 #define MIN_ICON_SIZE			72
 #define ICON_MARGIN				5		// icon与周围边界的距离，固定不变
 
-#define TEXTEDIT_HEIGHT			20		// 
 #define ITEM_MIN_X_SPACE        10         // item之间的X方向的最小间隙
 #define ITEM_MIN_Y_SPACE        20        // item之间的Y方向的最小间隙
 
@@ -43,8 +42,8 @@ HzDesktopIconView::HzDesktopIconView(QWidget *parent)
 
 	m_itemDelegate = new HzItemDelegate(this);
 	m_itemDelegate->setUiParam(
-		QSize(MEDIUM_ICON_SIZE, MEDIUM_ICON_SIZE), 
-		ICON_MARGIN, TEXTEDIT_HEIGHT);
+		QSize(MEDIUM_ICON_SIZE, MEDIUM_ICON_SIZE),
+		ICON_MARGIN);
 	setItemDelegate(m_itemDelegate);
 
 	// 图标模式
@@ -52,7 +51,9 @@ HzDesktopIconView::HzDesktopIconView(QWidget *parent)
 
 	// TODO 通过计算得出gridsize
 	setGridSize(QSize(120, 140));
-	setUniformItemSizes(true);
+	//setUniformItemSizes(true);  设置这个之后所有图标的可选范围是相同的，故不设置
+	// TODO 设置这个无效
+	setItemAlignment(Qt::AlignTop);
 	setMovement(QListView::Snap); // 设置图标移动模式为对齐到网格
 	setDropIndicatorShown(true); // 显示拖放位置指示器
 
