@@ -2,6 +2,10 @@
 
 #include <QStyledItemDelegate>
 
+QT_BEGIN_NAMESPACE
+class QStandardItem;
+QT_END_NAMESPACE
+
 class HzItemDelegate  : public QStyledItemDelegate
 {
 	Q_OBJECT
@@ -30,17 +34,31 @@ protected:
 
 	QWidget* createEditor(QWidget* parent,
 		const QStyleOptionViewItem& option,
-		const QModelIndex& index) const override;
+		const QModelIndex& index
+	) const override;
 
 private:
+	QStandardItem* getItemFromParam(
+		const QStyleOptionViewItem& option,
+		const QModelIndex& index
+	) const;
+
 	void paintBackground(
 		QPainter* painter,
 		const QStyleOptionViewItem& option
 	) const;
 
-	void paintIcon();
+	void paintIcon(
+		QPainter* painter,
+		const QStyleOptionViewItem& option,
+		QStandardItem* item
+	) const;
 
-	void painText();
+	void paintText(
+		QPainter* painter,
+		const QStyleOptionViewItem& option,
+		QStandardItem* item
+	) const;
 
 	void setBackgroundPainter(
 		QPainter* painter,

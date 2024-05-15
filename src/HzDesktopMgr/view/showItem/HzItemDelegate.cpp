@@ -1,4 +1,6 @@
 #include <QPainter>
+#include <QAbstractItemView>
+#include <QStandardItemModel>
 
 #include "HzItemDelegate.h"
 #include "windows/UiOperation.h"
@@ -39,31 +41,47 @@ void HzItemDelegate::paint(
 	const QModelIndex& index
 ) const
 {
+	QStandardItem* item = getItemFromParam(option, index);
+	if (!item) {
+		return;
+	}
+
 	//option.rect 就是 sizeHint 的值
 
 	paintBackground(painter, option);
 
+	paintIcon(painter, option, item);
 
-	//const QIcon& icon = item->icon();
-	//int showX = option.rect.left() + m_iconShowRC.left();
-	//int showY = option.rect.top() + m_iconShowRC.top();
-
-	//QPixmap pixmap = icon.pixmap(m_iconShowRC.size());
-
-	//// 部分文件的图标最大只包含了48x48的，但是Qt读取时会自动合成一个256x256的图片，并且将48x48绘制在256大小图片的左上角
-	//// 此时缩放后导致显示在左上角一个很小的图片，这里规避处理进行矫正
-	//UemQHelper::correctPixmapIfIsInvalid(pixmap, icon);
-
-	//QPixmap scaledPixmap = pixmap.scaled(
-	//	m_iconShowRC.size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
-
-	//painter->drawPixmap(showX, showY, m_iconShowRC.width(), m_iconShowRC.height(), scaledPixmap);
-
+	paintText(painter, option, item);
 }
 
 QWidget* HzItemDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
 	return nullptr;
+}
+
+QStandardItem* HzItemDelegate::getItemFromParam(const QStyleOptionViewItem& option, const QModelIndex& index) const
+{
+	QStandardItem* item = nullptr;
+
+	do 
+	{
+		QAbstractItemView* itemView = 
+			qobject_cast<QAbstractItemView*>(option.styleObject);
+		if (!itemView) {
+			break;
+		}
+		
+		QStandardItemModel* itemModel = 
+			qobject_cast<QStandardItemModel*>(itemView->model());
+		if (!itemModel) {
+			break;
+		}
+
+		item = itemModel->itemFromIndex(index);
+	} while (false);
+
+	return item;
 }
 
 void HzItemDelegate::paintBackground(
@@ -76,12 +94,26 @@ void HzItemDelegate::paintBackground(
 	painter->drawRect(option.rect);
 }
 
-void HzItemDelegate::paintIcon()
+void HzItemDelegate::paintIcon(
+	QPainter* painter,
+	const QStyleOptionViewItem& option,
+	QStandardItem* item
+) const
 {
+	const QIcon& itemIcon = item->icon();
+	QPoint showPos = option.rect.topLeft() + QPoint(m_iconMargin, m_iconMargin);
 
+	//QPixmap scaledPixmap = pixmap.scaled(
+	//	m_iconShowRC.size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+	painter->drawPixmap({ showPos , m_iconSize }, itemIcon.pixmap(m_iconSize));
 }
 
-void HzItemDelegate::painText()
+void HzItemDelegate::paintText(
+	QPainter* painter,
+	const QStyleOptionViewItem& option,
+	QStandardItem* item
+) const
 {
 }
 
