@@ -46,19 +46,17 @@ HzDesktopIconView::HzDesktopIconView(QWidget *parent)
 		ICON_MARGIN);
 	setItemDelegate(m_itemDelegate);
 
-	// 图标模式
+	// 图标模式，自己指定delegate的话，什么模式倒不重要了
 	setViewMode(QListView::IconMode);
 
 	// TODO 通过计算得出gridsize
-	setGridSize(QSize(120, 140));
+	//setGridSize(QSize(120, 140));
 	//setUniformItemSizes(true);  设置这个之后所有图标的可选范围是相同的，故不设置
-	// TODO 设置这个无效
-	setItemAlignment(Qt::AlignTop);
-	setMovement(QListView::Snap); // 设置图标移动模式为对齐到网格
+	setMovement(QListView::Free);
 	setDropIndicatorShown(true); // 显示拖放位置指示器
 
 	//setWordWrap(true);
-	setWrapping(true);
+	//setWrapping(true);
 
 	//setStyleSheet("QListView {background-color: transparent;}");
 	setDragEnabled(true);
@@ -68,6 +66,10 @@ HzDesktopIconView::HzDesktopIconView(QWidget *parent)
 
 	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::refreshDesktopItemsSignal,
 		m_itemModel, &HzDesktopItemModel::refreshItems);
+
+	// TODO 这里设置了，但是在paint的时候又无效了，为什么？
+	// 推测是doItemsLayout导致的？
+	initItemsPos();
 }
 
 HzDesktopIconView::~HzDesktopIconView()
@@ -106,6 +108,8 @@ HzDesktopIconView::~HzDesktopIconView()
 
 void HzDesktopIconView::contextMenuEvent(QContextMenuEvent* event)
 {
+	//initItemsPos();
+
 	QStringList selectedPathList = getSelectedPaths();
 
 	if (selectedPathList.empty()) {
@@ -119,6 +123,21 @@ void HzDesktopIconView::contextMenuEvent(QContextMenuEvent* event)
 	event->accept();
 }
 
+void HzDesktopIconView::paintEvent(QPaintEvent* e)
+{
+	// TODO 要等待执行完成，并且仅初始化一次。
+	// 但是事件循环还是不堵塞为好，还是看看是哪里给清空了吧
+	//initItemsPos();
+
+	QListView::paintEvent(e);
+}
+
+void HzDesktopIconView::doItemsLayout()
+{
+	// TODO 此函数为空时，就不会调用到delegate的paint，为什么？
+	//QListView::doItemsLayout();
+}
+
 QStringList HzDesktopIconView::getSelectedPaths()
 {
 	QStringList pathList;
@@ -130,4 +149,14 @@ QStringList HzDesktopIconView::getSelectedPaths()
 	}
 		
 	return pathList;
+}
+
+void HzDesktopIconView::initItemsPos()
+{
+	int rowCount = model()->rowCount();
+	for (int i = 0; i < rowCount; ++i) {
+		QModelIndex index = model()->index(i, 0); // 获取指定行列的索引
+		QPoint posIndex = index.data(HzDesktopItemModel::PosIndex2DRole).toPoint();
+		setPositionForIndex({ posIndex.x() * 120, posIndex.y() * 140 }, index);
+	}
 }

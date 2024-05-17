@@ -85,7 +85,7 @@ QStandardItem* DesktopSystemItemWatcher::genQStandardItem(const QString& clsidVa
 	newItem->setIcon(itemIcon);
 	newItem->setText(getSystemAppDisplayName("::" + clsidValue));
 	newItem->setData("::" + clsidValue, HzDesktopItemModel::FilePathRole);
-
+	
 	return newItem;
 }
 
@@ -606,6 +606,10 @@ void HzDesktopItemModelPrivate::init()
 		&DesktopSystemItemWatcher::systemAppRefreshed,
 		this, [this](QList<QStandardItem*> itemList) {
 			for (QStandardItem* item : itemList) {
+				// TODO 这里先按顺序来，后面改为读配置
+				int index = hzq_ptr->rowCount();
+				QPoint pos(index / 5, index % 5);
+				item->setData(pos, HzDesktopItemModel::PosIndex2DRole);
 				hzq_ptr->appendRow(item);
 			}
 			// TODO 为什么下面这样不行？
@@ -616,9 +620,11 @@ void HzDesktopItemModelPrivate::init()
 		&DesktopFileItemWatcher::fileItemRefreshed,
 		this, [this](QList<QStandardItem*> itemList) {
 			for (QStandardItem* item : itemList) {
+				int index = hzq_ptr->rowCount();
+				QPoint pos(index / 5, index % 5);
+				item->setData(pos, HzDesktopItemModel::PosIndex2DRole);
 				hzq_ptr->appendRow(item);
 			}
-			//hzq_ptr->appendRow(itemList);
 		});
 
 	m_systemItemWatcher.init();

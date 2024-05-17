@@ -41,10 +41,16 @@ protected:
 
 	void contextMenuEvent(QContextMenuEvent* event) override;
 
+	void paintEvent(QPaintEvent* e) override;
+
+	void doItemsLayout() override;
+
 private:
 	QStringList getSelectedPaths();
 
 private:
+	void initItemsPos();
+
 	QSortFilterProxyModel* m_itemProxyModel;
 	HzDesktopItemModel* m_itemModel;
 	HzItemDelegate* m_itemDelegate;

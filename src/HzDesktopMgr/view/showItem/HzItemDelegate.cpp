@@ -220,12 +220,3 @@ QPixmap HzItemDelegate::paintIconText(
 
 	return retPixmap;
 }
-
-int HzItemDelegate::calculateTextLine(
-	const QRect& rect,
-	const QString& text
-) const
-{
-	return m_metrics->boundingRect(rect, s_textFlags, text).height()
-		/ m_metrics->lineSpacing();
-}

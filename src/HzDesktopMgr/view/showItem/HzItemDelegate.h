@@ -60,11 +60,6 @@ private:
 		QStandardItem* item
 	) const;
 
-	inline int calculateTextLine(
-		const QRect& rect,
-		const QString& text
-	) const;
-
 private:
 	QPixmapCache m_showPixmapCache;
 
