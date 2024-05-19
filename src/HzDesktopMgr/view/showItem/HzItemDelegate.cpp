@@ -72,7 +72,6 @@ void HzItemDelegate::paint(
 	}
 	
 	painter->save();
-
 	//option.rect 就是 sizeHint 的值
 	paintBackground(painter, option);
 
