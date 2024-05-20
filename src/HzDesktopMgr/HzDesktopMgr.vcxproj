@@ -117,6 +117,7 @@
     <ClCompile Include="view\DesktopBackgroundView.cpp" />
     <ClCompile Include="view\DesktopViewMgr.cpp" />
     <ClCompile Include="view\HzDesktopIconView.cpp" />
+    <ClCompile Include="view\HzDesktopIconView_p.cpp" />
     <ClCompile Include="view\HzSystemTray.cpp" />
     <ClCompile Include="view\menu\HzItemMenu.cpp" />
     <ClCompile Include="view\showItem\HzDesktopItemModel.cpp" />
@@ -125,6 +126,7 @@
     <ClCompile Include="view\showItem\HzItemDelegate.cpp" />
     <ClCompile Include="view\showItem\HzItemTextEditor.cpp" />
     <ClInclude Include="..\..\include\common\CommonTools.h" />
+    <ClInclude Include="..\..\include\common\QtpqReimp.h" />
     <ClInclude Include="..\..\include\common\StringConv.h" />
     <ClInclude Include="..\..\include\windows\EnsureCleanup.h" />
     <ClInclude Include="..\..\include\windows\FileInfoGather.h" />
@@ -137,6 +139,7 @@
     <QtMoc Include="view\menu\HzItemMenu.h" />
     <QtMoc Include="view\showItem\HzDesktopItemModel.h" />
     <QtMoc Include="view\showItem\HzDesktopItemModel_p.h" />
+    <QtMoc Include="view\HzDesktopIconView_p.h" />
     <ClInclude Include="view\showItem\HzFileItem.h" />
     <QtMoc Include="view\HzDesktopIconView.h" />
     <QtMoc Include="view\DesktopBackgroundView.h" />

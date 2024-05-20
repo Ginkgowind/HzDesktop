@@ -7,6 +7,13 @@
 #include <QMenu>
 #include <QDebug>
 #include <QPainter>
+#include <QApplication>
+#include <QClipboard>
+#include <QShortcut>
+#include <QDesktopServices>
+#include <windows.h>
+#include <shellapi.h>
+#include <shlwapi.h>
 
 #include <QFileSystemModel>
 
@@ -31,6 +38,7 @@ HzDesktopIconView::HzDesktopIconView(QWidget *parent)
 	: QAbstractItemView(parent)
 	//: QListView(parent)
 	, m_menuShowStyle(Win10Style)
+	, m_ctrlDragSelectionFlag(QItemSelectionModel::NoUpdate)
 {
 	setFixedSize(1200, 800);
 
@@ -55,10 +63,8 @@ HzDesktopIconView::HzDesktopIconView(QWidget *parent)
 	//setDropIndicatorShown(true); // 显示拖放位置指示器
 
 	//setStyleSheet("QListView {background-color: transparent;}");
-	//setDragEnabled(true);
-	//setAcceptDrops(true);
-	setDragEnabled(false);
-	setAcceptDrops(false);
+	setDragEnabled(true);
+	setAcceptDrops(true);
 	setSelectionMode(QAbstractItemView::ExtendedSelection);
 
 	viewport()->setAttribute(Qt::WA_Hover, true);
@@ -68,12 +74,64 @@ HzDesktopIconView::HzDesktopIconView(QWidget *parent)
 	//connect(m_desktopBlankMenu, &HzDesktopBlankMenu::refreshDesktopItemsSignal,
 	//	m_itemModel, &HzDesktopItemModel::refreshItems);
 
+	initSignalAndSlot();
+
 	updateGridSize();
 }
 
 HzDesktopIconView::~HzDesktopIconView()
 {
 
+}
+
+void HzDesktopIconView::initSignalAndSlot()
+{
+	connect(this, &QAbstractItemView::doubleClicked,
+		this, &HzDesktopIconView::onOpenFile);
+
+	// 粘贴，默认为Ctrl + C
+	new QShortcut(QKeySequence(QKeySequence::Copy), this, 
+		SLOT(onCopy()), nullptr, Qt::WidgetWithChildrenShortcut);
+
+	// 拷贝， 默认为Ctrl + V
+	new QShortcut(QKeySequence(QKeySequence::Paste), this, 
+		SLOT(onPaste()), nullptr, Qt::WidgetWithChildrenShortcut);
+
+	// 剪切， 默认为Ctrl + X
+	new QShortcut(QKeySequence(QKeySequence::Cut), this, 
+		SLOT(onCut()), nullptr, Qt::WidgetWithChildrenShortcut);
+
+	// 全选， 默认为Ctrl + A
+	/*QShortcut* pSelectAllShorcut = new QShortcut(QKeySequence(QKeySequence::SelectAll),
+		this, SLOT(handleSelectAll()), nullptr, Qt::WidgetWithChildrenShortcut);*/
+
+	// 删除， 默认为Delete
+	new QShortcut(QKeySequence(QKeySequence::Delete), this, 
+		SLOT(onDelete()), nullptr, Qt::WidgetWithChildrenShortcut);
+	new QShortcut(QKeySequence("Ctrl+D"), this,
+		SLOT(onDelete()), nullptr, Qt::WidgetWithChildrenShortcut);
+
+	// 刷新，默认为F5
+	//QShortcut* pRefreshShorcut = new QShortcut(QKeySequence(QKeySequence::Refresh),
+	//	this, SLOT(handleRefreshFile()), nullptr, Qt::WidgetWithChildrenShortcut);
+
+	// 重命名，F2
+	//QShortcut* pRenameShorcut = new QShortcut(QKeySequence(Qt::Key_F2),
+	//	this, SLOT(_handleRenameFileAct()), nullptr, Qt::WidgetWithChildrenShortcut);
+
+	// 打开选中文件， Enter
+	new QShortcut(QKeySequence(Qt::Key_Return), this, 
+		SLOT(onOpenFile()), nullptr, Qt::WidgetWithChildrenShortcut);
+	new QShortcut(QKeySequence(Qt::Key_Enter), this, 
+		SLOT(onOpenFile()), nullptr, Qt::WidgetWithChildrenShortcut);
+}
+
+void HzDesktopIconView::updateGridSize()
+{
+	m_gridSize = QSize(MEDIUM_ICON_SIZE, MEDIUM_ICON_SIZE)
+		+ QSize(ICON_MARGIN, ICON_MARGIN)
+		+ QSize(0, TEXT_MAX_HEIGHT)
+		+ QSize(ITEM_X_SPACE, ITEM_Y_SPACE);
 }
 
 QRect HzDesktopIconView::visualRect(const QModelIndex& index) const
@@ -126,7 +184,6 @@ void HzDesktopIconView::setSelection(const QRect& rect, QItemSelectionModel::Sel
 			selection = getSelection(rect);
 		}
 		else {
-			int a = 1;
 		}
 		// TODO 处理 logical selection mode (key and mouse click selection)
 	}
@@ -176,9 +233,6 @@ bool HzDesktopIconView::viewportEvent(QEvent* event)
 	case QEvent::HoverMove:
 	case QEvent::HoverEnter:
 		m_hoverIndex = indexAt(static_cast<QHoverEvent*>(event)->pos());
-		if (rootIndex().isValid()) {
-			int a = 1;
-		}
 		break;
 	case QEvent::HoverLeave:
 		m_hoverIndex = QModelIndex();
@@ -196,14 +250,38 @@ void HzDesktopIconView::mousePressEvent(QMouseEvent* e)
 	QAbstractItemView::mousePressEvent(e);
 
 	m_pressedPos = e->pos();
+	QPersistentModelIndex index = indexAt(m_pressedPos);
+	QItemSelectionModel::SelectionFlags command = selectionCommand(index, e);
+
+	if (index.isValid()) {
+		if (command.testFlag(QItemSelectionModel::Toggle)) {
+			command &= ~QItemSelectionModel::Toggle;
+			m_ctrlDragSelectionFlag = selectionModel()->isSelected(index) ? QItemSelectionModel::Deselect : QItemSelectionModel::Select;
+			command |= m_ctrlDragSelectionFlag;
+		}
+	}
 }
 
 void HzDesktopIconView::mouseMoveEvent(QMouseEvent* e)
 {
-	//QListView::mouseMoveEvent(e);
 	QAbstractItemView::mouseMoveEvent(e);
 
-	if (state() == DragSelectingState) {
+	if ((e->buttons() & Qt::LeftButton) && state() != DraggingState) {
+		// 参考 QAbstractItemView
+		setState(DragSelectingState);
+
+		QPersistentModelIndex index = indexAt(e->pos());
+		QItemSelectionModel::SelectionFlags command = selectionCommand(index, e);
+		if (m_ctrlDragSelectionFlag != QItemSelectionModel::NoUpdate && command.testFlag(QItemSelectionModel::Toggle)) {
+			command &= ~QItemSelectionModel::Toggle;
+			command |= m_ctrlDragSelectionFlag;
+		}
+
+		// Do the normalize ourselves, since QRect::normalized() is flawed
+		QRect selectionRect = QRect(m_pressedPos, e->pos());
+		setSelection(selectionRect, command);
+
+		// 参考QListView
 		QRect rect(m_pressedPos, e->pos());
 		rect = rect.normalized();
 		viewport()->update(rect.united(m_elasticBand));
@@ -214,6 +292,10 @@ void HzDesktopIconView::mouseMoveEvent(QMouseEvent* e)
 void HzDesktopIconView::mouseReleaseEvent(QMouseEvent* e)
 {
 	QAbstractItemView::mouseReleaseEvent(e);
+
+	if (state() != EditingState) {
+		setState(NoState);
+	}
 
 	if (m_elasticBand.isValid()) {
 		viewport()->update(m_elasticBand);
@@ -336,6 +418,99 @@ QStringList HzDesktopIconView::getSelectedPaths()
 	return pathList;
 }
 
+void HzDesktopIconView::onOpenFile(const QModelIndex& index)
+{
+	QModelIndexList indexList = selectedIndexes();
+	for (const QModelIndex& aindex : indexList) {
+		QDesktopServices::openUrl(QUrl::fromLocalFile(m_itemModel->filePath(aindex)));
+	}
+}
+
+void HzDesktopIconView::onCopy()
+{
+	QMimeData* mimeData = new QMimeData;
+	QList<QUrl> urls;
+	QModelIndexList indexList = selectedIndexes();
+
+	for (const QModelIndex& index : indexList) {
+		urls.append(QUrl::fromLocalFile(m_itemModel->filePath(index)));
+	}
+
+	mimeData->setUrls(urls);
+	int dropEffect = 5; // 2 for cut and 5 for copy
+	QByteArray data;
+	QDataStream stream(&data, QIODevice::WriteOnly);
+	stream.setByteOrder(QDataStream::LittleEndian);
+	stream << dropEffect;
+	mimeData->setData("Preferred DropEffect", data);
+	QApplication::clipboard()->setMimeData(mimeData);
+}
+
+void HzDesktopIconView::onCut()
+{
+	QMimeData* mimeData = new QMimeData;
+	QList<QUrl> urls;
+	QModelIndexList indexList = selectedIndexes();
+
+	for (const QModelIndex& index : indexList) {
+		urls.append(QUrl::fromLocalFile(m_itemModel->filePath(index)));
+	}
+
+	mimeData->setUrls(urls);
+	int dropEffect = 2; // 2 for cut and 5 for copy
+	QByteArray data;
+	QDataStream stream(&data, QIODevice::WriteOnly);
+	stream.setByteOrder(QDataStream::LittleEndian);
+	stream << dropEffect;
+	mimeData->setData("Preferred DropEffect", data);
+	QApplication::clipboard()->setMimeData(mimeData);
+}
+
+void HzDesktopIconView::onPaste()
+{
+	QString desktopPath = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
+
+	const QMimeData* mimeData = QApplication::clipboard()->mimeData();
+	if (!mimeData->hasUrls() ||
+		!mimeData->hasFormat("Preferred DropEffect")) {
+		return;
+	}
+
+	int dropEffect = 0;
+	QByteArray data = mimeData->data("Preferred DropEffect");
+	QDataStream stream(&data, QIODevice::ReadOnly);
+	stream.setByteOrder(QDataStream::LittleEndian);
+	stream >> dropEffect;
+	QList<QUrl> urls = mimeData->urls();
+	if (dropEffect != 2 && dropEffect != 5) return;
+	QStringList srcs;
+	for (QUrl url : urls) {
+		if (!url.isLocalFile()) continue;
+		srcs << url.toLocalFile();
+	}
+	if (dropEffect == 2) QApplication::clipboard()->clear();
+
+	for (QString src : srcs) {
+		QFileInfo srcFileInfo(src);
+		QFileInfo dstFileInfo(QDir(desktopPath), srcFileInfo.fileName());
+		if (srcFileInfo.isFile()) {
+			CopySingleFile(src, dstFileInfo.absoluteFilePath(), move);
+		}
+		else {
+			CopyDir(src, dstFileInfo.absoluteFilePath(), move);
+		}
+	}
+	if (inNetwork()) onRefresh();    //由于性能的原因，网络文件的增删不会被Model感知，需要手动刷新
+}
+
+void HzDesktopIconView::onDelete()
+{
+}
+
+void HzDesktopIconView::onRename()
+{
+}
+
 void HzDesktopIconView::initItemsPos()
 {
 	int rowCount = model()->rowCount();
@@ -344,14 +519,6 @@ void HzDesktopIconView::initItemsPos()
 		QPoint posIndex = index.data(HzDesktopItemModel::PosIndex2DRole).toPoint();
 		//setPositionForIndex({ posIndex.x() * 120, posIndex.y() * 140 }, index);
 	}
-}
-
-void HzDesktopIconView::updateGridSize()
-{
-	m_gridSize = QSize(MEDIUM_ICON_SIZE, MEDIUM_ICON_SIZE)
-		+ QSize(ICON_MARGIN, ICON_MARGIN)
-		+ QSize(0, TEXT_MAX_HEIGHT)
-		+ QSize(ITEM_X_SPACE, ITEM_Y_SPACE);
 }
 
 QVector<QModelIndex> HzDesktopIconView::intersectingSet(const QRect& area) const
@@ -375,9 +542,7 @@ QItemSelection HzDesktopIconView::getSelection(const QRect& rect) const
 	QModelIndex tl, br;
 	// TODO 这里为什么要normalized
 	const QVector<QModelIndex> intersectVector = intersectingSet(rect.normalized());
-	qDebug() << intersectVector.size();
 	QVector<QModelIndex>::const_iterator it = intersectVector.begin();
-	qDebug() << rect << visualRect(*it);
 	for (; it != intersectVector.end(); ++it) {
 		if (!tl.isValid() && !br.isValid()) {
 			tl = br = *it;

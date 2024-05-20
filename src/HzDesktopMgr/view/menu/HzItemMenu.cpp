@@ -1,4 +1,11 @@
 ﻿#include <QDebug>
+#include <QUrl>
+#include <QApplication>
+#include <QClipboard>
+#include <QDesktopServices>
+#include <windows.h>
+#include <shellapi.h>
+#include <shlwapi.h>
 
 #include "HzItemMenu.h"
 #include "windows/UiOperation.h"
@@ -46,6 +53,9 @@ void HzItemMenu::showMenu(
 
 void HzItemMenu::onOpen()
 {
+	for (const QString& path : m_selectedItemList) {
+		QDesktopServices::openUrl(QUrl::fromLocalFile(path));
+	}
 }
 
 void HzItemMenu::onOpenWith()
@@ -54,14 +64,54 @@ void HzItemMenu::onOpenWith()
 
 void HzItemMenu::onCopy()
 {
+	QMimeData* mimeData = new QMimeData;
+	QList<QUrl> urls;
+	for (QString path : m_selectedItemList) {
+		urls.append(QUrl::fromLocalFile(path));
+	}
+	mimeData->setUrls(urls);
+	int dropEffect = 5; // 2 for cut and 5 for copy
+	QByteArray data;
+	QDataStream stream(&data, QIODevice::WriteOnly);
+	stream.setByteOrder(QDataStream::LittleEndian);
+	stream << dropEffect;
+	mimeData->setData("Preferred DropEffect", data);
+	QApplication::clipboard()->setMimeData(mimeData);
 }
 
 void HzItemMenu::onCut()
 {
+	QMimeData* mimeData = new QMimeData;
+	QList<QUrl> urls;
+	for (QString path : m_selectedItemList) {
+		urls.append(QUrl::fromLocalFile(path));
+	}
+	mimeData->setUrls(urls);
+	int dropEffect = 2; // 2 for cut and 5 for copy
+	QByteArray data;
+	QDataStream stream(&data, QIODevice::WriteOnly);
+	stream.setByteOrder(QDataStream::LittleEndian);
+	stream << dropEffect;
+	mimeData->setData("Preferred DropEffect", data);
+	QApplication::clipboard()->setMimeData(mimeData);
 }
 
 void HzItemMenu::onDelete()
 {
+	for (QString path : m_selectedItemList) {
+		FILEOP_FLAGS dwOpFlags = FOF_ALLOWUNDO | FOF_NO_UI;
+
+		SHFILEOPSTRUCTA fileOp = { 0 };
+		fileOp.hwnd = NULL;
+		fileOp.wFunc = FO_DELETE; ///> 文件删除操作
+		fileOp.pFrom = StrDupA(path.toStdString().c_str());
+		fileOp.pTo = NULL;
+		fileOp.fFlags = dwOpFlags;
+		fileOp.hNameMappings = NULL;
+		fileOp.lpszProgressTitle = "hz delete file";
+
+		SHFileOperationA(&fileOp);
+	}
 }
 
 void HzItemMenu::onRename()

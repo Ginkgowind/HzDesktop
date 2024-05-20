@@ -13,6 +13,7 @@
 
 #include "HzDesktopItemModel.h"
 #include "windows/EnsureCleanup.h"
+#include "common/QtpqReimp.h"
 
 /**************************监控系统图标************************/
 
@@ -117,7 +118,7 @@ private:
 
 //QObjectPrivate未公开，故此处采用
 class HzDesktopItemModelPrivate 
-	: public HzDesktopItemDataMgr
+	: public HzDesktopPrivate
 {
 	Q_OBJECT
 

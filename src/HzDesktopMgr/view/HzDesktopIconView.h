@@ -32,6 +32,11 @@ public:
 	HzDesktopIconView(QWidget *parent);
 	~HzDesktopIconView();
 
+private:
+	void initSignalAndSlot();
+
+	void updateGridSize();
+
 protected:
 	virtual QRect visualRect(const QModelIndex& index) const;
 
@@ -70,13 +75,26 @@ protected:
 
 	//void doItemsLayout() override;
 
+
+
 private:
 	QStringList getSelectedPaths();
 
+private:	// 以下函数处理在界面上的操作
+	void onOpenFile(const QModelIndex& index = QModelIndex());
+
+	void onCopy();
+
+	void onCut();
+
+	void onPaste();
+
+	void onDelete();
+
+	void onRename();
+
 private:
 	void initItemsPos();
-
-	void updateGridSize();
 
 	QVector<QModelIndex> intersectingSet(const QRect& area) const;
 
@@ -97,4 +115,17 @@ private:
 	// QAbstractItemView的下列数据未暴露，故自己实现一个
 	QPoint m_pressedPos;
 	QPersistentModelIndex m_hoverIndex;
+	QItemSelectionModel::SelectionFlag m_ctrlDragSelectionFlag;
+
+private:
+	QScopedPointer<HzDesktopItemDataMgr> hzd_ptr;
+	Q_DISABLE_COPY(HzDesktopItemModel)
+
+		inline HzDesktopItemModelPrivate* hzd_func() {
+		return reinterpret_cast<HzDesktopItemModelPrivate*>(qGetPtrHelper(hzd_ptr));
+	}
+	inline const HzDesktopItemModelPrivate* hzd_func() const {
+		return reinterpret_cast<HzDesktopItemModelPrivate*>(qGetPtrHelper(hzd_ptr));
+	}
+	friend class HzDesktopItemModelPrivate;
 };

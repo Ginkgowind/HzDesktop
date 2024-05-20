@@ -3,10 +3,6 @@
 #include "HzDesktopItemModel.h"
 #include "HzDesktopItemModel_p.h"
 
-HzDesktopItemDataMgr::~HzDesktopItemDataMgr()
-{
-}
-
 HzDesktopItemModel::HzDesktopItemModel(QObject *parent)
 	: QStandardItemModel(parent)
 	, hzd_ptr(new HzDesktopItemModelPrivate())

@@ -87,6 +87,9 @@
     <ClCompile Include="view\showItem\HzItemTextEditor.cpp">
       <Filter>view\model</Filter>
     </ClCompile>
+    <ClCompile Include="view\HzDesktopIconView_p.cpp">
+      <Filter>view</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HzDesktopMgr.h" />
@@ -114,6 +117,9 @@
     <ClInclude Include="..\..\include\windows\tools.h">
       <Filter>include\windows</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\common\QtpqReimp.h">
+      <Filter>include\common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="view\DesktopBackgroundView.h">
@@ -139,6 +145,9 @@
     </QtMoc>
     <QtMoc Include="view\showItem\HzItemTextEditor.h">
       <Filter>view\model</Filter>
+    </QtMoc>
+    <QtMoc Include="view\HzDesktopIconView_p.h">
+      <Filter>view</Filter>
     </QtMoc>
   </ItemGroup>
 </Project>
