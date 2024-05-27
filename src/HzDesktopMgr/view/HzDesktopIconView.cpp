@@ -18,6 +18,7 @@
 #include <QFileSystemModel>
 
 #include "HzDesktopIconView.h"
+#include "HzDesktopIconView_p.h"
 #include "showItem/HzItemDelegate.h"
 #include "menu/HzItemMenu.h"
 #include "showItem/HzFileItem.h"
@@ -36,7 +37,7 @@
 
 HzDesktopIconView::HzDesktopIconView(QWidget *parent)
 	: QAbstractItemView(parent)
-	//: QListView(parent)
+	, HzDesktopPublic(new HzDesktopIconViewPrivate())
 	, m_menuShowStyle(Win10Style)
 	, m_ctrlDragSelectionFlag(QItemSelectionModel::NoUpdate)
 {
@@ -44,7 +45,7 @@ HzDesktopIconView::HzDesktopIconView(QWidget *parent)
 
 	setIconSize({MEDIUM_ICON_SIZE, MEDIUM_ICON_SIZE});
 
-	//m_desktopBlankMenu = new HzDesktopBlankMenu(this);
+	m_desktopBlankMenu = new HzDesktopBlankMenu(this);
 
 	//m_itemProxyModel = new QSortFilterProxyModel(this);
 	//m_itemModel = new HzDesktopItemModel(m_itemProxyModel);
@@ -60,9 +61,14 @@ HzDesktopIconView::HzDesktopIconView(QWidget *parent)
 		ICON_MARGIN);
 	setItemDelegate(m_itemDelegate);
 
+	m_itemMenu = new HzItemMenu(this);
+
 	//setDropIndicatorShown(true); // 显示拖放位置指示器
 
-	//setStyleSheet("QListView {background-color: transparent;}");
+	//setStyleSheet("QAbstractItemView {background-color: transparent;}");
+	//setAttribute(Qt::WA_TranslucentBackground, true);
+	//setWindowFlags(Qt::Tool | Qt::FramelessWindowHint);
+
 	setDragEnabled(true);
 	setAcceptDrops(true);
 	setSelectionMode(QAbstractItemView::ExtendedSelection);
@@ -87,15 +93,17 @@ HzDesktopIconView::~HzDesktopIconView()
 void HzDesktopIconView::initSignalAndSlot()
 {
 	connect(this, &QAbstractItemView::doubleClicked,
-		this, &HzDesktopIconView::onOpenFile);
+		[this](const QModelIndex& index) {onOpen(); });
 
-	// 粘贴，默认为Ctrl + C
-	new QShortcut(QKeySequence(QKeySequence::Copy), this, 
+	// TODO 为什么使用SLOT宏时，函数必须要用slots来声明？
+
+	// 复制，默认为Ctrl + C
+	new QShortcut(QKeySequence(QKeySequence::Copy), this,
 		SLOT(onCopy()), nullptr, Qt::WidgetWithChildrenShortcut);
 
-	// 拷贝， 默认为Ctrl + V
-	new QShortcut(QKeySequence(QKeySequence::Paste), this, 
-		SLOT(onPaste()), nullptr, Qt::WidgetWithChildrenShortcut);
+	// 粘贴， 默认为Ctrl + V
+	new QShortcut(QKeySequence::Paste, this, 
+		SLOT(onPaste()), nullptr, Qt::WindowShortcut);
 
 	// 剪切， 默认为Ctrl + X
 	new QShortcut(QKeySequence(QKeySequence::Cut), this, 
@@ -112,18 +120,24 @@ void HzDesktopIconView::initSignalAndSlot()
 		SLOT(onDelete()), nullptr, Qt::WidgetWithChildrenShortcut);
 
 	// 刷新，默认为F5
-	//QShortcut* pRefreshShorcut = new QShortcut(QKeySequence(QKeySequence::Refresh),
+	//new QShortcut(QKeySequence(QKeySequence::Refresh),
 	//	this, SLOT(handleRefreshFile()), nullptr, Qt::WidgetWithChildrenShortcut);
 
 	// 重命名，F2
-	//QShortcut* pRenameShorcut = new QShortcut(QKeySequence(Qt::Key_F2),
-	//	this, SLOT(_handleRenameFileAct()), nullptr, Qt::WidgetWithChildrenShortcut);
+	new QShortcut(QKeySequence(Qt::Key_F2),
+		this, SLOT(onRename()), nullptr, Qt::WidgetWithChildrenShortcut);
 
 	// 打开选中文件， Enter
 	new QShortcut(QKeySequence(Qt::Key_Return), this, 
-		SLOT(onOpenFile()), nullptr, Qt::WidgetWithChildrenShortcut);
+		SLOT(onOpen()), nullptr, Qt::WidgetWithChildrenShortcut);
 	new QShortcut(QKeySequence(Qt::Key_Enter), this, 
-		SLOT(onOpenFile()), nullptr, Qt::WidgetWithChildrenShortcut);
+		SLOT(onOpen()), nullptr, Qt::WidgetWithChildrenShortcut);
+
+	connect(m_itemMenu, &HzItemMenu::onOpen, this, &HzDesktopIconView::onOpen);
+	connect(m_itemMenu, &HzItemMenu::onCopy, this, &HzDesktopIconView::onCopy);
+	connect(m_itemMenu, &HzItemMenu::onCut, this, &HzDesktopIconView::onCut);
+	connect(m_itemMenu, &HzItemMenu::onDelete, this, &HzDesktopIconView::onDelete);
+	connect(m_itemMenu, &HzItemMenu::onRename, this, &HzDesktopIconView::onRename);
 }
 
 void HzDesktopIconView::updateGridSize()
@@ -340,7 +354,7 @@ void HzDesktopIconView::contextMenuEvent(QContextMenuEvent* event)
 		m_desktopBlankMenu->exec(QCursor::pos());
 	}
 	else {
-		HzItemMenu::instance().showMenu(this, selectedPathList);
+		m_itemMenu->showMenu(selectedPathList);
 	}
 
 	// TODO 有作用吗
@@ -350,6 +364,13 @@ void HzDesktopIconView::contextMenuEvent(QContextMenuEvent* event)
 void HzDesktopIconView::paintEvent(QPaintEvent* e)
 {
 	QPainter painter(viewport());
+
+	// TODO 绘制一个透明内容，为什么不绘制就会穿透
+	painter.save();
+	painter.setPen(Qt::transparent);
+	painter.setBrush(QColor(0, 0, 0, 1));
+	painter.drawRect(viewport()->rect());
+	painter.restore();
 
 	QStyleOptionViewItem option = QAbstractItemView::viewOptions();
 	const QVector<QModelIndex> toBeRendered = intersectingSet(e->rect());
@@ -418,7 +439,7 @@ QStringList HzDesktopIconView::getSelectedPaths()
 	return pathList;
 }
 
-void HzDesktopIconView::onOpenFile(const QModelIndex& index)
+void HzDesktopIconView::onOpen()
 {
 	QModelIndexList indexList = selectedIndexes();
 	for (const QModelIndex& aindex : indexList) {
@@ -494,17 +515,35 @@ void HzDesktopIconView::onPaste()
 		QFileInfo srcFileInfo(src);
 		QFileInfo dstFileInfo(QDir(desktopPath), srcFileInfo.fileName());
 		if (srcFileInfo.isFile()) {
-			CopySingleFile(src, dstFileInfo.absoluteFilePath(), move);
+			// TODO 暂时先不处理这个，先处理拖拽的逻辑
+			// 考虑到格子的实现，这些可能要放到公用里
+			//CopySingleFile(src, dstFileInfo.absoluteFilePath(), move);
 		}
 		else {
-			CopyDir(src, dstFileInfo.absoluteFilePath(), move);
+			//CopyDir(src, dstFileInfo.absoluteFilePath(), move);
 		}
 	}
-	if (inNetwork()) onRefresh();    //由于性能的原因，网络文件的增删不会被Model感知，需要手动刷新
+	//if (inNetwork()) onRefresh();    //由于性能的原因，网络文件的增删不会被Model感知，需要手动刷新
 }
 
 void HzDesktopIconView::onDelete()
 {
+	QModelIndexList indexList = selectedIndexes();
+
+	for (const QModelIndex& index : indexList) {
+		FILEOP_FLAGS dwOpFlags = FOF_ALLOWUNDO | FOF_NO_UI;
+
+		SHFILEOPSTRUCTA fileOp = { 0 };
+		fileOp.hwnd = NULL;
+		fileOp.wFunc = FO_DELETE; ///> 文件删除操作
+		fileOp.pFrom = StrDupA(m_itemModel->filePath(index).toStdString().c_str());
+		fileOp.pTo = NULL;
+		fileOp.fFlags = dwOpFlags;
+		fileOp.hNameMappings = NULL;
+		fileOp.lpszProgressTitle = "hz delete file";
+
+		SHFileOperationA(&fileOp);
+	}
 }
 
 void HzDesktopIconView::onRename()

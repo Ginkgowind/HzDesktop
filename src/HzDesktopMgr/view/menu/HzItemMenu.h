@@ -13,21 +13,19 @@ public:
 
 	static HzItemMenu& instance();
 
-	void showMenu(
-		QWidget* parentWidget,
-		const QStringList& itemList
-	);
+	void showMenu(const QStringList& itemList);
 
+signals:
 	void onOpen();
-	void onOpenWith();
 	void onCopy();
 	void onCut();
 	void onDelete();
 	void onRename();
+
+private:
 	void onExplorerMenu();
 
 private:
-	QAction* m_openWithAct;
 	QAction* m_copyAct;
 	QAction* m_cutAct;
 	QAction* m_deleteAct;
@@ -35,7 +33,6 @@ private:
 
 	QStringList m_selectedItemList;
 	QPoint m_showPos;
-	QWidget* m_parentWidget;
 };
 
 class HzDesktopBlankMenu : public QMenu

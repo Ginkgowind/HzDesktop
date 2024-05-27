@@ -9,6 +9,7 @@ class HzDesktopItemModelPrivate;
 
 class HzDesktopItemModel
 	: public QStandardItemModel
+	, public HzDesktopPublic
 {
 	Q_OBJECT
 
@@ -31,15 +32,6 @@ public:
 protected:
 
 private:
-	QScopedPointer<HzDesktopPrivate> hzd_ptr;
+	HZQ_DECLARE_PRIVATE(HzDesktopItemModel)
 	Q_DISABLE_COPY(HzDesktopItemModel)
-
-	inline HzDesktopItemModelPrivate* hzd_func() {
-		return reinterpret_cast<HzDesktopItemModelPrivate*>(qGetPtrHelper(hzd_ptr));
-	}
-	inline const HzDesktopItemModelPrivate* hzd_func() const {
-		return reinterpret_cast<HzDesktopItemModelPrivate*>(qGetPtrHelper(hzd_ptr));
-	}
-	friend class HzDesktopItemModelPrivate;
-
 };

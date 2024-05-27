@@ -13,14 +13,13 @@
 HzItemMenu::HzItemMenu(QWidget* parent)
 	: QMenu(parent)
 {
-	addAction(tr("Open"), this, &HzItemMenu::onOpen);
-	m_openWithAct = addAction(tr("Open method"), this, &HzItemMenu::onOpenWith);
+	addAction(tr("Open"), this, [this]() {emit onOpen(); });
 	addSeparator();
-	m_copyAct = addAction(tr("Copy"), this, &HzItemMenu::onCopy);
-	m_cutAct = addAction(tr("Cut"), this, &HzItemMenu::onCut);
+	m_copyAct = addAction(tr("Copy"), this, [this]() {emit onCopy(); });
+	m_cutAct = addAction(tr("Cut"), this, [this]() {emit onCut(); });
 	addSeparator();
-	m_deleteAct = addAction(tr("Delete"), this, &HzItemMenu::onDelete);
-	m_renameAct = addAction(tr("Rename"), this, &HzItemMenu::onRename);
+	m_deleteAct = addAction(tr("Delete"), this, [this]() {emit onDelete(); });
+	m_renameAct = addAction(tr("Rename"), this, [this]() {emit onRename(); }); 
 	addSeparator();
 	addAction(tr("Explorer menu"), this, &HzItemMenu::onExplorerMenu);
 }
@@ -34,94 +33,23 @@ HzItemMenu& HzItemMenu::instance()
 	return ins;
 }
 
-void HzItemMenu::showMenu(
-	QWidget* parentWidget,
-	const QStringList& itemList
-)
+void HzItemMenu::showMenu(const QStringList& itemList)
 {
 	if (itemList.empty()) {
 
 	}
-	else if (parentWidget) {
+	else if (parent()) {
 		// 部分数据存起来，因为打开文件管理器菜单时会用到
 		m_showPos = QCursor::pos();
-		m_parentWidget = parentWidget;
 		m_selectedItemList = itemList;
 		exec(m_showPos);
 	}
 }
 
-void HzItemMenu::onOpen()
-{
-	for (const QString& path : m_selectedItemList) {
-		QDesktopServices::openUrl(QUrl::fromLocalFile(path));
-	}
-}
-
-void HzItemMenu::onOpenWith()
-{
-}
-
-void HzItemMenu::onCopy()
-{
-	QMimeData* mimeData = new QMimeData;
-	QList<QUrl> urls;
-	for (QString path : m_selectedItemList) {
-		urls.append(QUrl::fromLocalFile(path));
-	}
-	mimeData->setUrls(urls);
-	int dropEffect = 5; // 2 for cut and 5 for copy
-	QByteArray data;
-	QDataStream stream(&data, QIODevice::WriteOnly);
-	stream.setByteOrder(QDataStream::LittleEndian);
-	stream << dropEffect;
-	mimeData->setData("Preferred DropEffect", data);
-	QApplication::clipboard()->setMimeData(mimeData);
-}
-
-void HzItemMenu::onCut()
-{
-	QMimeData* mimeData = new QMimeData;
-	QList<QUrl> urls;
-	for (QString path : m_selectedItemList) {
-		urls.append(QUrl::fromLocalFile(path));
-	}
-	mimeData->setUrls(urls);
-	int dropEffect = 2; // 2 for cut and 5 for copy
-	QByteArray data;
-	QDataStream stream(&data, QIODevice::WriteOnly);
-	stream.setByteOrder(QDataStream::LittleEndian);
-	stream << dropEffect;
-	mimeData->setData("Preferred DropEffect", data);
-	QApplication::clipboard()->setMimeData(mimeData);
-}
-
-void HzItemMenu::onDelete()
-{
-	for (QString path : m_selectedItemList) {
-		FILEOP_FLAGS dwOpFlags = FOF_ALLOWUNDO | FOF_NO_UI;
-
-		SHFILEOPSTRUCTA fileOp = { 0 };
-		fileOp.hwnd = NULL;
-		fileOp.wFunc = FO_DELETE; ///> 文件删除操作
-		fileOp.pFrom = StrDupA(path.toStdString().c_str());
-		fileOp.pTo = NULL;
-		fileOp.fFlags = dwOpFlags;
-		fileOp.hNameMappings = NULL;
-		fileOp.lpszProgressTitle = "hz delete file";
-
-		SHFileOperationA(&fileOp);
-	}
-}
-
-void HzItemMenu::onRename()
-{
-}
-
 void HzItemMenu::onExplorerMenu()
 {
 	HZ::showContentMenuWin10(
-		m_parentWidget->winId(),
+		qobject_cast<QWidget*>(parent())->winId(),
 		m_selectedItemList,
 		m_showPos.x(),
 		m_showPos.y()

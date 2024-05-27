@@ -5,11 +5,11 @@
 
 HzDesktopItemModel::HzDesktopItemModel(QObject *parent)
 	: QStandardItemModel(parent)
-	, hzd_ptr(new HzDesktopItemModelPrivate())
+	, HzDesktopPublic(new HzDesktopItemModelPrivate())
 {
-	hzd_ptr->hzq_ptr = this;
-	
-	hzd_func()->init();
+	HZQ_D(HzDesktopItemModel);
+
+	d->init();
 }
 
 HzDesktopItemModel::~HzDesktopItemModel()

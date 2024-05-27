@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "showItem/HzDesktopItemModel.h"
+#include "common/QtpqReimp.h"
 
 QT_BEGIN_NAMESPACE
 class QSortFilterProxyModel;
@@ -13,7 +14,9 @@ class QFileSystemModel;
 QT_END_NAMESPACE
 
 class HzDesktopBlankMenu;
+class HzItemMenu;
 class HzItemDelegate;
+class HzDesktopIconViewPrivate;
 
 enum MenuShowStyle
 {
@@ -24,7 +27,7 @@ enum MenuShowStyle
 
 class HzDesktopIconView  
 	: public QAbstractItemView
-	//: public QListView
+	, public HzDesktopPublic
 {
 	Q_OBJECT
 
@@ -80,8 +83,8 @@ protected:
 private:
 	QStringList getSelectedPaths();
 
-private:	// 以下函数处理在界面上的操作
-	void onOpenFile(const QModelIndex& index = QModelIndex());
+private slots:	// 以下函数处理在界面上的操作
+	void onOpen();
 
 	void onCopy();
 
@@ -105,6 +108,7 @@ private:
 	HzItemDelegate* m_itemDelegate;
 
 	MenuShowStyle m_menuShowStyle;
+	HzItemMenu* m_itemMenu;
 	HzDesktopBlankMenu* m_desktopBlankMenu;
 
 	QSize m_gridSize;
@@ -118,14 +122,6 @@ private:
 	QItemSelectionModel::SelectionFlag m_ctrlDragSelectionFlag;
 
 private:
-	QScopedPointer<HzDesktopItemDataMgr> hzd_ptr;
-	Q_DISABLE_COPY(HzDesktopItemModel)
-
-		inline HzDesktopItemModelPrivate* hzd_func() {
-		return reinterpret_cast<HzDesktopItemModelPrivate*>(qGetPtrHelper(hzd_ptr));
-	}
-	inline const HzDesktopItemModelPrivate* hzd_func() const {
-		return reinterpret_cast<HzDesktopItemModelPrivate*>(qGetPtrHelper(hzd_ptr));
-	}
-	friend class HzDesktopItemModelPrivate;
+	HZQ_DECLARE_PRIVATE(HzDesktopIconView)
+	Q_DISABLE_COPY(HzDesktopIconView)
 };

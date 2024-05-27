@@ -8,7 +8,6 @@ HzDesktopMgr::HzDesktopMgr()
     m_desktopViewMgr = new DesktopViewMgr();
 
     CoUninitialize();
-    // 
 }
 
 HzDesktopMgr::~HzDesktopMgr()

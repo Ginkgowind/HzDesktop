@@ -9,10 +9,11 @@ class HzDesktopIconViewPrivate : public HzDesktopPrivate
 {
 	Q_OBJECT
 
+	HZQ_DECLARE_PUBLIC(HzDesktopIconView)
+
 public:
 	HzDesktopIconViewPrivate();
 	~HzDesktopIconViewPrivate();
 
 private:
-	friend class HzDesktopIconView;
 };

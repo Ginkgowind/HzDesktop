@@ -602,15 +602,17 @@ HzDesktopItemModelPrivate::~HzDesktopItemModelPrivate()
 
 void HzDesktopItemModelPrivate::init()
 {
+	HZQ_Q(HzDesktopItemModel);
+
 	connect(&m_systemItemWatcher,
 		&DesktopSystemItemWatcher::systemAppRefreshed,
-		this, [this](QList<QStandardItem*> itemList) {
+		this, [&](QList<QStandardItem*> itemList) {
 			for (QStandardItem* item : itemList) {
 				// TODO 这里先按顺序来，后面改为读配置
-				int index = hzq_ptr->rowCount();
+				int index = q->rowCount();
 				QPoint pos(index / 5, index % 5);
 				item->setData(pos, HzDesktopItemModel::PosIndex2DRole);
-				hzq_ptr->appendRow(item);
+				q->appendRow(item);
 			}
 			// TODO 为什么下面这样不行？
 			//hzq_ptr->appendRow(itemList);
@@ -618,12 +620,12 @@ void HzDesktopItemModelPrivate::init()
 
 	connect(&m_fileItemWatcher,
 		&DesktopFileItemWatcher::fileItemRefreshed,
-		this, [this](QList<QStandardItem*> itemList) {
+		this, [&](QList<QStandardItem*> itemList) {
 			for (QStandardItem* item : itemList) {
-				int index = hzq_ptr->rowCount();
+				int index = q->rowCount();
 				QPoint pos(index / 5, index % 5);
 				item->setData(pos, HzDesktopItemModel::PosIndex2DRole);
-				hzq_ptr->appendRow(item);
+				q->appendRow(item);
 			}
 		});
 

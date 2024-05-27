@@ -116,11 +116,12 @@ private:
 	CEnsureCloseHandle m_monitorEvent;
 };
 
-//QObjectPrivate未公开，故此处采用
 class HzDesktopItemModelPrivate 
 	: public HzDesktopPrivate
 {
 	Q_OBJECT
+
+	HZQ_DECLARE_PUBLIC(HzDesktopItemModel)
 
 public:
 	enum { NumColumns = 4 };
@@ -138,6 +139,4 @@ private:
 	DesktopSystemItemWatcher m_systemItemWatcher;
 	
 	DesktopFileItemWatcher m_fileItemWatcher;
-
-	friend class HzDesktopItemModel;
 };
