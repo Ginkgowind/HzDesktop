@@ -83,6 +83,9 @@ HzDesktopIconView::HzDesktopIconView(QWidget *parent)
 	initSignalAndSlot();
 
 	updateGridSize();
+
+	m_maxViewRow = height() / m_gridSize.height();
+	m_maxViewColumn = width() / m_gridSize.width();
 }
 
 HzDesktopIconView::~HzDesktopIconView()
@@ -150,11 +153,13 @@ void HzDesktopIconView::updateGridSize()
 
 QRect HzDesktopIconView::visualRect(const QModelIndex& index) const
 {
-	QPoint posIndex = index.data(HzDesktopItemModel::PosIndex2DRole).toPoint();
+	// TODO 处理横向时的逻辑
+	int posIndexX = index.row() / m_maxViewRow;
+	int posIndexY = index.row() % m_maxViewRow;
 
 	return QRect(
-		posIndex.x() * m_gridSize.width(),
-		posIndex.y() * m_gridSize.height(),
+		posIndexX * m_gridSize.width(),
+		posIndexY * m_gridSize.height(),
 		2 * ICON_MARGIN + iconSize().width(),
 		2 * ICON_MARGIN + iconSize().height() + TEXT_MAX_HEIGHT
 	);
@@ -239,6 +244,11 @@ QRegion HzDesktopIconView::visualRegionForSelection(const QItemSelection& select
 	}
 
 	return selectionRegion;
+}
+
+bool HzDesktopIconView::isIndexHidden(const QModelIndex& index) const
+{
+	return !m_itemModel->item(index.row())->isEnabled();
 }
 
 bool HzDesktopIconView::viewportEvent(QEvent* event)
@@ -340,11 +350,15 @@ void HzDesktopIconView::mouseReleaseEvent(QMouseEvent* e)
 //	event->accept();
 //}
 
-//void HzDesktopIconView::dropEvent(QDropEvent* e)
-//{
-//	auto strList = e->mimeData()->formats();
-//	qDebug() << strList;
-//}
+void HzDesktopIconView::dropEvent(QDropEvent* e)
+{
+	if (e->source() == this) {
+		handleInternalDrop(e);
+	}
+	else {
+		handleExternalDrop(e);
+	}
+}
 
 void HzDesktopIconView::contextMenuEvent(QContextMenuEvent* event)
 {
@@ -437,6 +451,35 @@ QStringList HzDesktopIconView::getSelectedPaths()
 	}
 		
 	return pathList;
+}
+
+void HzDesktopIconView::handleInternalDrop(QDropEvent* e)
+{
+	QModelIndexList indexList = selectedIndexes();
+	QList<QStandardItem*> dropItems;
+
+	// 按照row从大到小进行排序
+	qSort(indexList.begin(), indexList.end(), [](const QModelIndex& index1, const QModelIndex& index2) {
+		return index1.row() > index2.row(); });
+
+	for (const QModelIndex& index : indexList) {
+		dropItems.push_back(m_itemModel->takeItem(index.row()));
+		m_itemModel->removeRow(index.row());
+	}
+
+	// 获取鼠标位置对应的row
+	QPoint dropPos = e->pos();
+	int insertRow = dropPos.x() / m_gridSize.width() * m_maxViewRow 
+		+ dropPos.y() / m_gridSize.height();
+
+	m_itemModel->insertItems(insertRow, dropItems);
+
+	//updateGeometries();
+	viewport()->update(viewport()->rect());
+}
+
+void HzDesktopIconView::handleExternalDrop(QDropEvent* e)
+{
 }
 
 void HzDesktopIconView::onOpen()
@@ -554,9 +597,7 @@ void HzDesktopIconView::initItemsPos()
 {
 	int rowCount = model()->rowCount();
 	for (int i = 0; i < rowCount; ++i) {
-		QModelIndex index = model()->index(i, 0); // 获取指定行列的索引
-		QPoint posIndex = index.data(HzDesktopItemModel::PosIndex2DRole).toPoint();
-		//setPositionForIndex({ posIndex.x() * 120, posIndex.y() * 140 }, index);
+
 	}
 }
 

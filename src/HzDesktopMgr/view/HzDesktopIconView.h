@@ -52,11 +52,12 @@ protected:
 	
 	virtual QRegion visualRegionForSelection(const QItemSelection& selection) const;
 
+	virtual bool isIndexHidden(const QModelIndex& index) const;
+
 	// 桌面无需实现
 	virtual int horizontalOffset() const { return 0; }
 	virtual int verticalOffset() const { return 0; }
 	virtual void scrollTo(const QModelIndex& index, ScrollHint hint = EnsureVisible) {}
-	virtual bool isIndexHidden(const QModelIndex& index) const { return false; }
 
 	bool viewportEvent(QEvent* event) override;
 
@@ -70,7 +71,7 @@ protected:
 
 	//void dragEnterEvent(QDragEnterEvent* event) override;
 
-	//void dropEvent(QDropEvent* e) override;
+	void dropEvent(QDropEvent* e) override;
 
 	void contextMenuEvent(QContextMenuEvent* event) override;
 
@@ -82,6 +83,10 @@ protected:
 
 private:
 	QStringList getSelectedPaths();
+
+	void handleInternalDrop(QDropEvent* e);
+
+	void handleExternalDrop(QDropEvent* e);
 
 private slots:	// 以下函数处理在界面上的操作
 	void onOpen();
@@ -97,6 +102,8 @@ private slots:	// 以下函数处理在界面上的操作
 	void onRename();
 
 private:
+
+
 	void initItemsPos();
 
 	QVector<QModelIndex> intersectingSet(const QRect& area) const;
@@ -111,9 +118,13 @@ private:
 	HzItemMenu* m_itemMenu;
 	HzDesktopBlankMenu* m_desktopBlankMenu;
 
+private:
+
 	QSize m_gridSize;
 
-private:
+	int m_maxViewRow;
+	int m_maxViewColumn;
+
 	QRect m_elasticBand;
 
 	// QAbstractItemView的下列数据未暴露，故自己实现一个

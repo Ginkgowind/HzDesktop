@@ -609,9 +609,6 @@ void HzDesktopItemModelPrivate::init()
 		this, [&](QList<QStandardItem*> itemList) {
 			for (QStandardItem* item : itemList) {
 				// TODO 这里先按顺序来，后面改为读配置
-				int index = q->rowCount();
-				QPoint pos(index / 5, index % 5);
-				item->setData(pos, HzDesktopItemModel::PosIndex2DRole);
 				q->appendRow(item);
 			}
 			// TODO 为什么下面这样不行？
@@ -622,9 +619,6 @@ void HzDesktopItemModelPrivate::init()
 		&DesktopFileItemWatcher::fileItemRefreshed,
 		this, [&](QList<QStandardItem*> itemList) {
 			for (QStandardItem* item : itemList) {
-				int index = q->rowCount();
-				QPoint pos(index / 5, index % 5);
-				item->setData(pos, HzDesktopItemModel::PosIndex2DRole);
 				q->appendRow(item);
 			}
 		});

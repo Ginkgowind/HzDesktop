@@ -67,7 +67,7 @@ void HzItemDelegate::paint(
 ) const
 {
 	QStandardItem* item = getItemFromParam(option, index);
-	if (!item) {
+	if (!item || !item->isEnabled()) {
 		return;
 	}
 	

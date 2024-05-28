@@ -16,8 +16,7 @@ class HzDesktopItemModel
 public:
 	enum Roles {
 		FilePathRole = Qt::UserRole + 1,
-		FileNameRole = Qt::UserRole + 2,
-		PosIndex2DRole = Qt::UserRole + 3
+		FileNameRole = Qt::UserRole + 2
 	};
 
 	HzDesktopItemModel(QObject *parent);
@@ -25,6 +24,9 @@ public:
 
 public:
 	void refreshItems();
+
+	// 会自动消除占位符的插入函数
+	void insertItems(int row, const QList<QStandardItem*>& items);
 
 public:
 	QString filePath(const QModelIndex& index) const;
