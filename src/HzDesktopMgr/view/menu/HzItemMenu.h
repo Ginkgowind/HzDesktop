@@ -44,14 +44,14 @@ public:
 	~HzDesktopBlankMenu();
 
 signals:
+	void onHide();
+
 	void refreshDesktopItemsSignal();
 
 private:
 	void setViewMode();
 
 	void switchAutoArrangeIcons();
-
-	void switchShowDesktopIcons();
 
 	void setSortMode();
 

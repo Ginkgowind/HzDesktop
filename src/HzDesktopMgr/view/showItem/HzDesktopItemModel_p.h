@@ -79,6 +79,18 @@ signals:
 	// 因为是传递到主线程去处理，所以此处不传引用
 	void fileItemRefreshed(QList<QStandardItem*> fileItemList);
 
+	void onFileCreated(QStandardItem* item);
+
+	void onFileDeleted(const QString& filePath);
+
+	void onFileModified(const QString& filePath, QStandardItem* item);
+
+	void onFileRenamed(
+		const QString& oldPath, 
+		const QString& newPath,
+		const QString& newFileName
+	);
+
 protected:
 	void run() override;
 
@@ -94,19 +106,9 @@ private:
 	QIcon getUltimateIcon(const QFileInfo& fileInfo);
 
 	void handleObserveResult(
-		const std::wstring& strWatchDirectory,
+		const QString& strWatchDirectory,
 		const FILE_NOTIFY_INFORMATION* pNotification
 	);
-
-	void handleFileCreated(const std::wstring& filePath);
-
-	void handleFileDeleted(const std::wstring& filePath);
-
-	void handleFileModified(const std::wstring& filePath);
-
-	void handleFileRenamed(const std::wstring& oldPath, const std::wstring& newPath);
-
-	static std::function<bool(const QFileInfo& itInfo)> compMemberPath(const std::wstring& targetPath);
 
 private:
 	// 各个目录监控所维护的数据结构，单线程中调用，不用处理同步问题
@@ -134,6 +136,19 @@ public:
 	~HzDesktopItemModelPrivate();
 
 	void init();
+
+private:
+	void handleFileCreated(QStandardItem* item);
+
+	void handleFileDeleted(const QString& filePath);
+
+	void handleFileModified(const QString& filePath, QStandardItem* item);
+
+	void handleFileRenamed(
+		const QString& oldPath, 
+		const QString& newPath,
+		const QString& newFileName
+	);
 
 private:
 	DesktopSystemItemWatcher m_systemItemWatcher;

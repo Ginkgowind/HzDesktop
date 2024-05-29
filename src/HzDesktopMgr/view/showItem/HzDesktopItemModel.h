@@ -15,8 +15,7 @@ class HzDesktopItemModel
 
 public:
 	enum Roles {
-		FilePathRole = Qt::UserRole + 1,
-		FileNameRole = Qt::UserRole + 2
+		FilePathRole = Qt::UserRole + 1
 	};
 
 	HzDesktopItemModel(QObject *parent);

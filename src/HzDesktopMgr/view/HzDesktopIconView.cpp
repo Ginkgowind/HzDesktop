@@ -95,9 +95,6 @@ HzDesktopIconView::~HzDesktopIconView()
 
 void HzDesktopIconView::initSignalAndSlot()
 {
-	connect(this, &QAbstractItemView::doubleClicked,
-		[this](const QModelIndex& index) {onOpen(); });
-
 	// TODO 为什么使用SLOT宏时，函数必须要用slots来声明？
 
 	// 复制，默认为Ctrl + C
@@ -136,11 +133,15 @@ void HzDesktopIconView::initSignalAndSlot()
 	new QShortcut(QKeySequence(Qt::Key_Enter), this, 
 		SLOT(onOpen()), nullptr, Qt::WidgetWithChildrenShortcut);
 
+	// item右键菜单
 	connect(m_itemMenu, &HzItemMenu::onOpen, this, &HzDesktopIconView::onOpen);
 	connect(m_itemMenu, &HzItemMenu::onCopy, this, &HzDesktopIconView::onCopy);
 	connect(m_itemMenu, &HzItemMenu::onCut, this, &HzDesktopIconView::onCut);
 	connect(m_itemMenu, &HzItemMenu::onDelete, this, &HzDesktopIconView::onDelete);
 	connect(m_itemMenu, &HzItemMenu::onRename, this, &HzDesktopIconView::onRename);
+
+	// 空白处右键菜单
+	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::onHide, [this]() {setVisible(false); });
 }
 
 void HzDesktopIconView::updateGridSize()
@@ -288,10 +289,16 @@ void HzDesktopIconView::mousePressEvent(QMouseEvent* e)
 
 void HzDesktopIconView::mouseMoveEvent(QMouseEvent* e)
 {
+	State preState = state();
+
 	QAbstractItemView::mouseMoveEvent(e);
 
-	if ((e->buttons() & Qt::LeftButton) && state() != DraggingState) {
-		// 参考 QAbstractItemView
+	// dropEvent之后总是会又触发一次mouseMoveEvent，所以这里要设置过滤条件
+	bool bFilterDragSelecting = (state() == DraggingState) ||
+		(preState == DraggingState && (m_pressedPos - e->pos()).manhattanLength() > QApplication::startDragDistance());
+
+	if ((e->buttons() & Qt::LeftButton) && !bFilterDragSelecting) {
+		// 参考 QAbstractItemView 实现状态设置与框选逻辑
 		setState(DragSelectingState);
 
 		QPersistentModelIndex index = indexAt(e->pos());
@@ -305,7 +312,7 @@ void HzDesktopIconView::mouseMoveEvent(QMouseEvent* e)
 		QRect selectionRect = QRect(m_pressedPos, e->pos());
 		setSelection(selectionRect, command);
 
-		// 参考QListView
+		// 参考QListView 实现框选框绘制
 		QRect rect(m_pressedPos, e->pos());
 		rect = rect.normalized();
 		viewport()->update(rect.united(m_elasticBand));
@@ -324,6 +331,17 @@ void HzDesktopIconView::mouseReleaseEvent(QMouseEvent* e)
 	if (m_elasticBand.isValid()) {
 		viewport()->update(m_elasticBand);
 		m_elasticBand = QRect();
+	}
+}
+
+void HzDesktopIconView::mouseDoubleClickEvent(QMouseEvent* event)
+{
+	if (selectedIndexes().empty()) {
+		// 隐藏桌面
+		setVisible(false);
+	}
+	else {
+		onOpen();
 	}
 }
 
@@ -358,6 +376,8 @@ void HzDesktopIconView::dropEvent(QDropEvent* e)
 	else {
 		handleExternalDrop(e);
 	}
+
+	setState(NoState);
 }
 
 void HzDesktopIconView::contextMenuEvent(QContextMenuEvent* event)
@@ -370,9 +390,6 @@ void HzDesktopIconView::contextMenuEvent(QContextMenuEvent* event)
 	else {
 		m_itemMenu->showMenu(selectedPathList);
 	}
-
-	// TODO 有作用吗
-	event->accept();
 }
 
 void HzDesktopIconView::paintEvent(QPaintEvent* e)

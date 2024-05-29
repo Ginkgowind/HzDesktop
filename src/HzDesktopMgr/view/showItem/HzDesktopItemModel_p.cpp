@@ -370,7 +370,9 @@ void DesktopFileItemWatcher::run()
 			}
 
 			pNotification = (FILE_NOTIFY_INFORMATION*)m_observerInfos[watchInfoIndex].notifyDataBuf;
-			handleObserveResult(m_observerInfos[watchInfoIndex].watchPath, pNotification);
+			handleObserveResult(
+				QString::fromStdWString(m_observerInfos[watchInfoIndex].watchPath),
+				pNotification);
 			ZeroMemory(m_observerInfos[watchInfoIndex].notifyDataBuf, OBSERVE_DIR_BUFFER_SIZE);
 
 			// 使用异步的ReadDirectoryChangesW
@@ -502,17 +504,17 @@ QIcon DesktopFileItemWatcher::getUltimateIcon(const QFileInfo& fileInfo)
 	return QIcon();
 }
 
-void DesktopFileItemWatcher::handleObserveResult(const std::wstring& strWatchDirectory, const FILE_NOTIFY_INFORMATION* pNotification)
+void DesktopFileItemWatcher::handleObserveResult(const QString& strWatchDirectory, const FILE_NOTIFY_INFORMATION* pNotification)
 {
 	assert(pNotification);
 
-	std::wstring strFileName(
-		pNotification->FileName,
-		pNotification->FileNameLength / sizeof(wchar_t));
-
-	std::wstring strFileAbsPath = HZ::AppendPathConstW(strWatchDirectory, strFileName);
+	QString strFileName = QString::fromStdWString(
+		std::wstring(pNotification->FileName,
+			pNotification->FileNameLength / sizeof(wchar_t)));
+	QString strFileAbsPath = QDir(strWatchDirectory).absoluteFilePath(strFileName);
+	
 	DWORD cbOffset = 0;
-	std::wstring strRenameOldFilePath;
+	QString strRenameOldFilePath;
 
 	do
 	{
@@ -521,19 +523,21 @@ void DesktopFileItemWatcher::handleObserveResult(const std::wstring& strWatchDir
 		case FILE_ACTION_ADDED:
 		{
 			//LOG_DEBUG_W("FILE_ACTION_ADDED: %ws", strFileAbsPath.c_str());
-			handleFileCreated(strFileAbsPath);
+			QStandardItem* newItem = genQStandardItem(QFileInfo(strFileAbsPath));
+			emit onFileCreated(newItem);
 			break;
 		}
 		case FILE_ACTION_REMOVED:
 		{
 			//LOG_DEBUG_W("FILE_ACTION_REMOVED: %ws", strFileAbsPath.c_str());
-			handleFileDeleted(strFileAbsPath);
+			emit onFileDeleted(strFileAbsPath);
 			break;
 		}
 		case FILE_ACTION_MODIFIED:
 		{
 			//LOG_DEBUG_W("FILE_ACTION_MODIFIED: %ws", strFileAbsPath.c_str());
-			handleFileModified(strFileAbsPath);
+			QStandardItem* newItem = genQStandardItem(QFileInfo(strFileAbsPath));
+			emit onFileModified(strFileAbsPath, newItem);
 			break;
 		}
 		case FILE_ACTION_RENAMED_OLD_NAME:
@@ -545,7 +549,7 @@ void DesktopFileItemWatcher::handleObserveResult(const std::wstring& strWatchDir
 		case FILE_ACTION_RENAMED_NEW_NAME:
 		{
 			//LOG_DEBUG_W("FILE_ACTION_RENAMED_NEW_NAME: %ws", strFileAbsPath.c_str());
-			handleFileRenamed(strRenameOldFilePath, strFileAbsPath);
+			emit onFileRenamed(strRenameOldFilePath, strFileAbsPath, strFileName);
 			break;
 		}
 		default:
@@ -558,39 +562,13 @@ void DesktopFileItemWatcher::handleObserveResult(const std::wstring& strWatchDir
 		if (cbOffset)
 		{
 			// 获取新的路径信息
-			strFileName = std::wstring(
-				pNotification->FileName,
-				pNotification->FileNameLength / sizeof(wchar_t));
-			strFileAbsPath = HZ::AppendPathConstW(strWatchDirectory, strFileName);
+			strFileName = QString::fromStdWString(
+				std::wstring(pNotification->FileName,
+					pNotification->FileNameLength / sizeof(wchar_t)));
+			strFileAbsPath = QDir(strWatchDirectory).absoluteFilePath(strFileName);
 		}
 
 	} while (cbOffset);
-}
-
-void DesktopFileItemWatcher::handleFileCreated(const std::wstring& filePath)
-{
-
-}
-
-void DesktopFileItemWatcher::handleFileDeleted(const std::wstring& filePath)
-{
-
-}
-
-void DesktopFileItemWatcher::handleFileModified(const std::wstring& filePath)
-{
-}
-
-void DesktopFileItemWatcher::handleFileRenamed(const std::wstring& oldPath, const std::wstring& newPath)
-{
-}
-
-std::function<bool(const QFileInfo& itInfo)> DesktopFileItemWatcher::compMemberPath(const std::wstring& targetPath)
-{
-	return [&targetPath](const QFileInfo& itInfo)
-		{
-			return itInfo.absoluteFilePath().toStdWString() == targetPath;
-		};
 }
 
 HzDesktopItemModelPrivate::HzDesktopItemModelPrivate()
@@ -623,15 +601,73 @@ void HzDesktopItemModelPrivate::init()
 			}
 		});
 
+	// TODO 目前增添和删除，鼠标不移动到界面上就刷新不出来，看看为什么
+	connect(&m_fileItemWatcher, &DesktopFileItemWatcher::onFileCreated,
+		this, &HzDesktopItemModelPrivate::handleFileCreated);
+
+	connect(&m_fileItemWatcher, &DesktopFileItemWatcher::onFileDeleted,
+		this, &HzDesktopItemModelPrivate::handleFileDeleted);
+
+	connect(&m_fileItemWatcher, &DesktopFileItemWatcher::onFileModified,
+		this, &HzDesktopItemModelPrivate::handleFileModified);
+
+	connect(&m_fileItemWatcher, &DesktopFileItemWatcher::onFileRenamed,
+		this, &HzDesktopItemModelPrivate::handleFileRenamed);
+
 	m_systemItemWatcher.init();
 	m_fileItemWatcher.init();
 
 	// TODO 决定优先级
 	m_systemItemWatcher.start();
 	m_fileItemWatcher.start();
+}
 
-	//const QModelIndex topLeft = hzq_ptr->createIndex(0, 0);
-	//const QModelIndex bottomRight = hzq_ptr->createIndex(hzq_ptr->rowCount(), NumColumns - 1);
-	//emit hzq_ptr->dataChanged(topLeft, bottomRight);
+void HzDesktopItemModelPrivate::handleFileCreated(QStandardItem* item)
+{
+	HZQ_Q(HzDesktopItemModel);
+
+	q->appendRow(item);
+}
+
+void HzDesktopItemModelPrivate::handleFileDeleted(const QString& filePath)
+{
+	HZQ_Q(HzDesktopItemModel);
+
+	for (int i = 0; i < q->rowCount(); i++) {
+		if (q->filePath(q->index(i, 0)) == filePath) {
+			q->removeRow(i);
+			break;
+		}
+	}
+}
+
+void HzDesktopItemModelPrivate::handleFileModified(const QString& filePath, QStandardItem* item)
+{
+	HZQ_Q(HzDesktopItemModel);
+
+	for (int i = 0; i < q->rowCount(); i++) {
+		if (q->filePath(q->index(i, 0)) == filePath) {
+			q->setItem(i, item);
+			break;
+		}
+	}
+}
+
+void HzDesktopItemModelPrivate::handleFileRenamed(
+	const QString& oldPath, 
+	const QString& newPath, 
+	const QString& newFileName
+)
+{
+	HZQ_Q(HzDesktopItemModel);
+
+	for (int i = 0; i < q->rowCount(); i++) {
+		if (q->filePath(q->index(i, 0)) == oldPath) {
+			QStandardItem* item = q->itemFromIndex(q->index(i, 0));
+			item->setText(newFileName);
+			item->setData(newPath, HzDesktopItemModel::FilePathRole);
+			break;
+		}
+	}
 }
 

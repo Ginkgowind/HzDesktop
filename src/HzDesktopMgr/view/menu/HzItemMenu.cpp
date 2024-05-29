@@ -84,7 +84,7 @@ HzDesktopBlankMenu::HzDesktopBlankMenu(QObject* parent)
 	viewModeSubMenu->addSeparator();
 	viewModeSubMenu->addAction(tr("Auto arrange icons"), this, &HzDesktopBlankMenu::switchAutoArrangeIcons);
 	viewModeSubMenu->addSeparator();
-	viewModeSubMenu->addAction(tr("Show desktop icons"), this, &HzDesktopBlankMenu::switchShowDesktopIcons);
+	viewModeSubMenu->addAction(tr("Show desktop icons"), [this]() {emit onHide(); });
 
 	QMenu* sortBySubMenu = addMenu(tr("Sort by"));
 	sortBySubMenu->addAction(tr("Large icons"), this, &HzDesktopBlankMenu::setSortMode);
@@ -105,10 +105,6 @@ void HzDesktopBlankMenu::setViewMode()
 }
 
 void HzDesktopBlankMenu::switchAutoArrangeIcons()
-{
-}
-
-void HzDesktopBlankMenu::switchShowDesktopIcons()
 {
 }
 

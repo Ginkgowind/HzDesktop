@@ -67,6 +67,8 @@ protected:
 
 	void mouseReleaseEvent(QMouseEvent* event) override;
 
+	void mouseDoubleClickEvent(QMouseEvent* event) override;
+
 	//void startDrag(Qt::DropActions supportedActions) override;
 
 	//void dragEnterEvent(QDragEnterEvent* event) override;
@@ -89,6 +91,7 @@ private:
 	void handleExternalDrop(QDropEvent* e);
 
 private slots:	// 以下函数处理在界面上的操作
+
 	void onOpen();
 
 	void onCopy();
