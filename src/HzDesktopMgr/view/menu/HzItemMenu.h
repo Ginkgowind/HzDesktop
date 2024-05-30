@@ -3,6 +3,8 @@
 #include <QMenu>
 #include <memory>
 
+#include "config/HzDesktopParam.h"
+
 class HzItemMenu : public QMenu
 {
 	Q_OBJECT
@@ -44,12 +46,15 @@ public:
 	~HzDesktopBlankMenu();
 
 signals:
+	void onSetIconSizeMode(IconSizeMode mode);
+
+	void onSetItemSortMode(ItemSortMode mode);
+
 	void onHide();
 
 	void refreshDesktopItemsSignal();
 
 private:
-	void setViewMode();
 
 	void switchAutoArrangeIcons();
 

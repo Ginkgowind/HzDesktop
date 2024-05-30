@@ -20,30 +20,18 @@
 #include "HzDesktopIconView.h"
 #include "HzDesktopIconView_p.h"
 #include "showItem/HzItemDelegate.h"
-#include "menu/HzItemMenu.h"
 #include "showItem/HzFileItem.h"
 #include "windows/UiOperation.h"
 #include "windows/tools.h"
 
-#define MAX_ICON_SIZE			108
-#define MEDIUM_ICON_SIZE		90
-#define MIN_ICON_SIZE			72
-#define ICON_MARGIN				5		// icon与周围边界的距离，固定不变
-
 #define TEXT_MAX_HEIGHT			40
-
-#define ITEM_X_SPACE        5         // item之间的X方向的间隙
-#define ITEM_Y_SPACE        20        // item之间的Y方向的间隙
 
 HzDesktopIconView::HzDesktopIconView(QWidget *parent)
 	: QAbstractItemView(parent)
 	, HzDesktopPublic(new HzDesktopIconViewPrivate())
-	, m_menuShowStyle(Win10Style)
 	, m_ctrlDragSelectionFlag(QItemSelectionModel::NoUpdate)
 {
 	setFixedSize(1200, 800);
-
-	setIconSize({MEDIUM_ICON_SIZE, MEDIUM_ICON_SIZE});
 
 	m_desktopBlankMenu = new HzDesktopBlankMenu(this);
 
@@ -56,9 +44,6 @@ HzDesktopIconView::HzDesktopIconView(QWidget *parent)
 	setModel(m_itemModel);
 
 	m_itemDelegate = new HzItemDelegate(this);
-	m_itemDelegate->setUiParam(
-		QSize(MEDIUM_ICON_SIZE, MEDIUM_ICON_SIZE),
-		ICON_MARGIN);
 	setItemDelegate(m_itemDelegate);
 
 	m_itemMenu = new HzItemMenu(this);
@@ -82,10 +67,7 @@ HzDesktopIconView::HzDesktopIconView(QWidget *parent)
 
 	initSignalAndSlot();
 
-	updateGridSize();
-
-	m_maxViewRow = height() / m_gridSize.height();
-	m_maxViewColumn = width() / m_gridSize.width();
+	handleLayoutChanged();
 }
 
 HzDesktopIconView::~HzDesktopIconView()
@@ -142,14 +124,10 @@ void HzDesktopIconView::initSignalAndSlot()
 
 	// 空白处右键菜单
 	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::onHide, [this]() {setVisible(false); });
-}
-
-void HzDesktopIconView::updateGridSize()
-{
-	m_gridSize = QSize(MEDIUM_ICON_SIZE, MEDIUM_ICON_SIZE)
-		+ QSize(ICON_MARGIN, ICON_MARGIN)
-		+ QSize(0, TEXT_MAX_HEIGHT)
-		+ QSize(ITEM_X_SPACE, ITEM_Y_SPACE);
+	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::onSetIconSizeMode,
+		this, &HzDesktopIconView::handleSetIconSizeMode);
+	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::onSetItemSortMode,
+		this, &HzDesktopIconView::handleSetItemSortMode);
 }
 
 QRect HzDesktopIconView::visualRect(const QModelIndex& index) const
@@ -159,10 +137,10 @@ QRect HzDesktopIconView::visualRect(const QModelIndex& index) const
 	int posIndexY = index.row() % m_maxViewRow;
 
 	return QRect(
-		posIndexX * m_gridSize.width(),
-		posIndexY * m_gridSize.height(),
-		2 * ICON_MARGIN + iconSize().width(),
-		2 * ICON_MARGIN + iconSize().height() + TEXT_MAX_HEIGHT
+		posIndexX * m_param.gridSize.width(),
+		posIndexY * m_param.gridSize.height(),
+		2 * m_param.iconMargin.width() + m_param.iconSize.width(),
+		2 * m_param.iconMargin.height() + m_param.iconSize.height() + TEXT_MAX_HEIGHT
 	);
 }
 
@@ -470,6 +448,12 @@ QStringList HzDesktopIconView::getSelectedPaths()
 	return pathList;
 }
 
+void HzDesktopIconView::handleLayoutChanged()
+{
+	m_maxViewRow = height() / m_param.gridSize.height();
+	m_maxViewColumn = width() / m_param.gridSize.width();
+}
+
 void HzDesktopIconView::handleInternalDrop(QDropEvent* e)
 {
 	QModelIndexList indexList = selectedIndexes();
@@ -486,8 +470,8 @@ void HzDesktopIconView::handleInternalDrop(QDropEvent* e)
 
 	// 获取鼠标位置对应的row
 	QPoint dropPos = e->pos();
-	int insertRow = dropPos.x() / m_gridSize.width() * m_maxViewRow 
-		+ dropPos.y() / m_gridSize.height();
+	int insertRow = dropPos.x() / m_param.gridSize.width() * m_maxViewRow
+		+ dropPos.y() / m_param.gridSize.height();
 
 	m_itemModel->insertItems(insertRow, dropItems);
 
@@ -496,6 +480,19 @@ void HzDesktopIconView::handleInternalDrop(QDropEvent* e)
 }
 
 void HzDesktopIconView::handleExternalDrop(QDropEvent* e)
+{
+}
+
+void HzDesktopIconView::handleSetIconSizeMode(IconSizeMode mode)
+{
+	m_param.setIconSizeMode(mode);
+
+	handleLayoutChanged();
+
+	update();
+}
+
+void HzDesktopIconView::handleSetItemSortMode(ItemSortMode mode)
 {
 }
 

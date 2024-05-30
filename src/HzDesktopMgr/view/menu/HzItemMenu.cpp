@@ -10,6 +10,8 @@
 #include "HzItemMenu.h"
 #include "windows/UiOperation.h"
 
+
+
 HzItemMenu::HzItemMenu(QWidget* parent)
 	: QMenu(parent)
 {
@@ -78,30 +80,25 @@ void HzItemMenu::onExplorerMenu()
 HzDesktopBlankMenu::HzDesktopBlankMenu(QObject* parent)
 {
 	QMenu* viewModeSubMenu = addMenu(tr("View"));
-	viewModeSubMenu->addAction(tr("Large icons"), this, &HzDesktopBlankMenu::setViewMode);
-	viewModeSubMenu->addAction(tr("Medium icons"), this, &HzDesktopBlankMenu::setViewMode);
-	viewModeSubMenu->addAction(tr("Small icons"), this, &HzDesktopBlankMenu::setViewMode);
+	viewModeSubMenu->addAction(tr("Large icons"), [this]() {emit onSetIconSizeMode(Large); });
+	viewModeSubMenu->addAction(tr("Medium icons"), [this]() {emit onSetIconSizeMode(Medium); });
+	viewModeSubMenu->addAction(tr("Small icons"), [this]() {emit onSetIconSizeMode(Small); });
 	viewModeSubMenu->addSeparator();
 	viewModeSubMenu->addAction(tr("Auto arrange icons"), this, &HzDesktopBlankMenu::switchAutoArrangeIcons);
 	viewModeSubMenu->addSeparator();
 	viewModeSubMenu->addAction(tr("Show desktop icons"), [this]() {emit onHide(); });
 
 	QMenu* sortBySubMenu = addMenu(tr("Sort by"));
-	sortBySubMenu->addAction(tr("Large icons"), this, &HzDesktopBlankMenu::setSortMode);
-	sortBySubMenu->addAction(tr("Medium icons"), this, &HzDesktopBlankMenu::setSortMode);
-	sortBySubMenu->addAction(tr("Small icons"), this, &HzDesktopBlankMenu::setSortMode);
+	sortBySubMenu->addAction(tr("Name"), this, &HzDesktopBlankMenu::setSortMode);
+	sortBySubMenu->addAction(tr("Size"), this, &HzDesktopBlankMenu::setSortMode);
+	sortBySubMenu->addAction(tr("ItemType"), this, &HzDesktopBlankMenu::setSortMode);
+	sortBySubMenu->addAction(tr("DateModified"), this, &HzDesktopBlankMenu::setSortMode);
 
 	addAction(tr("Refresh"), this, &HzDesktopBlankMenu::OnRefresh);
 }
 
 HzDesktopBlankMenu::~HzDesktopBlankMenu()
 {
-}
-
-void HzDesktopBlankMenu::setViewMode()
-{
-	QAction* action = (QAction*)sender();
-	qDebug() << action->text();
 }
 
 void HzDesktopBlankMenu::switchAutoArrangeIcons()

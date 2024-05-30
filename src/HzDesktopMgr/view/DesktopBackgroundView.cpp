@@ -1,9 +1,12 @@
 #include <QScreen>
 #include <QGuiApplication>
+#include <QMouseEvent>
+#include <QMenu>
 
 #include "DesktopBackgroundView.h"
 
 DesktopBackgroundView::DesktopBackgroundView()
+	: m_menu(nullptr)
 {
 	//setWindowFlags(Qt::Tool | Qt::FramelessWindowHint);
 	// 设置为桌面去除掉任务栏的矩形
@@ -20,6 +23,24 @@ DesktopBackgroundView::DesktopBackgroundView()
 
 DesktopBackgroundView::~DesktopBackgroundView()
 {
+}
+
+void DesktopBackgroundView::mouseDoubleClickEvent(QMouseEvent* event)
+{
+	emit onShowDesktopView();
+
+	QWidget::mouseDoubleClickEvent(event);
+}
+
+void DesktopBackgroundView::contextMenuEvent(QContextMenuEvent* event)
+{
+	if (!m_menu) {
+		m_menu = new QMenu(this);
+		m_menu->addAction(tr("Show Desktop"), this,
+			[this]() {emit onShowDesktopView(); });
+	}
+
+	m_menu->exec(QCursor::pos());
 }
 
 // TODO 这里也画一块透明的

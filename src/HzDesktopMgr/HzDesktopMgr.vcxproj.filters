@@ -90,12 +90,12 @@
     <ClCompile Include="view\HzDesktopIconView_p.cpp">
       <Filter>view</Filter>
     </ClCompile>
+    <ClCompile Include="config\HzDesktopParam.cpp">
+      <Filter>config</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HzDesktopMgr.h" />
-    <ClInclude Include="view\DesktopViewMgr.h">
-      <Filter>view</Filter>
-    </ClInclude>
     <ClInclude Include="view\showItem\HzFileItem.h">
       <Filter>view\model</Filter>
     </ClInclude>
@@ -119,6 +119,9 @@
     </ClInclude>
     <ClInclude Include="..\..\include\common\QtpqReimp.h">
       <Filter>include\common</Filter>
+    </ClInclude>
+    <ClInclude Include="config\HzDesktopParam.h">
+      <Filter>config</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -147,6 +150,9 @@
       <Filter>view\model</Filter>
     </QtMoc>
     <QtMoc Include="view\HzDesktopIconView_p.h">
+      <Filter>view</Filter>
+    </QtMoc>
+    <QtMoc Include="view\DesktopViewMgr.h">
       <Filter>view</Filter>
     </QtMoc>
   </ItemGroup>

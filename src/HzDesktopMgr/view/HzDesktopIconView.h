@@ -5,25 +5,16 @@
 #include <memory>
 
 #include "showItem/HzDesktopItemModel.h"
+#include "menu/HzItemMenu.h"
 #include "common/QtpqReimp.h"
 
 QT_BEGIN_NAMESPACE
 class QSortFilterProxyModel;
 class QStandardItemModel;
-class QFileSystemModel;
 QT_END_NAMESPACE
 
-class HzDesktopBlankMenu;
-class HzItemMenu;
 class HzItemDelegate;
 class HzDesktopIconViewPrivate;
-
-enum MenuShowStyle
-{
-	HzStyle,
-	Win10Style,
-	Win11Style
-};
 
 class HzDesktopIconView  
 	: public QAbstractItemView
@@ -35,10 +26,12 @@ public:
 	HzDesktopIconView(QWidget *parent);
 	~HzDesktopIconView();
 
+	const HzDesktopParam& getParam() const {
+		return m_param;
+	}
+
 private:
 	void initSignalAndSlot();
-
-	void updateGridSize();
 
 protected:
 	virtual QRect visualRect(const QModelIndex& index) const;
@@ -81,14 +74,18 @@ protected:
 
 	//void doItemsLayout() override;
 
-
-
 private:
 	QStringList getSelectedPaths();
+
+	void handleLayoutChanged();
 
 	void handleInternalDrop(QDropEvent* e);
 
 	void handleExternalDrop(QDropEvent* e);
+
+	void handleSetIconSizeMode(IconSizeMode mode);
+
+	void handleSetItemSortMode(ItemSortMode mode);
 
 private slots:	// 以下函数处理在界面上的操作
 
@@ -106,29 +103,31 @@ private slots:	// 以下函数处理在界面上的操作
 
 private:
 
-
 	void initItemsPos();
 
 	QVector<QModelIndex> intersectingSet(const QRect& area) const;
 
 	QItemSelection getSelection(const QRect& rect) const;
 
+private:
+
 	QSortFilterProxyModel* m_itemProxyModel;
 	HzDesktopItemModel* m_itemModel;
 	HzItemDelegate* m_itemDelegate;
 
-	MenuShowStyle m_menuShowStyle;
 	HzItemMenu* m_itemMenu;
 	HzDesktopBlankMenu* m_desktopBlankMenu;
 
-private:
+	HzDesktopParam m_param;
 
-	QSize m_gridSize;
+	//QSize m_gridSize;
 
 	int m_maxViewRow;
 	int m_maxViewColumn;
 
 	QRect m_elasticBand;
+
+	bool m_bAutoArrange;
 
 	// QAbstractItemView的下列数据未暴露，故自己实现一个
 	QPoint m_pressedPos;

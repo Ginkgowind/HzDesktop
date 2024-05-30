@@ -626,7 +626,18 @@ void HzDesktopItemModelPrivate::handleFileCreated(QStandardItem* item)
 {
 	HZQ_Q(HzDesktopItemModel);
 
-	q->appendRow(item);
+	// 查找第一个空格设置到该位置，否则就添加到末尾
+	for (int i = 0; i < q->rowCount(); i++) {
+		QStandardItem* tmpItem = q->itemFromIndex(q->index(i, 0));
+		if (!tmpItem->isEnabled()) {
+			q->setItem(i, item);
+			item = nullptr;
+		}
+	}
+
+	if (item) {
+		q->appendRow(item);
+	}
 }
 
 void HzDesktopItemModelPrivate::handleFileDeleted(const QString& filePath)

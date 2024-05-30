@@ -4,8 +4,10 @@
 #include "HzDesktopIconView.h"
 #include "HzSystemTray.h"
 
-class DesktopViewMgr
+class DesktopViewMgr : public QObject
 {
+	Q_OBJECT
+
 public:
 	DesktopViewMgr();
 
@@ -16,4 +18,3 @@ private:
 	HzDesktopIconView* m_desktopIconView = nullptr;
 	HzSystemTray* m_systemTray = nullptr;
 };
-

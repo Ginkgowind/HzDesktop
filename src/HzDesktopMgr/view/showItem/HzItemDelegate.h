@@ -3,6 +3,8 @@
 #include <QStyledItemDelegate>
 #include <QPixmapCache>
 
+#include "config/HzDesktopParam.h"
+
 QT_BEGIN_NAMESPACE
 class QStandardItem;
 QT_END_NAMESPACE
@@ -14,11 +16,6 @@ class HzItemDelegate  : public QStyledItemDelegate
 public:
 	HzItemDelegate(QObject *parent);
 	~HzItemDelegate();
-
-	void setUiParam(
-		const QSize& iconSize,
-		const int iconMargin
-	);
 
 protected:
 	QSize sizeHint(
@@ -38,7 +35,7 @@ protected:
 	//) const override;
 
 private:
-	QStandardItem* getItemFromParam(
+	QStandardItem* getItemFromOption(
 		const QStyleOptionViewItem& option,
 		const QModelIndex& index
 	) const;
@@ -57,6 +54,7 @@ private:
 	// 不用paint传来的painter，会有很多问题
 	QPixmap paintIconText(
 		const QStyleOptionViewItem& option,
+		const HzDesktopParam& param,
 		QStandardItem* item
 	) const;
 
@@ -66,7 +64,4 @@ private:
 	QPainter* m_painter;
 
 	QFontMetrics* m_metrics;
-
-	QSize m_iconSize;
-	int m_iconMargin;
 };

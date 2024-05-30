@@ -2,6 +2,7 @@
 #include <QAbstractItemView>
 
 #include "HzItemDelegate.h"
+#include "../HzDesktopIconView.h"
 #include "HzDesktopItemModel.h"
 #include "windows/UiOperation.h"
 
@@ -30,23 +31,20 @@ HzItemDelegate::~HzItemDelegate()
 	delete m_painter;
 }
 
-void HzItemDelegate::setUiParam(
-	const QSize& iconSize,
-	const int iconMargin
-)
-{
-	m_iconSize = iconSize;
-	m_iconMargin = iconMargin;
-}
 
 QSize HzItemDelegate::sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-	QStandardItem* item = getItemFromParam(option, index);
-	if (!item) {
+	HzDesktopIconView* itemView =
+		qobject_cast<HzDesktopIconView*>(option.styleObject);
+
+	QStandardItem* item = getItemFromOption(option, index);
+	if (!item || !itemView) {
 		return {0, 0};
 	}
 
-	QSize sizeRet = m_iconSize + 2 * QSize(m_iconMargin, m_iconMargin);
+	auto& param = itemView->getParam();
+
+	QSize sizeRet = param.iconSize + 2 * param.iconMargin;
 
 	constexpr int customDeltaHeight = 6;
 	int textHeight = m_metrics->boundingRect(0, 0, sizeRet.width(), sizeRet.height(),
@@ -66,8 +64,11 @@ void HzItemDelegate::paint(
 	const QModelIndex& index
 ) const
 {
-	QStandardItem* item = getItemFromParam(option, index);
-	if (!item || !item->isEnabled()) {
+	HzDesktopIconView* itemView =
+		qobject_cast<HzDesktopIconView*>(option.styleObject);
+
+	QStandardItem* item = getItemFromOption(option, index);
+	if (!itemView || !item || !item->isEnabled()) {
 		return;
 	}
 	
@@ -78,7 +79,7 @@ void HzItemDelegate::paint(
 	QPixmap showPixmap;
 	const QString& path = item->data(HzDesktopItemModel::FilePathRole).toString();
 	if (!m_showPixmapCache.find(path, &showPixmap)) {
-		showPixmap = paintIconText(option, item);
+		showPixmap = paintIconText(option, itemView->getParam(), item);
 		m_showPixmapCache.insert(path, showPixmap);
 	}
 
@@ -92,7 +93,7 @@ void HzItemDelegate::paint(
 //	return nullptr;
 //}
 
-QStandardItem* HzItemDelegate::getItemFromParam(const QStyleOptionViewItem& option, const QModelIndex& index) const
+QStandardItem* HzItemDelegate::getItemFromOption(const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
 	QStandardItem* item = nullptr;
 
@@ -179,6 +180,7 @@ void HzItemDelegate::paintText(
 
 QPixmap HzItemDelegate::paintIconText(
 	const QStyleOptionViewItem& option,
+	const HzDesktopParam& param,
 	QStandardItem* item
 ) const
 {
@@ -190,19 +192,19 @@ QPixmap HzItemDelegate::paintIconText(
 
 	// 绘制icon
 	QRect iconShowRC(
-		QPoint(m_iconMargin, m_iconMargin),
-		m_iconSize
+		QPoint(param.iconMargin.width(), param.iconMargin.height()),
+		param.iconSize
 	);
 	m_painter->drawPixmap(
 		iconShowRC,
-		item->icon().pixmap(m_iconSize)
+		item->icon().pixmap(param.iconSize)
 	);
 
 	// 绘制显示名字
 	m_painter->setPen(Qt::SolidLine);
 
 	QRect textShowRC(
-		QPoint(0, m_iconSize.height() + 2 * m_iconMargin),
+		QPoint(0, param.iconSize.height() + 2 * param.iconMargin.height()),
 		QPoint(option.rect.width(), option.rect.height())
 	);
 
