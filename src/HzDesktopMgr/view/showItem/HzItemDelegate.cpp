@@ -4,6 +4,7 @@
 #include "HzItemDelegate.h"
 #include "../HzDesktopIconView.h"
 #include "HzDesktopItemModel.h"
+#include "HzItemSortProxyModel.h"
 #include "windows/UiOperation.h"
 
 #define FONT_PIXEL_SIZE	16
@@ -77,7 +78,7 @@ void HzItemDelegate::paint(
 	paintBackground(painter, option);
 
 	QPixmap showPixmap;
-	const QString& path = item->data(HzDesktopItemModel::FilePathRole).toString();
+	const QString& path = item->data(CustomRoles::FilePathRole).toString();
 	if (!m_showPixmapCache.find(path, &showPixmap)) {
 		showPixmap = paintIconText(option, itemView->getParam(), item);
 		m_showPixmapCache.insert(path, showPixmap);
@@ -105,13 +106,19 @@ QStandardItem* HzItemDelegate::getItemFromOption(const QStyleOptionViewItem& opt
 			break;
 		}
 		
-		QStandardItemModel* itemModel = 
-			qobject_cast<QStandardItemModel*>(itemView->model());
+		HzItemSortProxyModel* itemProxyModel = 
+			qobject_cast<HzItemSortProxyModel*>(itemView->model());
+		if (!itemProxyModel) {
+			break;
+		}
+
+		HzDesktopItemModel* itemModel =
+			qobject_cast<HzDesktopItemModel*>(itemProxyModel->sourceModel());
 		if (!itemModel) {
 			break;
 		}
 
-		item = itemModel->itemFromIndex(index);
+		item = itemModel->itemFromIndex(itemProxyModel->mapToSource(index));
 	} while (false);
 
 	return item;
@@ -201,19 +208,17 @@ QPixmap HzItemDelegate::paintIconText(
 	);
 
 	// 绘制显示名字
-	m_painter->setPen(Qt::SolidLine);
+	m_painter->setPen(Qt::white);
 
 	QRect textShowRC(
 		QPoint(0, param.iconSize.height() + 2 * param.iconMargin.height()),
 		QPoint(option.rect.width(), option.rect.height())
 	);
 
-	QString showText = item->text();
-
 	m_painter->drawText(
 		textShowRC,
 		s_textFlags,
-		showText
+		item->text()
 	);
 
 	// 绘制结束

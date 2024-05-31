@@ -21,6 +21,8 @@ signals:
 
 protected:
 
+	void paintEvent(QPaintEvent* event) override;
+
 	void mouseDoubleClickEvent(QMouseEvent* event) override;
 
 	void contextMenuEvent(QContextMenuEvent* event) override;

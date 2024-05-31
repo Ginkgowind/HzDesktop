@@ -1,10 +1,12 @@
 #include <QSettings>
 #include <QDir>
+#include <QDateTime>
 #include <shlwapi.h>
 #include <Shlobj.h>
 #include <QtWinExtras/QtWin>
 
 #include "HzDesktopItemModel_p.h"
+#include "config/HzDesktopParam.h"
 #include "windows/tools.h"
 #include "common/CommonTools.h"
 #include "windows/UiOperation.h"
@@ -84,7 +86,7 @@ QStandardItem* DesktopSystemItemWatcher::genQStandardItem(const QString& clsidVa
 	HZ::correctPixmapIfIsInvalid(itemIcon);
 	newItem->setIcon(itemIcon);
 	newItem->setText(getSystemAppDisplayName("::" + clsidValue));
-	newItem->setData("::" + clsidValue, HzDesktopItemModel::FilePathRole);
+	newItem->setData("::" + clsidValue, CustomRoles::FilePathRole);
 	
 	return newItem;
 }
@@ -323,7 +325,8 @@ void DesktopFileItemWatcher::run()
 	DWORD dwNotifyFilter =
 		FILE_NOTIFY_CHANGE_FILE_NAME |
 		FILE_NOTIFY_CHANGE_DIR_NAME |
-		FILE_NOTIFY_CHANGE_ATTRIBUTES;
+		FILE_NOTIFY_CHANGE_ATTRIBUTES |
+		FILE_NOTIFY_CHANGE_LAST_WRITE;
 
 	// 初始化，
 	// 现在有两个init，要整合一下
@@ -479,14 +482,16 @@ void DesktopFileItemWatcher::uninitWatcher()
 QStandardItem* DesktopFileItemWatcher::genQStandardItem(const QFileInfo& fileInfo)
 {
 	QStandardItem* newItem = new QStandardItem();
-
-	QString path = fileInfo.absoluteFilePath();
 	
 	QIcon itemIcon = getUltimateIcon(fileInfo);
 	HZ::correctPixmapIfIsInvalid(itemIcon);
 	newItem->setIcon(itemIcon);
-	newItem->setText(fileInfo.fileName());
-	newItem->setData(fileInfo.absoluteFilePath(), HzDesktopItemModel::FilePathRole);
+	newItem->setText(getFileShowText(fileInfo));
+	newItem->setData(fileInfo.absoluteFilePath(), CustomRoles::FilePathRole);
+	newItem->setData(fileInfo.fileName(), CustomRoles::FileNameRole);
+	newItem->setData(fileInfo.size(), CustomRoles::FileSizeRole);
+	newItem->setData(fileInfo.suffix(), CustomRoles::FileTypeRole);
+	newItem->setData(fileInfo.lastModified(), CustomRoles::FileLastModifiedRole);
 
 	return newItem;
 }
@@ -502,6 +507,25 @@ QIcon DesktopFileItemWatcher::getUltimateIcon(const QFileInfo& fileInfo)
 	}
 
 	return QIcon();
+}
+
+QString DesktopFileItemWatcher::getFileShowText(const QFileInfo& fileInfo)
+{
+	// Qt的QFileInfo::isShortcut 未判断.url后缀
+	bool bIsShortCut
+		= fileInfo.suffix().compare("lnk", Qt::CaseInsensitive) == 0
+		|| fileInfo.suffix().compare("url", Qt::CaseInsensitive) == 0
+		|| fileInfo.suffix().compare("pif", Qt::CaseInsensitive) == 0
+		|| fileInfo.suffix().compare("scf", Qt::CaseInsensitive) == 0;
+
+	// TODO 后续改为读配置
+	bool bShowSuffix = true;
+
+	if (bIsShortCut || !bShowSuffix) {
+		return fileInfo.baseName();
+	}
+
+	return fileInfo.fileName();
 }
 
 void DesktopFileItemWatcher::handleObserveResult(const QString& strWatchDirectory, const FILE_NOTIFY_INFORMATION* pNotification)
@@ -676,7 +700,7 @@ void HzDesktopItemModelPrivate::handleFileRenamed(
 		if (q->filePath(q->index(i, 0)) == oldPath) {
 			QStandardItem* item = q->itemFromIndex(q->index(i, 0));
 			item->setText(newFileName);
-			item->setData(newPath, HzDesktopItemModel::FilePathRole);
+			item->setData(newPath, CustomRoles::FilePathRole);
 			break;
 		}
 	}

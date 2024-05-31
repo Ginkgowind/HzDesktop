@@ -15,6 +15,7 @@ QT_END_NAMESPACE
 
 class HzItemDelegate;
 class HzDesktopIconViewPrivate;
+class HzItemSortProxyModel;
 
 class HzDesktopIconView  
 	: public QAbstractItemView
@@ -52,6 +53,8 @@ protected:
 	virtual int verticalOffset() const { return 0; }
 	virtual void scrollTo(const QModelIndex& index, ScrollHint hint = EnsureVisible) {}
 
+	void resizeEvent(QResizeEvent* event) override;
+
 	bool viewportEvent(QEvent* event) override;
 
 	void mousePressEvent(QMouseEvent* event) override;
@@ -85,7 +88,7 @@ private:
 
 	void handleSetIconSizeMode(IconSizeMode mode);
 
-	void handleSetItemSortMode(ItemSortMode mode);
+	void handleSetItemSortRole(CustomRoles role);
 
 private slots:	// 以下函数处理在界面上的操作
 
@@ -111,7 +114,7 @@ private:
 
 private:
 
-	QSortFilterProxyModel* m_itemProxyModel;
+	HzItemSortProxyModel* m_itemProxyModel;
 	HzDesktopItemModel* m_itemModel;
 	HzItemDelegate* m_itemDelegate;
 
@@ -119,8 +122,6 @@ private:
 	HzDesktopBlankMenu* m_desktopBlankMenu;
 
 	HzDesktopParam m_param;
-
-	//QSize m_gridSize;
 
 	int m_maxViewRow;
 	int m_maxViewColumn;

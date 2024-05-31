@@ -93,6 +93,9 @@
     <ClCompile Include="config\HzDesktopParam.cpp">
       <Filter>config</Filter>
     </ClCompile>
+    <ClCompile Include="view\showItem\HzItemSortProxyModel.cpp">
+      <Filter>view\model</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HzDesktopMgr.h" />
@@ -154,6 +157,9 @@
     </QtMoc>
     <QtMoc Include="view\DesktopViewMgr.h">
       <Filter>view</Filter>
+    </QtMoc>
+    <QtMoc Include="view\showItem\HzItemSortProxyModel.h">
+      <Filter>view\model</Filter>
     </QtMoc>
   </ItemGroup>
 </Project>

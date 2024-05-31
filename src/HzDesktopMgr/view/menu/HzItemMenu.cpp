@@ -89,10 +89,10 @@ HzDesktopBlankMenu::HzDesktopBlankMenu(QObject* parent)
 	viewModeSubMenu->addAction(tr("Show desktop icons"), [this]() {emit onHide(); });
 
 	QMenu* sortBySubMenu = addMenu(tr("Sort by"));
-	sortBySubMenu->addAction(tr("Name"), this, &HzDesktopBlankMenu::setSortMode);
-	sortBySubMenu->addAction(tr("Size"), this, &HzDesktopBlankMenu::setSortMode);
-	sortBySubMenu->addAction(tr("ItemType"), this, &HzDesktopBlankMenu::setSortMode);
-	sortBySubMenu->addAction(tr("DateModified"), this, &HzDesktopBlankMenu::setSortMode);
+	sortBySubMenu->addAction(tr("Name"), [this]() {emit onSetItemSortRole(FileNameRole); });
+	sortBySubMenu->addAction(tr("Size"), [this]() {emit onSetItemSortRole(FileSizeRole); });
+	sortBySubMenu->addAction(tr("ItemType"), [this]() {emit onSetItemSortRole(FileTypeRole); });
+	sortBySubMenu->addAction(tr("DateModified"), [this]() {emit onSetItemSortRole(FileLastModifiedRole); });
 
 	addAction(tr("Refresh"), this, &HzDesktopBlankMenu::OnRefresh);
 }
@@ -102,10 +102,6 @@ HzDesktopBlankMenu::~HzDesktopBlankMenu()
 }
 
 void HzDesktopBlankMenu::switchAutoArrangeIcons()
-{
-}
-
-void HzDesktopBlankMenu::setSortMode()
 {
 }
 

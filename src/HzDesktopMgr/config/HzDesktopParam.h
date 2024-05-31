@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QSize>
+#include <QDateTime>
 
 enum MenuShowStyle
 {
@@ -16,13 +17,12 @@ enum IconSizeMode
 	Small
 };
 
-enum ItemSortMode
-{
-	None,
-	Name,
-	Size,
-	ItemType,
-	DateModified
+enum CustomRoles {
+	FilePathRole = Qt::UserRole + 1,
+	FileNameRole,
+	FileSizeRole,
+	FileTypeRole,
+	FileLastModifiedRole
 };
 
 struct HzDesktopParam

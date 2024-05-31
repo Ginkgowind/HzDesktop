@@ -125,6 +125,7 @@
     <ClCompile Include="view\showItem\HzDesktopItemModel_p.cpp" />
     <ClCompile Include="view\showItem\HzFileItem.cpp" />
     <ClCompile Include="view\showItem\HzItemDelegate.cpp" />
+    <ClCompile Include="view\showItem\HzItemSortProxyModel.cpp" />
     <ClCompile Include="view\showItem\HzItemTextEditor.cpp" />
     <ClInclude Include="..\..\include\common\CommonTools.h" />
     <ClInclude Include="..\..\include\common\QtpqReimp.h" />
@@ -133,6 +134,7 @@
     <ClInclude Include="..\..\include\windows\FileInfoGather.h" />
     <ClInclude Include="..\..\include\windows\tools.h" />
     <ClInclude Include="..\..\include\windows\UiOperation.h" />
+    <QtMoc Include="view\showItem\HzItemSortProxyModel.h" />
     <QtMoc Include="view\DesktopViewMgr.h" />
     <QtMoc Include="view\showItem\HzItemTextEditor.h" />
     <QtMoc Include="view\showItem\HzItemDelegate.h" />

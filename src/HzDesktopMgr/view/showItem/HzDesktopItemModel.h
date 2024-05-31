@@ -14,12 +14,15 @@ class HzDesktopItemModel
 	Q_OBJECT
 
 public:
-	enum Roles {
-		FilePathRole = Qt::UserRole + 1
-	};
-
+	
 	HzDesktopItemModel(QObject *parent);
 	~HzDesktopItemModel();
+
+	QString name(const QModelIndex& index) const;
+	qint64 size(const QModelIndex& index) const;
+	QString type(const QModelIndex& index) const;
+	QDateTime lastModified(const QModelIndex& index) const;
+	QString filePath(const QModelIndex& index) const;
 
 public:
 	void refreshItems();
@@ -27,8 +30,6 @@ public:
 	// 会自动消除占位符的插入函数
 	void insertItems(int row, const QList<QStandardItem*>& items);
 
-public:
-	QString filePath(const QModelIndex& index) const;
 
 protected:
 

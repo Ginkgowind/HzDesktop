@@ -21,6 +21,7 @@
 #include "HzDesktopIconView_p.h"
 #include "showItem/HzItemDelegate.h"
 #include "showItem/HzFileItem.h"
+#include "showItem/HzItemSortProxyModel.h"
 #include "windows/UiOperation.h"
 #include "windows/tools.h"
 
@@ -31,17 +32,14 @@ HzDesktopIconView::HzDesktopIconView(QWidget *parent)
 	, HzDesktopPublic(new HzDesktopIconViewPrivate())
 	, m_ctrlDragSelectionFlag(QItemSelectionModel::NoUpdate)
 {
-	setFixedSize(1200, 800);
-
 	m_desktopBlankMenu = new HzDesktopBlankMenu(this);
 
-	//m_itemProxyModel = new QSortFilterProxyModel(this);
-	//m_itemModel = new HzDesktopItemModel(m_itemProxyModel);
-	//m_itemProxyModel->setSourceModel(m_itemModel);
-	//setModel(m_itemProxyModel);
-
-	m_itemModel = new HzDesktopItemModel(this);
-	setModel(m_itemModel);
+	m_itemProxyModel = new HzItemSortProxyModel(this);
+	// TODO 动态设置
+	m_itemProxyModel->setDynamicSortFilter(false);
+	m_itemModel = new HzDesktopItemModel(m_itemProxyModel);
+	m_itemProxyModel->setSourceModel(m_itemModel);
+	setModel(m_itemProxyModel);
 
 	m_itemDelegate = new HzItemDelegate(this);
 	setItemDelegate(m_itemDelegate);
@@ -50,8 +48,8 @@ HzDesktopIconView::HzDesktopIconView(QWidget *parent)
 
 	//setDropIndicatorShown(true); // 显示拖放位置指示器
 
-	//setStyleSheet("QAbstractItemView {background-color: transparent;}");
-	//setAttribute(Qt::WA_TranslucentBackground, true);
+	setStyleSheet("QAbstractItemView {background-color: transparent;}");
+	setAttribute(Qt::WA_TranslucentBackground, true);
 	//setWindowFlags(Qt::Tool | Qt::FramelessWindowHint);
 
 	setDragEnabled(true);
@@ -126,8 +124,8 @@ void HzDesktopIconView::initSignalAndSlot()
 	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::onHide, [this]() {setVisible(false); });
 	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::onSetIconSizeMode,
 		this, &HzDesktopIconView::handleSetIconSizeMode);
-	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::onSetItemSortMode,
-		this, &HzDesktopIconView::handleSetItemSortMode);
+	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::onSetItemSortRole,
+		this, &HzDesktopIconView::handleSetItemSortRole);
 }
 
 QRect HzDesktopIconView::visualRect(const QModelIndex& index) const
@@ -227,7 +225,15 @@ QRegion HzDesktopIconView::visualRegionForSelection(const QItemSelection& select
 
 bool HzDesktopIconView::isIndexHidden(const QModelIndex& index) const
 {
+	//const QModelIndex sourceIndex = m_
 	return !m_itemModel->item(index.row())->isEnabled();
+}
+
+void HzDesktopIconView::resizeEvent(QResizeEvent* event)
+{
+	handleLayoutChanged();
+
+	QAbstractItemView::resizeEvent(event);
 }
 
 bool HzDesktopIconView::viewportEvent(QEvent* event)
@@ -442,7 +448,7 @@ QStringList HzDesktopIconView::getSelectedPaths()
 	// TODO 了解此处直接调用函数与复制变量，有什么区别？
 	QModelIndexList indexList = selectedIndexes();
 	for (const QModelIndex& index : indexList) {
-		pathList.append(m_itemModel->filePath(index));
+		pathList.append(m_itemProxyModel->filePath(index));
 	}
 		
 	return pathList;
@@ -492,15 +498,27 @@ void HzDesktopIconView::handleSetIconSizeMode(IconSizeMode mode)
 	update();
 }
 
-void HzDesktopIconView::handleSetItemSortMode(ItemSortMode mode)
+void HzDesktopIconView::handleSetItemSortRole(CustomRoles role)
 {
+	// 触发排序时，先删除掉所有的占位item
+	for (int i = 0; i < m_itemModel->rowCount(); ) {
+		if (!m_itemModel->item(i)->isEnabled()) {
+			m_itemModel->removeRow(i);
+		}
+		else {
+			i++;
+		}
+	}
+
+	m_itemProxyModel->setSortRole(role);
+	m_itemProxyModel->sort(0);
 }
 
 void HzDesktopIconView::onOpen()
 {
 	QModelIndexList indexList = selectedIndexes();
 	for (const QModelIndex& aindex : indexList) {
-		QDesktopServices::openUrl(QUrl::fromLocalFile(m_itemModel->filePath(aindex)));
+		QDesktopServices::openUrl(QUrl::fromLocalFile(m_itemProxyModel->filePath(aindex)));
 	}
 }
 
@@ -511,7 +529,7 @@ void HzDesktopIconView::onCopy()
 	QModelIndexList indexList = selectedIndexes();
 
 	for (const QModelIndex& index : indexList) {
-		urls.append(QUrl::fromLocalFile(m_itemModel->filePath(index)));
+		urls.append(QUrl::fromLocalFile(m_itemProxyModel->filePath(index)));
 	}
 
 	mimeData->setUrls(urls);
@@ -531,7 +549,7 @@ void HzDesktopIconView::onCut()
 	QModelIndexList indexList = selectedIndexes();
 
 	for (const QModelIndex& index : indexList) {
-		urls.append(QUrl::fromLocalFile(m_itemModel->filePath(index)));
+		urls.append(QUrl::fromLocalFile(m_itemProxyModel->filePath(index)));
 	}
 
 	mimeData->setUrls(urls);
@@ -593,7 +611,7 @@ void HzDesktopIconView::onDelete()
 		SHFILEOPSTRUCTA fileOp = { 0 };
 		fileOp.hwnd = NULL;
 		fileOp.wFunc = FO_DELETE; ///> 文件删除操作
-		fileOp.pFrom = StrDupA(m_itemModel->filePath(index).toStdString().c_str());
+		fileOp.pFrom = StrDupA(m_itemProxyModel->filePath(index).toStdString().c_str());
 		fileOp.pTo = NULL;
 		fileOp.fFlags = dwOpFlags;
 		fileOp.hNameMappings = NULL;

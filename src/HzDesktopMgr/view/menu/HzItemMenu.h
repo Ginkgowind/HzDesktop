@@ -48,7 +48,7 @@ public:
 signals:
 	void onSetIconSizeMode(IconSizeMode mode);
 
-	void onSetItemSortMode(ItemSortMode mode);
+	void onSetItemSortRole(CustomRoles role);
 
 	void onHide();
 
