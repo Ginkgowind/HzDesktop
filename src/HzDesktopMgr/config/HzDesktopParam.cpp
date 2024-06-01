@@ -5,25 +5,32 @@
 HzDesktopParam::HzDesktopParam()
 	: iconMargin(5, 5)
 	, itemSpaceSize(10, 20)
+	, bEnableDoubleClick(true)
+	, bAutoArrange(false)
+	, iconMode(MediumIcon)
+	, sortRole(FileNameRole)
+	, sortOrder(Qt::AscendingOrder)
 {
-	setIconSizeMode(Medium);
+	setIconSizeMode(iconMode);
 }
 
 void HzDesktopParam::setIconSizeMode(IconSizeMode mode)
 {
 	switch (mode)
 	{
-	case Small:
+	case SmallIcon:
 		iconSize = { 64, 64 };
 		break;
-	case Medium:
+	case MediumIcon:
 		iconSize = { 90, 90 };
 		break;
-	case Large:
+	case LargeIcon:
 	default:
 		iconSize = { 108, 108 };
 		break;
 	}
+
+	iconMode = mode;
 
 	updateGridSize();
 }

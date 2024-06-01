@@ -77,35 +77,85 @@ void HzItemMenu::onExplorerMenu()
 //	break;
 //}
 
-HzDesktopBlankMenu::HzDesktopBlankMenu(QObject* parent)
+HzDesktopBlankMenu::HzDesktopBlankMenu(QWidget* parent, HzDesktopParam* param)
+	: QMenu(parent)
+	, m_param(param)
 {
-	QMenu* viewModeSubMenu = addMenu(tr("View"));
-	viewModeSubMenu->addAction(tr("Large icons"), [this]() {emit onSetIconSizeMode(Large); });
-	viewModeSubMenu->addAction(tr("Medium icons"), [this]() {emit onSetIconSizeMode(Medium); });
-	viewModeSubMenu->addAction(tr("Small icons"), [this]() {emit onSetIconSizeMode(Small); });
-	viewModeSubMenu->addSeparator();
-	viewModeSubMenu->addAction(tr("Auto arrange icons"), this, &HzDesktopBlankMenu::switchAutoArrangeIcons);
-	viewModeSubMenu->addSeparator();
-	viewModeSubMenu->addAction(tr("Show desktop icons"), [this]() {emit onHide(); });
+	initViewSubMenu();
 
-	QMenu* sortBySubMenu = addMenu(tr("Sort by"));
-	sortBySubMenu->addAction(tr("Name"), [this]() {emit onSetItemSortRole(FileNameRole); });
-	sortBySubMenu->addAction(tr("Size"), [this]() {emit onSetItemSortRole(FileSizeRole); });
-	sortBySubMenu->addAction(tr("ItemType"), [this]() {emit onSetItemSortRole(FileTypeRole); });
-	sortBySubMenu->addAction(tr("DateModified"), [this]() {emit onSetItemSortRole(FileLastModifiedRole); });
+	initSortSubMenu();
 
-	addAction(tr("Refresh"), this, &HzDesktopBlankMenu::OnRefresh);
+	addAction(tr("Refresh"), this, [this]() {emit refreshDesktop(); });
 }
 
 HzDesktopBlankMenu::~HzDesktopBlankMenu()
 {
 }
 
-void HzDesktopBlankMenu::switchAutoArrangeIcons()
+void HzDesktopBlankMenu::initViewSubMenu()
 {
+	QActionGroup* viewModeGroup = new QActionGroup(this);
+	QMenu* viewModeSubMenu = addMenu(tr("View"));
+
+	QAction* largeIcon = viewModeSubMenu->addAction(
+		tr("Large icons"), [this]() {emit onSetIconSizeMode(LargeIcon); });
+	QAction* mediumIcon = viewModeSubMenu->addAction(
+		tr("Medium icons"), [this]() {emit onSetIconSizeMode(MediumIcon); });
+	QAction* smallIcon = viewModeSubMenu->addAction(
+		tr("Small icons"), [this]() {emit onSetIconSizeMode(SmallIcon); });
+
+	viewModeGroup->addAction(largeIcon)->setCheckable(true);
+	viewModeGroup->addAction(mediumIcon)->setCheckable(true);
+	viewModeGroup->addAction(smallIcon)->setCheckable(true);
+
+	largeIcon->setChecked(m_param->iconMode == LargeIcon);
+	mediumIcon->setChecked(m_param->iconMode == MediumIcon);
+	smallIcon->setChecked(m_param->iconMode == SmallIcon);
+
+	viewModeSubMenu->addSeparator();
+
+	QAction* autoArrange = viewModeSubMenu->addAction(tr("Auto arrange icons"),
+		[this]() {emit switchAutoArrangeStatus(); });
+	autoArrange->setCheckable(true);
+	autoArrange->setChecked(m_param->bAutoArrange);
+
+	viewModeSubMenu->addSeparator();
+
+	QAction* enableDoubleClick = viewModeSubMenu->addAction(tr("Double click hide desktop"),
+		[this]() {emit switchDoubleClickStatus(); });
+	enableDoubleClick->setCheckable(true);
+	enableDoubleClick->setChecked(m_param->bEnableDoubleClick);
+
+	// 这个要保持选中状态
+	QAction* action = viewModeSubMenu->addAction(tr("Show desktop"));
+	action->setCheckable(true);
+	action->setChecked(true);
+	connect(action, &QAction::triggered,
+		[this, action]() {emit onHide(); action->setChecked(true); });
 }
 
-void HzDesktopBlankMenu::OnRefresh()
+void HzDesktopBlankMenu::initSortSubMenu()
 {
-	emit refreshDesktopItemsSignal();
+	QActionGroup* sortModeGroup = new QActionGroup(this);
+	QMenu* sortModeSubMenu = addMenu(tr("Sort by"));
+	QAction* sortByName = sortModeSubMenu->addAction(tr("Name"),
+		[this]() {emit onSetItemSortRole(FileNameRole); });
+	QAction* sortBySize = sortModeSubMenu->addAction(tr("Size"),
+		[this]() {emit onSetItemSortRole(FileSizeRole); });
+	QAction* sortByType = sortModeSubMenu->addAction(tr("ItemType"),
+		[this]() {emit onSetItemSortRole(FileTypeRole); });
+	QAction* sortByTime = sortModeSubMenu->addAction(tr("DateModified"),
+		[this]() {emit onSetItemSortRole(FileLastModifiedRole); });
+
+	sortModeGroup->addAction(sortByName)->setCheckable(true);
+	sortModeGroup->addAction(sortBySize)->setCheckable(true);
+	sortModeGroup->addAction(sortByType)->setCheckable(true);
+	sortModeGroup->addAction(sortByTime)->setCheckable(true);
+
+	if (m_param->bAutoArrange) {
+		sortByName->setChecked(m_param->sortRole == FileNameRole);
+		sortBySize->setChecked(m_param->sortRole == FileSizeRole);
+		sortByType->setChecked(m_param->sortRole == FileTypeRole);
+		sortByTime->setChecked(m_param->sortRole == FileLastModifiedRole);
+	}
 }

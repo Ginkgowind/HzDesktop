@@ -1,21 +1,15 @@
 #include <QSortFilterProxyModel>
 #include <QStandardItemModel>
-#include <QMouseEvent>
-#include <QMimeData>
-#include <QDrag>
-#include <QUrl>
-#include <QMenu>
-#include <QDebug>
-#include <QPainter>
-#include <QApplication>
-#include <QClipboard>
-#include <QShortcut>
 #include <QDesktopServices>
-#include <windows.h>
-#include <shellapi.h>
-#include <shlwapi.h>
-
-#include <QFileSystemModel>
+#include <QMouseEvent>
+#include <QApplication>
+#include <QShortcut>
+#include <QMimeData>
+#include <QPainter>
+#include <QDrag>
+#include <QMenu>
+#include <QUrl>
+#include <QDebug>
 
 #include "HzDesktopIconView.h"
 #include "HzDesktopIconView_p.h"
@@ -32,9 +26,9 @@ HzDesktopIconView::HzDesktopIconView(QWidget *parent)
 	, HzDesktopPublic(new HzDesktopIconViewPrivate())
 	, m_ctrlDragSelectionFlag(QItemSelectionModel::NoUpdate)
 {
-	m_desktopBlankMenu = new HzDesktopBlankMenu(this);
+	m_desktopBlankMenu = new HzDesktopBlankMenu(this, &m_param);
 
-	m_itemProxyModel = new HzItemSortProxyModel(this);
+	m_itemProxyModel = new HzItemSortProxyModel(this, &m_param);
 	// TODO 动态设置
 	m_itemProxyModel->setDynamicSortFilter(false);
 	m_itemModel = new HzDesktopItemModel(m_itemProxyModel);
@@ -60,9 +54,6 @@ HzDesktopIconView::HzDesktopIconView(QWidget *parent)
 
 	setEditTriggers(EditKeyPressed);
 
-	//connect(m_desktopBlankMenu, &HzDesktopBlankMenu::refreshDesktopItemsSignal,
-	//	m_itemModel, &HzDesktopItemModel::refreshItems);
-
 	initSignalAndSlot();
 
 	handleLayoutChanged();
@@ -75,57 +66,69 @@ HzDesktopIconView::~HzDesktopIconView()
 
 void HzDesktopIconView::initSignalAndSlot()
 {
-	// TODO 为什么使用SLOT宏时，函数必须要用slots来声明？
+	HZQ_D(HzDesktopIconView);
 
 	// 复制，默认为Ctrl + C
-	new QShortcut(QKeySequence(QKeySequence::Copy), this,
-		SLOT(onCopy()), nullptr, Qt::WidgetWithChildrenShortcut);
-
-	// 粘贴， 默认为Ctrl + V
-	new QShortcut(QKeySequence::Paste, this, 
-		SLOT(onPaste()), nullptr, Qt::WindowShortcut);
+	connect(new QShortcut(QKeySequence::Copy, this), &QShortcut::activated, 
+		d, &HzDesktopIconViewPrivate::handleCopy);
 
 	// 剪切， 默认为Ctrl + X
-	new QShortcut(QKeySequence(QKeySequence::Cut), this, 
-		SLOT(onCut()), nullptr, Qt::WidgetWithChildrenShortcut);
+	connect(new QShortcut(QKeySequence::Cut, this), &QShortcut::activated,
+		d, &HzDesktopIconViewPrivate::handleCut);
+
+	// 粘贴， 默认为Ctrl + V
+	connect(new QShortcut(QKeySequence::Paste, this), &QShortcut::activated,
+		d, &HzDesktopIconViewPrivate::handlePaste);
 
 	// 全选， 默认为Ctrl + A
 	/*QShortcut* pSelectAllShorcut = new QShortcut(QKeySequence(QKeySequence::SelectAll),
 		this, SLOT(handleSelectAll()), nullptr, Qt::WidgetWithChildrenShortcut);*/
 
 	// 删除， 默认为Delete
-	new QShortcut(QKeySequence(QKeySequence::Delete), this, 
-		SLOT(onDelete()), nullptr, Qt::WidgetWithChildrenShortcut);
-	new QShortcut(QKeySequence("Ctrl+D"), this,
-		SLOT(onDelete()), nullptr, Qt::WidgetWithChildrenShortcut);
+	connect(new QShortcut(QKeySequence::Delete, this), &QShortcut::activated,
+		d, &HzDesktopIconViewPrivate::handleDelete);
+	connect(new QShortcut(QKeySequence("Ctrl+D"), this), &QShortcut::activated,
+		d, &HzDesktopIconViewPrivate::handleDelete);
 
 	// 刷新，默认为F5
 	//new QShortcut(QKeySequence(QKeySequence::Refresh),
 	//	this, SLOT(handleRefreshFile()), nullptr, Qt::WidgetWithChildrenShortcut);
 
 	// 重命名，F2
-	new QShortcut(QKeySequence(Qt::Key_F2),
-		this, SLOT(onRename()), nullptr, Qt::WidgetWithChildrenShortcut);
+	connect(new QShortcut(QKeySequence(Qt::Key_F2), this), &QShortcut::activated,
+		d, &HzDesktopIconViewPrivate::handleRename);
 
 	// 打开选中文件， Enter
-	new QShortcut(QKeySequence(Qt::Key_Return), this, 
-		SLOT(onOpen()), nullptr, Qt::WidgetWithChildrenShortcut);
-	new QShortcut(QKeySequence(Qt::Key_Enter), this, 
-		SLOT(onOpen()), nullptr, Qt::WidgetWithChildrenShortcut);
+	connect(new QShortcut(QKeySequence(Qt::Key_Return), this), &QShortcut::activated,
+		d, &HzDesktopIconViewPrivate::handleOpen);
+	connect(new QShortcut(QKeySequence(Qt::Key_Enter), this), &QShortcut::activated,
+		d, &HzDesktopIconViewPrivate::handleOpen);
 
 	// item右键菜单
-	connect(m_itemMenu, &HzItemMenu::onOpen, this, &HzDesktopIconView::onOpen);
-	connect(m_itemMenu, &HzItemMenu::onCopy, this, &HzDesktopIconView::onCopy);
-	connect(m_itemMenu, &HzItemMenu::onCut, this, &HzDesktopIconView::onCut);
-	connect(m_itemMenu, &HzItemMenu::onDelete, this, &HzDesktopIconView::onDelete);
-	connect(m_itemMenu, &HzItemMenu::onRename, this, &HzDesktopIconView::onRename);
+	connect(m_itemMenu, &HzItemMenu::onOpen, d, &HzDesktopIconViewPrivate::handleOpen);
+	connect(m_itemMenu, &HzItemMenu::onCopy, d, &HzDesktopIconViewPrivate::handleCopy);
+	connect(m_itemMenu, &HzItemMenu::onCut, d, &HzDesktopIconViewPrivate::handleCut);
+	connect(m_itemMenu, &HzItemMenu::onDelete, d, &HzDesktopIconViewPrivate::handleDelete);
+	connect(m_itemMenu, &HzItemMenu::onRename, d, &HzDesktopIconViewPrivate::handleRename);
 
 	// 空白处右键菜单
-	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::onHide, [this]() {setVisible(false); });
 	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::onSetIconSizeMode,
 		this, &HzDesktopIconView::handleSetIconSizeMode);
 	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::onSetItemSortRole,
 		this, &HzDesktopIconView::handleSetItemSortRole);
+	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::switchAutoArrangeStatus,
+		this, &HzDesktopIconView::handleSwitchAutoArrangeStatus);
+	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::switchDoubleClickStatus,
+		[this]() {m_param.bEnableDoubleClick = !m_param.bEnableDoubleClick; });
+	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::onHide, [this]() {setVisible(false); });
+
+	//connect(m_desktopBlankMenu, &HzDesktopBlankMenu::refreshDesktopItemsSignal,
+	//	m_itemModel, &HzDesktopItemModel::refreshItems);
+
+	//connect(m_itemModel, &QStandardItemModel::itemChanged,
+	//	[this](QStandardItem* item) {
+	//		qDebug() << item->data(FilePathRole);
+	//	});
 }
 
 QRect HzDesktopIconView::visualRect(const QModelIndex& index) const
@@ -320,12 +323,16 @@ void HzDesktopIconView::mouseReleaseEvent(QMouseEvent* e)
 
 void HzDesktopIconView::mouseDoubleClickEvent(QMouseEvent* event)
 {
+	HZQ_D(HzDesktopIconView);
+
 	if (selectedIndexes().empty()) {
 		// 隐藏桌面
-		setVisible(false);
+		if (m_param.bEnableDoubleClick) {
+			setVisible(false);
+		}
 	}
 	else {
-		onOpen();
+		d->handleOpen();
 	}
 }
 
@@ -501,136 +508,38 @@ void HzDesktopIconView::handleSetIconSizeMode(IconSizeMode mode)
 void HzDesktopIconView::handleSetItemSortRole(CustomRoles role)
 {
 	// 触发排序时，先删除掉所有的占位item
-	for (int i = 0; i < m_itemModel->rowCount(); ) {
-		if (!m_itemModel->item(i)->isEnabled()) {
-			m_itemModel->removeRow(i);
-		}
-		else {
-			i++;
-		}
+	m_itemModel->removeAllDisableItem();
+
+	// 如果设置的role相同，就取反排序顺序
+	if (m_param.sortRole == role) {
+		m_param.sortOrder = (m_param.sortOrder == Qt::AscendingOrder ?
+			Qt::DescendingOrder : Qt::AscendingOrder);
 	}
+
+	m_param.sortRole = role;
 
 	m_itemProxyModel->setSortRole(role);
-	m_itemProxyModel->sort(0);
+	m_itemProxyModel->sort(0, m_param.sortOrder);
 }
 
-void HzDesktopIconView::onOpen()
+void HzDesktopIconView::handleSwitchAutoArrangeStatus()
 {
-	QModelIndexList indexList = selectedIndexes();
-	for (const QModelIndex& aindex : indexList) {
-		QDesktopServices::openUrl(QUrl::fromLocalFile(m_itemProxyModel->filePath(aindex)));
+	if (m_param.bAutoArrange) {
+		m_itemProxyModel->setDynamicSortFilter(false);
 	}
+	else {
+		m_itemModel->removeAllDisableItem();
+
+		m_itemProxyModel->setDynamicSortFilter(true);
+		m_itemProxyModel->sort(0, m_param.sortOrder);
+	}
+
+	m_param.bAutoArrange = !m_param.bAutoArrange;
 }
 
-void HzDesktopIconView::onCopy()
+bool HzDesktopIconView::isAutoArrange()
 {
-	QMimeData* mimeData = new QMimeData;
-	QList<QUrl> urls;
-	QModelIndexList indexList = selectedIndexes();
-
-	for (const QModelIndex& index : indexList) {
-		urls.append(QUrl::fromLocalFile(m_itemProxyModel->filePath(index)));
-	}
-
-	mimeData->setUrls(urls);
-	int dropEffect = 5; // 2 for cut and 5 for copy
-	QByteArray data;
-	QDataStream stream(&data, QIODevice::WriteOnly);
-	stream.setByteOrder(QDataStream::LittleEndian);
-	stream << dropEffect;
-	mimeData->setData("Preferred DropEffect", data);
-	QApplication::clipboard()->setMimeData(mimeData);
-}
-
-void HzDesktopIconView::onCut()
-{
-	QMimeData* mimeData = new QMimeData;
-	QList<QUrl> urls;
-	QModelIndexList indexList = selectedIndexes();
-
-	for (const QModelIndex& index : indexList) {
-		urls.append(QUrl::fromLocalFile(m_itemProxyModel->filePath(index)));
-	}
-
-	mimeData->setUrls(urls);
-	int dropEffect = 2; // 2 for cut and 5 for copy
-	QByteArray data;
-	QDataStream stream(&data, QIODevice::WriteOnly);
-	stream.setByteOrder(QDataStream::LittleEndian);
-	stream << dropEffect;
-	mimeData->setData("Preferred DropEffect", data);
-	QApplication::clipboard()->setMimeData(mimeData);
-}
-
-void HzDesktopIconView::onPaste()
-{
-	QString desktopPath = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
-
-	const QMimeData* mimeData = QApplication::clipboard()->mimeData();
-	if (!mimeData->hasUrls() ||
-		!mimeData->hasFormat("Preferred DropEffect")) {
-		return;
-	}
-
-	int dropEffect = 0;
-	QByteArray data = mimeData->data("Preferred DropEffect");
-	QDataStream stream(&data, QIODevice::ReadOnly);
-	stream.setByteOrder(QDataStream::LittleEndian);
-	stream >> dropEffect;
-	QList<QUrl> urls = mimeData->urls();
-	if (dropEffect != 2 && dropEffect != 5) return;
-	QStringList srcs;
-	for (QUrl url : urls) {
-		if (!url.isLocalFile()) continue;
-		srcs << url.toLocalFile();
-	}
-	if (dropEffect == 2) QApplication::clipboard()->clear();
-
-	for (QString src : srcs) {
-		QFileInfo srcFileInfo(src);
-		QFileInfo dstFileInfo(QDir(desktopPath), srcFileInfo.fileName());
-		if (srcFileInfo.isFile()) {
-			// TODO 暂时先不处理这个，先处理拖拽的逻辑
-			// 考虑到格子的实现，这些可能要放到公用里
-			//CopySingleFile(src, dstFileInfo.absoluteFilePath(), move);
-		}
-		else {
-			//CopyDir(src, dstFileInfo.absoluteFilePath(), move);
-		}
-	}
-	//if (inNetwork()) onRefresh();    //由于性能的原因，网络文件的增删不会被Model感知，需要手动刷新
-}
-
-void HzDesktopIconView::onDelete()
-{
-	QModelIndexList indexList = selectedIndexes();
-
-	for (const QModelIndex& index : indexList) {
-		FILEOP_FLAGS dwOpFlags = FOF_ALLOWUNDO | FOF_NO_UI;
-
-		SHFILEOPSTRUCTA fileOp = { 0 };
-		fileOp.hwnd = NULL;
-		fileOp.wFunc = FO_DELETE; ///> 文件删除操作
-		fileOp.pFrom = StrDupA(m_itemProxyModel->filePath(index).toStdString().c_str());
-		fileOp.pTo = NULL;
-		fileOp.fFlags = dwOpFlags;
-		fileOp.hNameMappings = NULL;
-		fileOp.lpszProgressTitle = "hz delete file";
-
-		SHFileOperationA(&fileOp);
-	}
-}
-
-void HzDesktopIconView::onRename()
-{
-}
-
-void HzDesktopIconView::initItemsPos()
-{
-	int rowCount = model()->rowCount();
-	for (int i = 0; i < rowCount; ++i) {
-
-	}
+	return m_itemProxyModel->dynamicSortFilter();
 }
 
 QVector<QModelIndex> HzDesktopIconView::intersectingSet(const QRect& area) const

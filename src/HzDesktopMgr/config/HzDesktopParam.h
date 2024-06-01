@@ -12,9 +12,9 @@ enum MenuShowStyle
 
 enum IconSizeMode
 {
-	Large,
-	Medium,
-	Small
+	LargeIcon,
+	MediumIcon,
+	SmallIcon
 };
 
 enum CustomRoles {
@@ -37,6 +37,16 @@ private:
 	void updateGridSize();
 
 public:
+	bool bEnableDoubleClick;
+
+	bool bAutoArrange;
+
+	IconSizeMode iconMode;
+
+	CustomRoles sortRole;
+
+	Qt::SortOrder sortOrder;
+
 	MenuShowStyle menuShowStyle;
 
 	QSize iconSize;

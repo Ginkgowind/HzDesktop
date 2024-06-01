@@ -208,7 +208,7 @@ QPixmap HzItemDelegate::paintIconText(
 	);
 
 	// »æÖÆÏÔÊ¾Ãû×Ö
-	m_painter->setPen(Qt::white);
+	//m_painter->setPen(Qt::white);
 
 	QRect textShowRC(
 		QPoint(0, param.iconSize.height() + 2 * param.iconMargin.height()),

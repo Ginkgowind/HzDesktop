@@ -2,9 +2,26 @@
 #include "HzDesktopItemModel.h"
 #include "config/HzDesktopParam.h"
 
-HzItemSortProxyModel::HzItemSortProxyModel(QObject *parent)
+HzItemSortProxyModel::HzItemSortProxyModel(QObject *parent, HzDesktopParam* param)
 	: QSortFilterProxyModel(parent)
-{}
+	, m_param(param)
+{
+	connect(this, &QSortFilterProxyModel::sourceModelChanged, [this]() {
+		HzDesktopItemModel* itemModel = qobject_cast<HzDesktopItemModel*>(sourceModel());
+		if (!itemModel) {
+			return;
+		}
+
+		itemModel->removeAllDisableItem();
+
+		setSortRole(m_param->sortRole);
+		setDynamicSortFilter(m_param->bAutoArrange);
+
+		if (m_param->bAutoArrange) {
+			sort(0, m_param->sortOrder);
+		}
+	});
+}
 
 HzItemSortProxyModel::~HzItemSortProxyModel()
 {}

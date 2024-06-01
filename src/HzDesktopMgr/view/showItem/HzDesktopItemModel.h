@@ -18,6 +18,8 @@ public:
 	HzDesktopItemModel(QObject *parent);
 	~HzDesktopItemModel();
 
+	void removeAllDisableItem();
+
 	QString name(const QModelIndex& index) const;
 	qint64 size(const QModelIndex& index) const;
 	QString type(const QModelIndex& index) const;

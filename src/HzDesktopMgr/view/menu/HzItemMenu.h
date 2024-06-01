@@ -42,23 +42,39 @@ class HzDesktopBlankMenu : public QMenu
 	Q_OBJECT
 
 public:
-	explicit HzDesktopBlankMenu(QObject* parent);
+	explicit HzDesktopBlankMenu(QWidget* parent, HzDesktopParam* param);
 	~HzDesktopBlankMenu();
+
+private:
+	void initViewSubMenu();
+
+	void initSortSubMenu();
 
 signals:
 	void onSetIconSizeMode(IconSizeMode mode);
 
 	void onSetItemSortRole(CustomRoles role);
 
+	void switchAutoArrangeStatus();
+
+	void switchDoubleClickStatus();
+
 	void onHide();
 
-	void refreshDesktopItemsSignal();
+	void refreshDesktop();
 
 private:
 
-	void switchAutoArrangeIcons();
+	HzDesktopParam* m_param;
 
-	void setSortMode();
-
-	void OnRefresh();
+	//QAction* m_largeIcon;
+	//QAction* m_mediumIcon;
+	//QAction* m_smallIcon;
+	//QAction* m_autoArrange;
+	//QAction* m_doubleClickHide;
+	//QAction* m_showDesktop;
+	//QAction* m_sortByName;
+	//QAction* m_sortBySize;
+	//QAction* m_sortByType;
+	//QAction* m_sortByTime;
 };

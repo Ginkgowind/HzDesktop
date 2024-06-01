@@ -90,23 +90,11 @@ private:
 
 	void handleSetItemSortRole(CustomRoles role);
 
-private slots:	// 以下函数处理在界面上的操作
-
-	void onOpen();
-
-	void onCopy();
-
-	void onCut();
-
-	void onPaste();
-
-	void onDelete();
-
-	void onRename();
+	void handleSwitchAutoArrangeStatus();
 
 private:
 
-	void initItemsPos();
+	bool isAutoArrange();
 
 	QVector<QModelIndex> intersectingSet(const QRect& area) const;
 
@@ -127,8 +115,6 @@ private:
 	int m_maxViewColumn;
 
 	QRect m_elasticBand;
-
-	bool m_bAutoArrange;
 
 	// QAbstractItemView的下列数据未暴露，故自己实现一个
 	QPoint m_pressedPos;

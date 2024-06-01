@@ -7,9 +7,9 @@
 DesktopBackgroundView::DesktopBackgroundView()
 	: m_menu(nullptr)
 {
-	setWindowFlags(Qt::Tool | Qt::FramelessWindowHint);
+	//setWindowFlags(Qt::Tool | Qt::FramelessWindowHint);
 
-	setAttribute(Qt::WA_TranslucentBackground, true);
+	//setAttribute(Qt::WA_TranslucentBackground, true);
 	// TODO 单独设置下面这个为什么会变黑
 	//setStyleSheet("background: transparent;");
 }

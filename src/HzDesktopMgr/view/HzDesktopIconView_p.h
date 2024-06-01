@@ -16,4 +16,15 @@ public:
 	~HzDesktopIconViewPrivate();
 
 private:
+	void handleOpen();
+
+	void handleCopy();
+
+	void handleCut();
+
+	void handlePaste();
+
+	void handleDelete();
+
+	void handleRename();
 };

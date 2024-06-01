@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QObject>
+#include <QWidget>
 
 /*
  * Qt源码里的p、q指针，在QObject的构造函数中需要是
@@ -8,7 +9,7 @@
  */
 class HzDesktopPublic;
 
-class HzDesktopPrivate : public QObject
+class HzDesktopPrivate : public QWidget/*QObject*/
 {
     Q_DISABLE_COPY(HzDesktopPrivate)
 public:

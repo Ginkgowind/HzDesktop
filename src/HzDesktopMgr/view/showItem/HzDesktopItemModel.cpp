@@ -18,6 +18,18 @@ HzDesktopItemModel::~HzDesktopItemModel()
 {
 }
 
+void HzDesktopItemModel::removeAllDisableItem()
+{
+	for (int i = 0; i < rowCount(); ) {
+		if (!item(i)->isEnabled()) {
+			removeRow(i);
+		}
+		else {
+			i++;
+		}
+	}
+}
+
 QString HzDesktopItemModel::name(const QModelIndex& index) const
 {
 	return data(index, CustomRoles::FileNameRole).toString();

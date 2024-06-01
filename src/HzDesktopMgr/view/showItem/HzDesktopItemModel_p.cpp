@@ -1,4 +1,6 @@
 #include <QSettings>
+#include <QDebug>
+#include <QUrl>
 #include <QDir>
 #include <QDateTime>
 #include <shlwapi.h>
@@ -496,11 +498,54 @@ QStandardItem* DesktopFileItemWatcher::genQStandardItem(const QFileInfo& fileInf
 	return newItem;
 }
 
+QIcon getIconFromUrlFile(const QFileInfo& urlFileInfo) {
+	QIcon retIcon;
+
+	do
+	{
+		// 获取 IShellLink 接口
+		IShellLink* psl;
+		HRESULT hRes = CoCreateInstance(CLSID_InternetShortcut, NULL, 
+			CLSCTX_INPROC_SERVER, IID_IShellLink, (LPVOID*)&psl);
+		if (FAILED(hRes)) {
+			break;
+		}
+
+		IPersistFile* ppf;
+		hRes = psl->QueryInterface(IID_IPersistFile, (void**)&ppf);
+		if (FAILED(hRes)) {
+			break;
+		}
+
+		// 加载 .url 文件
+		hRes = ppf->Load((LPCOLESTR)urlFileInfo.absoluteFilePath().utf16(), STGM_READ);
+		if (FAILED(hRes)) {
+			break;
+		}
+
+		// 获取图标位置
+		WIN32_FIND_DATA wfd;
+		char path[MAX_PATH];
+		int index = 0;
+		hRes = psl->GetIconLocation(path, MAX_PATH, &index);
+		if (FAILED(hRes)) {
+			break;
+		}
+
+		retIcon = QFileIconProvider().icon(QFileInfo(QUrl(path).toLocalFile()));
+	} while (false);
+
+	return retIcon;
+}
+
 QIcon DesktopFileItemWatcher::getUltimateIcon(const QFileInfo& fileInfo)
 {
 	if (fileInfo.isShortcut()) {
 		QFileInfo targetFileInfo(fileInfo.symLinkTarget());
 		return QFileIconProvider().icon(targetFileInfo);
+	}
+	else if (fileInfo.suffix() == "url") {
+		return getIconFromUrlFile(fileInfo);
 	}
 	else {
 		return QFileIconProvider().icon(fileInfo);

@@ -2,12 +2,14 @@
 
 #include <QSortFilterProxyModel>
 
+class HzDesktopParam;
+
 class HzItemSortProxyModel  : public QSortFilterProxyModel
 {
 	Q_OBJECT
 
 public:
-	HzItemSortProxyModel(QObject *parent);
+	HzItemSortProxyModel(QObject *parent, HzDesktopParam* param);
 	~HzItemSortProxyModel();
 
 	QString name(const QModelIndex& index) const;
@@ -18,4 +20,8 @@ public:
 
 protected:
 	//virtual bool lessThan(const QModelIndex& source_left, const QModelIndex& source_right) const override;
+
+private:
+
+	HzDesktopParam* m_param;
 };
