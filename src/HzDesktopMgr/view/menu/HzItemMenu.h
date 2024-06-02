@@ -3,7 +3,10 @@
 #include <QMenu>
 #include <memory>
 
+#include "common/QtpqReimp.h"
 #include "config/HzDesktopParam.h"
+
+class HzDesktopBlankMenuPrivate;
 
 class HzItemMenu : public QMenu
 {
@@ -37,18 +40,22 @@ private:
 	QPoint m_showPos;
 };
 
-class HzDesktopBlankMenu : public QMenu
+class HzDesktopBlankMenu 
+	: public QMenu
+	, public HzDesktopPublic
 {
 	Q_OBJECT
 
 public:
-	explicit HzDesktopBlankMenu(QWidget* parent, HzDesktopParam* param);
+	HzDesktopBlankMenu(QWidget* parent, HzDesktopParam* param);
 	~HzDesktopBlankMenu();
 
 private:
 	void initViewSubMenu();
 
 	void initSortSubMenu();
+
+	void initSystemSubMenu();
 
 signals:
 	void onSetIconSizeMode(IconSizeMode mode);
@@ -67,14 +74,7 @@ private:
 
 	HzDesktopParam* m_param;
 
-	//QAction* m_largeIcon;
-	//QAction* m_mediumIcon;
-	//QAction* m_smallIcon;
-	//QAction* m_autoArrange;
-	//QAction* m_doubleClickHide;
-	//QAction* m_showDesktop;
-	//QAction* m_sortByName;
-	//QAction* m_sortBySize;
-	//QAction* m_sortByType;
-	//QAction* m_sortByTime;
+private:
+	HZQ_DECLARE_PRIVATE(HzDesktopBlankMenu)
+	Q_DISABLE_COPY(HzDesktopBlankMenu)
 };

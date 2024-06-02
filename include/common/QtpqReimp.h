@@ -9,7 +9,7 @@
  */
 class HzDesktopPublic;
 
-class HzDesktopPrivate : public QWidget/*QObject*/
+class HzDesktopPrivate : public QObject
 {
     Q_DISABLE_COPY(HzDesktopPrivate)
 public:

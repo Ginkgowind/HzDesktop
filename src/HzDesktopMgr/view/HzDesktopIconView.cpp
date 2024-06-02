@@ -122,8 +122,8 @@ void HzDesktopIconView::initSignalAndSlot()
 		[this]() {m_param.bEnableDoubleClick = !m_param.bEnableDoubleClick; });
 	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::onHide, [this]() {setVisible(false); });
 
-	//connect(m_desktopBlankMenu, &HzDesktopBlankMenu::refreshDesktopItemsSignal,
-	//	m_itemModel, &HzDesktopItemModel::refreshItems);
+	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::refreshDesktop,
+		m_itemModel, &HzDesktopItemModel::refreshItems);
 
 	//connect(m_itemModel, &QStandardItemModel::itemChanged,
 	//	[this](QStandardItem* item) {

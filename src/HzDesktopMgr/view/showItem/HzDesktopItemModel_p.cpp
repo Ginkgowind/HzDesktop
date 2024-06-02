@@ -228,12 +228,14 @@ QIcon DesktopSystemItemWatcher::getSystemAppIcon(const QString& clsidValue)
 		}
 
 		// Ã·»°Õº±Í
-		hIcon = ExtractIconA(GetModuleHandleW(NULL), iconPath.c_str(), iconIndex);
-		if (hIcon == NULL) {
+		ExtractIconExA(iconPath.c_str(), iconIndex, &hIcon, nullptr, 1);
+		if (hIcon == nullptr) {
 			break;
 		}
 		
 		retIcon = QtWin::fromHICON(hIcon);
+		auto test = retIcon.availableSizes();
+		int a = 1;
 
 	} while (false);
 

@@ -57,7 +57,17 @@ QString HzDesktopItemModel::filePath(const QModelIndex& index) const
 
 void HzDesktopItemModel::refreshItems()
 {
-	qDebug() << "model refresh";
+	HZQ_D(HzDesktopItemModel);
+
+	//for (int i = 0; i < rowCount(); ) {
+	//	removeRow(i);
+	//}
+
+	//removeRows(0, rowCount());
+
+	//d->m_systemItemWatcher.refreshSystemAppsInfo();
+
+	//d->m_fileItemWatcher.refreshFileItem();
 }
 
 void HzDesktopItemModel::insertItems(int row, const QList<QStandardItem*>& items)

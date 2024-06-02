@@ -8,6 +8,7 @@
 #include <shlwapi.h>
 
 #include "HzItemMenu.h"
+#include "HzItemMenu_p.h"
 #include "windows/UiOperation.h"
 
 
@@ -79,6 +80,7 @@ void HzItemMenu::onExplorerMenu()
 
 HzDesktopBlankMenu::HzDesktopBlankMenu(QWidget* parent, HzDesktopParam* param)
 	: QMenu(parent)
+	, HzDesktopPublic(new HzDesktopBlankMenuPrivate())
 	, m_param(param)
 {
 	initViewSubMenu();
@@ -86,6 +88,8 @@ HzDesktopBlankMenu::HzDesktopBlankMenu(QWidget* parent, HzDesktopParam* param)
 	initSortSubMenu();
 
 	addAction(tr("Refresh"), this, [this]() {emit refreshDesktop(); });
+
+	initSystemSubMenu();
 }
 
 HzDesktopBlankMenu::~HzDesktopBlankMenu()
@@ -158,4 +162,9 @@ void HzDesktopBlankMenu::initSortSubMenu()
 		sortByType->setChecked(m_param->sortRole == FileTypeRole);
 		sortByTime->setChecked(m_param->sortRole == FileLastModifiedRole);
 	}
+}
+
+void HzDesktopBlankMenu::initSystemSubMenu()
+{
+
 }
