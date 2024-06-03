@@ -5,7 +5,6 @@
 #include <QDateTime>
 #include <shlwapi.h>
 #include <Shlobj.h>
-#include <QtWinExtras/QtWin>
 
 #include "HzDesktopItemModel_p.h"
 #include "config/HzDesktopParam.h"
@@ -213,27 +212,7 @@ QIcon DesktopSystemItemWatcher::getSystemAppIcon(const QString& clsidValue)
 			break;
 		}
 
-		// 分离图标路径和图标索引
-		std::string regValue = value;
-		std::string iconPath;
-		int iconIndex = 0;
-		size_t commaPos = regValue.find_last_of(',');
-		if (commaPos != std::string::npos) {
-			iconPath = regValue.substr(0, commaPos);
-			iconIndex = std::stoi(regValue.substr(commaPos + 1));
-		}
-		else {
-			iconPath = regValue; // 如果没有逗号，整个字符串就是路径
-			iconIndex = 0;    // 默认图标索引为0
-		}
-
-		// 提取图标
-		ExtractIconExA(iconPath.c_str(), iconIndex, &hIcon, nullptr, 1);
-		if (hIcon == nullptr) {
-			break;
-		}
-		
-		retIcon = QtWin::fromHICON(hIcon);
+		retIcon = HZ::getIconFromLocation(value);
 		auto test = retIcon.availableSizes();
 		int a = 1;
 

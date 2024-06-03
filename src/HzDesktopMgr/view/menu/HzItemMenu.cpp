@@ -166,5 +166,9 @@ void HzDesktopBlankMenu::initSortSubMenu()
 
 void HzDesktopBlankMenu::initSystemSubMenu()
 {
+	HZQ_D(HzDesktopBlankMenu);
 
+	addSeparator();
+
+	addActions(d->getDesktopBackgroundActions());
 }

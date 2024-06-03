@@ -1,12 +1,17 @@
 #include <windows.h>
 #include <shlobj.h>
 #include <objbase.h>
+#include <shlwapi.h>
 
-#include <QMimeData>
 #include <QUrl>
+#include <QMimeData>
+#include <QtWinExtras/QtWin>
 
 #include "spdlog/spdlog.h"
 #include "UiOperation.h"
+
+#define BUFFER_SIZE 1024
+
 
 //RAII机制
 
@@ -220,5 +225,47 @@ namespace HZ
 		//	Qt::KeepAspectRatio,
 		//	Qt::SmoothTransformation
 		//);;
+	}
+
+	QString getDirectString(const QString& resStr)
+	{
+		WCHAR outBuff[BUFFER_SIZE] = { 0 };
+		SHLoadIndirectString(resStr.toStdWString().c_str(), outBuff,
+			BUFFER_SIZE, nullptr);
+
+		return QString::fromStdWString(outBuff);
+	}
+
+	QIcon getIconFromLocation(const QString& location)
+	{
+		HICON hIcon = nullptr;
+
+		// 分离图标路径和图标索引
+		QString locationCopy = location;
+		QString iconPath;
+		int iconIndex = 0;
+		int commaPos = locationCopy.lastIndexOf(',');
+		if (commaPos != std::string::npos) {
+			iconPath = locationCopy.mid(0, commaPos);
+			iconIndex = locationCopy.mid(commaPos + 1).toInt();
+		}
+		else {
+			iconPath = locationCopy; // 如果没有逗号，整个字符串就是路径
+			iconIndex = 0;    // 默认图标索引为0
+		}
+
+		// iconIndex为负数就是指定资源标识符, 为正数就是该图标在资源文件中的顺序序号,
+		// 为-1时表示默认资源，不能使用ExtractIconEx提取图标
+		if (iconIndex == -1) {
+			char resPath[MAX_PATH] = { 0 };
+			ExpandEnvironmentStrings(iconPath.toStdString().c_str(), resPath, MAX_PATH);
+			HMODULE hModule = LoadLibraryA(resPath);
+			hIcon = (HICON)LoadImage(hModule, "#1", IMAGE_ICON, 0, 0, LR_DEFAULTSIZE);
+		}
+		else {
+			ExtractIconExA(iconPath.toStdString().c_str(), iconIndex, &hIcon, nullptr, 1);
+		}
+
+		return QtWin::fromHICON(hIcon);
 	}
 }

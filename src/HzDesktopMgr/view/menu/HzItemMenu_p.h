@@ -15,4 +15,6 @@ class HzDesktopBlankMenuPrivate : public HzDesktopPrivate
 public:
 	HzDesktopBlankMenuPrivate();
 	~HzDesktopBlankMenuPrivate();
+
+	QList<QAction*> getDesktopBackgroundActions();
 };
