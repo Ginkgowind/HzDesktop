@@ -168,4 +168,7 @@
       <Filter>view\menu</Filter>
     </QtMoc>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
 </Project>

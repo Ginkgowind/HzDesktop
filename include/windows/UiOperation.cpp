@@ -1,4 +1,4 @@
-#include <windows.h>
+Ôªø#include <windows.h>
 #include <shlobj.h>
 #include <objbase.h>
 #include <shlwapi.h>
@@ -9,11 +9,12 @@
 
 #include "spdlog/spdlog.h"
 #include "UiOperation.h"
+#include <QSettings>
 
 #define BUFFER_SIZE 1024
 
 
-//RAIIª˙÷∆
+//RAIIÊú∫Âà∂
 
 class FItemIdListReleaser {
 public:
@@ -58,6 +59,9 @@ namespace HZ
 		IContextMenu* pContextMenu = nullptr;
 		HMENU hMenu = nullptr;
 
+		testComMenu(hOwnerWnd);
+		return true;
+
 		do
 		{
 			if (pathList.empty()) {
@@ -72,13 +76,13 @@ namespace HZ
 				std::wstring windowsPath = path.toStdWString();
 				std::replace(windowsPath.begin(), windowsPath.end(), '/', '\\');
 				ITEMIDLIST* id = nullptr;
-				HRESULT res = SHParseDisplayName(windowsPath.c_str(), nullptr, &id, 0, nullptr);   //¬∑æ∂◊™PIDL
+				HRESULT res = SHParseDisplayName(windowsPath.c_str(), nullptr, &id, 0, nullptr);   //Ë∑ØÂæÑËΩ¨PIDL
 				if (!SUCCEEDED(res) || !id) {
 					continue;
 				}
 				idvec.push_back(id);
 				idChildvec.push_back(nullptr);
-				res = SHBindToParent(id, IID_IShellFolder, (void**)&ifolder, &idChildvec.back());   //ªÒ»°ishellfolder
+				res = SHBindToParent(id, IID_IShellFolder, (void**)&ifolder, &idChildvec.back());   //Ëé∑Âèñishellfolder
 				if (!SUCCEEDED(res) || !idChildvec.back())
 					idChildvec.pop_back();
 				else if (path.compare(pathList.back()) != 0 && ifolder) {
@@ -94,8 +98,8 @@ namespace HZ
 
 			IContextMenu* pContextMenu = nullptr;
 			HRESULT res = ifolder->GetUIObjectOf(hOwnerWnd, (UINT)idChildvec.size(),
-				(const ITEMIDLIST**)idChildvec.data(),     //ªÒ»°”“º¸UI∞¥≈•
-				IID_IContextMenu, nullptr, (void**)&pContextMenu);//∑≈µΩpContextMenu÷–
+				(const ITEMIDLIST**)idChildvec.data(),     //Ëé∑ÂèñÂè≥ÈîÆUIÊåâÈíÆ
+				IID_IContextMenu, nullptr, (void**)&pContextMenu);//ÊîæÂà∞pContextMenu‰∏≠
 			if (FAILED(res)) {
 				break;
 			}
@@ -106,10 +110,10 @@ namespace HZ
 				break;
 			}
 
-			if (SUCCEEDED(pContextMenu->QueryContextMenu(hMenu, 0, 1, 0x7FFF, CMF_NORMAL))) {    //ƒ¨»œ—°œÓ
+			if (SUCCEEDED(pContextMenu->QueryContextMenu(hMenu, 0, 1, 0x7FFF, CMF_NORMAL))) {    //ÈªòËÆ§ÈÄâÈ°π
 				int iCmd = TrackPopupMenuEx(hMenu, TPM_RETURNCMD, showX,
 					showY, hOwnerWnd, nullptr);
-				if (iCmd > 0) {   //÷¥––≤Àµ•√¸¡Ó
+				if (iCmd > 0) {   //ÊâßË°åËèúÂçïÂëΩ‰ª§
 					CMINVOKECOMMANDINFOEX info = { 0 };
 					info.cbSize = sizeof(info);
 					info.fMask = CMIC_MASK_UNICODE;
@@ -135,10 +139,74 @@ namespace HZ
 		return bRet;
 	}
 
+	void testComMenu(HWND hwnd)
+	{
+		// CLSID of the CDeskmgrShellMenu COM component
+		//const GUID CLSID_CDeskmgrShellMenu = { 0xCF444751, 0x60FC, 0x48B8, {0xAC, 0xF, 0x36, 0x30, 0x63, 0xEB, 0x2A, 0x9E} };
+
+		HRESULT hr;
+		HMENU hMenu = NULL;
+
+		CLSID CLSID_CDeskmgrShellMenu;
+		hr = CLSIDFromString(L"{CF444751-60FC-48B8-AC0F-363063EB2A9E}", &CLSID_CDeskmgrShellMenu);
+		if (FAILED(hr)) {
+			// ËΩ¨Êç¢Â§±Ë¥•
+			return ;
+		}
+
+		// Create the COM object
+		IShellExtInit* pExt = NULL;
+
+		hr = CoCreateInstance(CLSID_CDeskmgrShellMenu, NULL, CLSCTX_INPROC_SERVER, IID_IShellExtInit, (void**)&pExt);
+		if (SUCCEEDED(hr))
+		{
+			PIDLIST_ABSOLUTE pidlDesktop;
+			HRESULT hr = SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, &pidlDesktop);
+
+			// Initialize the shell extension
+			hr = pExt->Initialize(pidlDesktop, 0, NULL);
+			if (SUCCEEDED(hr))
+			{
+				// Query for IContextMenu interface
+				IContextMenu* pContextMenu = NULL;
+				hr = pExt->QueryInterface(IID_IContextMenu, (void**)&pContextMenu);
+				if (SUCCEEDED(hr))
+				{
+					hMenu = CreatePopupMenu();
+					if (!hMenu) {
+						int a = 1;
+					}
+
+					hr = pContextMenu->QueryContextMenu(hMenu, 0, 1, 0x7FFF, CMF_NORMAL);
+					if (SUCCEEDED(hr))
+					{
+						int iCmd = TrackPopupMenuEx(hMenu, TPM_RETURNCMD, 200,
+							200, hwnd, nullptr);
+						int a = GetLastError();
+						if (iCmd > 0) {   //ÊâßË°åËèúÂçïÂëΩ‰ª§
+							CMINVOKECOMMANDINFOEX info = { 0 };
+							info.cbSize = sizeof(info);
+							info.fMask = CMIC_MASK_UNICODE;
+							info.hwnd = hwnd;
+							info.lpVerb = MAKEINTRESOURCEA(iCmd - 1);
+							info.lpVerbW = MAKEINTRESOURCEW(iCmd - 1);
+							info.nShow = SW_SHOWNORMAL;
+							pContextMenu->InvokeCommand((LPCMINVOKECOMMANDINFO)&info);
+						}
+					}
+					pContextMenu->Release();
+				}
+			}
+			pExt->Release();
+		}
+
+		//return hMenu;
+	}
+
 	QByteArray ConvertToQByteArray(const std::vector<LPCITEMIDLIST>& idChildvec) {
 		QByteArray result;
 		for (const auto& pidl : idChildvec) {
-			UINT size = ILGetSize(pidl); // ªÒ»°ITEMIDLISTµƒ¥Û–°
+			UINT size = ILGetSize(pidl); // Ëé∑ÂèñITEMIDLISTÁöÑÂ§ßÂ∞è
 			result.append(reinterpret_cast<const char*>(pidl), size);
 		}
 		return result;
@@ -156,11 +224,11 @@ namespace HZ
 			std::wstring windowsPath = path.toStdWString();
 			std::replace(windowsPath.begin(), windowsPath.end(), '/', '\\');
 			ITEMIDLIST* id = nullptr;
-			HRESULT res = SHParseDisplayName(windowsPath.c_str(), nullptr, &id, 0, nullptr);   //¬∑æ∂◊™PIDL
+			HRESULT res = SHParseDisplayName(windowsPath.c_str(), nullptr, &id, 0, nullptr);   //Ë∑ØÂæÑËΩ¨PIDL
 			if (!SUCCEEDED(res) || !id) continue;
 			idvec.push_back(id);
 			idChildvec.push_back(nullptr);
-			res = SHBindToParent(id, IID_IShellFolder, (void**)&ifolder, &idChildvec.back());   //ªÒ»°ishellfolder
+			res = SHBindToParent(id, IID_IShellFolder, (void**)&ifolder, &idChildvec.back());   //Ëé∑Âèñishellfolder
 			if (!SUCCEEDED(res) || !idChildvec.back())
 				idChildvec.pop_back();
 			else if (path.compare(pathList.back()) != 0 && ifolder) {
@@ -191,7 +259,7 @@ namespace HZ
 		QSize currentPixmapSize = pixmap.size();
 
 		if (currentPixmapSize.width() != MAX_PIXMAP_SIZE) {
-			// µ±«∞Õº∆¨¥Û–°≤ª «256µƒ£¨≤ª–Ë“™Ω¯––ºÏ≤‚
+			// ÂΩìÂâçÂõæÁâáÂ§ßÂ∞è‰∏çÊòØ256ÁöÑÔºå‰∏çÈúÄË¶ÅËøõË°åÊ£ÄÊµã
 			return;
 		}
 
@@ -199,24 +267,24 @@ namespace HZ
 		int avaliableSizeCount = avaliableSizeList.size();
 
 		if (avaliableSizeCount < MIN_PIXMAP_COUNT) {
-			// ø…”√¥Û–°–°”⁄2£¨∑«’˝≥£Õº±Í£¨÷±Ω” π”√‘≠ º¥Û–°
+			// ÂèØÁî®Â§ßÂ∞èÂ∞è‰∫é2ÔºåÈùûÊ≠£Â∏∏ÂõæÊ†áÔºåÁõ¥Êé•‰ΩøÁî®ÂéüÂßãÂ§ßÂ∞è
 			return;
 		}
 
 		QSize secondBigPixmapSize = avaliableSizeList[avaliableSizeCount - MIN_PIXMAP_COUNT];
 		if (currentPixmapSize.width() <= secondBigPixmapSize.width()) {
-			// µ±«∞¥Û–°±»µ⁄∂˛¥ÛµƒÕº∆¨ªπ“™–°£¨Àµ√˜∞¸∫¨¡À±»256∏¸¥Û≥ﬂ¥ÁµƒÕº∆¨£¨≤ª «Qt∫œ≥…µƒ£¨≤ª–Ë“™¥¶¿Ì
+			// ÂΩìÂâçÂ§ßÂ∞èÊØîÁ¨¨‰∫åÂ§ßÁöÑÂõæÁâáËøòË¶ÅÂ∞èÔºåËØ¥ÊòéÂåÖÂê´‰∫ÜÊØî256Êõ¥Â§ßÂ∞∫ÂØ∏ÁöÑÂõæÁâáÔºå‰∏çÊòØQtÂêàÊàêÁöÑÔºå‰∏çÈúÄË¶ÅÂ§ÑÁêÜ
 			return;
 		}
 
-		// ªÒ»°µ±«∞Õº∆¨≤√ºÙµ⁄∂˛¥Û≥ﬂ¥Á∫Ûµƒ”“œ¬Ω««¯”ÚÕº∆¨
+		// Ëé∑ÂèñÂΩìÂâçÂõæÁâáË£ÅÂâ™Á¨¨‰∫åÂ§ßÂ∞∫ÂØ∏ÂêéÁöÑÂè≥‰∏ãËßíÂå∫ÂüüÂõæÁâá
 		QPixmap tempPixmap = pixmap.copy(
 			secondBigPixmapSize.width(), secondBigPixmapSize.height(),
 			currentPixmapSize.width() - secondBigPixmapSize.width(),
 			currentPixmapSize.height() - secondBigPixmapSize.width());
 
 		if (tempPixmap.toImage().allGray()) {
-			// ≤√ºÙ∫ÛµƒÕº∆¨≤ª∞¸∫¨”––ßœÒÀÿ£¨≈–∂®Œ™Œﬁ–ßÕº∆¨£¨ π”√µ⁄∂˛¥Û≥ﬂ¥ÁµƒÕº∆¨
+			// Ë£ÅÂâ™ÂêéÁöÑÂõæÁâá‰∏çÂåÖÂê´ÊúâÊïàÂÉèÁ¥†ÔºåÂà§ÂÆö‰∏∫Êó†ÊïàÂõæÁâáÔºå‰ΩøÁî®Á¨¨‰∫åÂ§ßÂ∞∫ÂØ∏ÁöÑÂõæÁâá
 			icon = icon.pixmap(secondBigPixmapSize);
 		}
 
@@ -240,7 +308,7 @@ namespace HZ
 	{
 		HICON hIcon = nullptr;
 
-		// ∑÷¿ÎÕº±Í¬∑æ∂∫ÕÕº±ÍÀ˜“˝
+		// ÂàÜÁ¶ªÂõæÊ†áË∑ØÂæÑÂíåÂõæÊ†áÁ¥¢Âºï
 		QString locationCopy = location;
 		QString iconPath;
 		int iconIndex = 0;
@@ -250,12 +318,12 @@ namespace HZ
 			iconIndex = locationCopy.mid(commaPos + 1).toInt();
 		}
 		else {
-			iconPath = locationCopy; // »Áπ˚√ª”–∂∫∫≈£¨’˚∏ˆ◊÷∑˚¥ÆæÕ «¬∑æ∂
-			iconIndex = 0;    // ƒ¨»œÕº±ÍÀ˜“˝Œ™0
+			iconPath = locationCopy; // Â¶ÇÊûúÊ≤°ÊúâÈÄóÂè∑ÔºåÊï¥‰∏™Â≠óÁ¨¶‰∏≤Â∞±ÊòØË∑ØÂæÑ
+			iconIndex = 0;    // ÈªòËÆ§ÂõæÊ†áÁ¥¢Âºï‰∏∫0
 		}
 
-		// iconIndexŒ™∏∫ ˝æÕ «÷∏∂®◊ ‘¥±Í ∂∑˚, Œ™’˝ ˝æÕ «∏√Õº±Í‘⁄◊ ‘¥Œƒº˛÷–µƒÀ≥–Ú–Ú∫≈,
-		// Œ™-1 ±±Ì æƒ¨»œ◊ ‘¥£¨≤ªƒ‹ π”√ExtractIconExÃ·»°Õº±Í
+		// iconIndex‰∏∫Ë¥üÊï∞Â∞±ÊòØÊåáÂÆöËµÑÊ∫êÊ†áËØÜÁ¨¶, ‰∏∫Ê≠£Êï∞Â∞±ÊòØËØ•ÂõæÊ†áÂú®ËµÑÊ∫êÊñá‰ª∂‰∏≠ÁöÑÈ°∫Â∫èÂ∫èÂè∑,
+		// ‰∏∫-1Êó∂Ë°®Á§∫ÈªòËÆ§ËµÑÊ∫êÔºå‰∏çËÉΩ‰ΩøÁî®ExtractIconExÊèêÂèñÂõæÊ†á
 		if (iconIndex == -1) {
 			char resPath[MAX_PATH] = { 0 };
 			ExpandEnvironmentStrings(iconPath.toStdString().c_str(), resPath, MAX_PATH);
@@ -267,5 +335,50 @@ namespace HZ
 		}
 
 		return QtWin::fromHICON(hIcon);
+	}
+
+	QString getTextFromGUID(const QString& guidStr)
+	{
+		static const QVector<QString> s_clsidPaths = {
+			"HKEY_CLASSES_ROOT\\CLSID\\",
+			"HKEY_CLASSES_ROOT\\WOW6432Node\\CLSID\\",
+			"HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Classes\\CLSID\\",
+		};
+
+		QString itemText;
+
+		GUID guid = { 0 };
+
+		do
+		{
+			//CLSIDFromString((LPCOLESTR)(LPCWSTR)guidStr.toStdWString().c_str(), &guid);
+			//if (IsEqualGUID(guid, GUID_NULL)) {
+			//	break;
+			//}
+
+			for (const QString& clsidPath : s_clsidPaths)
+			{
+				QSettings guidReg(clsidPath + guidStr, QSettings::NativeFormat);
+
+				for (const QString& valueName : { "LocalizedString", "InfoTip", "." }) {
+					itemText = guidReg.value(valueName).toString();
+					itemText = getDirectString(itemText);
+					if (!itemText.isEmpty()) {
+						break;
+					}
+				}
+
+				if (!itemText.isEmpty()) {
+					break;
+				}
+			}
+		} while (false);
+
+		return itemText;
+	}
+
+	QIcon getIconFromGUID(const QString& guid)
+	{
+		return QIcon();
 	}
 }

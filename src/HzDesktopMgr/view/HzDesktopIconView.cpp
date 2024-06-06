@@ -26,6 +26,8 @@ HzDesktopIconView::HzDesktopIconView(QWidget *parent)
 	, HzDesktopPublic(new HzDesktopIconViewPrivate())
 	, m_ctrlDragSelectionFlag(QItemSelectionModel::NoUpdate)
 {
+	initParam();
+
 	m_desktopBlankMenu = new HzDesktopBlankMenu(this, &m_param);
 
 	m_itemProxyModel = new HzItemSortProxyModel(this, &m_param);
@@ -129,6 +131,11 @@ void HzDesktopIconView::initSignalAndSlot()
 	//	[this](QStandardItem* item) {
 	//		qDebug() << item->data(FilePathRole);
 	//	});
+}
+
+void HzDesktopIconView::initParam()
+{
+	m_param.dirPath = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
 }
 
 QRect HzDesktopIconView::visualRect(const QModelIndex& index) const

@@ -170,5 +170,15 @@ void HzDesktopBlankMenu::initSystemSubMenu()
 
 	addSeparator();
 
+	addActions(d->getBackgroundShellActions());
+
+	QList<QAction*> exActionList = d->getBackgroundShellExActions();
+	for (QAction* action : exActionList) {
+		addSeparator();
+		addAction(action);
+	}
+
+	addSeparator();
+
 	addActions(d->getDesktopBackgroundActions());
 }

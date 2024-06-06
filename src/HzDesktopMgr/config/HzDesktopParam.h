@@ -37,6 +37,8 @@ private:
 	void updateGridSize();
 
 public:
+	QString dirPath;
+
 	bool bEnableDoubleClick;
 
 	bool bAutoArrange;

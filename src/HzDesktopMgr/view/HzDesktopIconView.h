@@ -35,6 +35,8 @@ private:
 	void initSignalAndSlot();
 
 protected:
+	virtual void initParam();
+
 	virtual QRect visualRect(const QModelIndex& index) const;
 
 	virtual QModelIndex indexAt(const QPoint& point) const;
