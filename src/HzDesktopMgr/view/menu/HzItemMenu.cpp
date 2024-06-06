@@ -6,12 +6,16 @@
 #include <windows.h>
 #include <shellapi.h>
 #include <shlwapi.h>
+#include <ShlObj.h>
+#include <wil/resource.h>
+#include <wil/com.h>
 
 #include "HzItemMenu.h"
 #include "HzItemMenu_p.h"
 #include "windows/UiOperation.h"
 
-
+static const int MIN_SHELL_MENU_ID = 1;
+static const int MAX_SHELL_MENU_ID = 1000;
 
 HzItemMenu::HzItemMenu(QWidget* parent)
 	: QMenu(parent)
@@ -88,12 +92,49 @@ HzDesktopBlankMenu::HzDesktopBlankMenu(QWidget* parent, HzDesktopParam* param)
 	initSortSubMenu();
 
 	addAction(tr("Refresh"), this, [this]() {emit refreshDesktop(); });
-
-	initSystemSubMenu();
 }
 
 HzDesktopBlankMenu::~HzDesktopBlankMenu()
 {
+}
+
+void HzDesktopBlankMenu::showMenu()
+{
+	HZQ_D(HzDesktopBlankMenu);
+
+	wil::unique_hmenu menu(CreatePopupMenu());
+	HWND hwnd = reinterpret_cast<HWND>(qobject_cast<QWidget*>(parent())->winId());
+
+	IShellFolder* pDesktopShell = nullptr;
+	HRESULT hr = SHGetDesktopFolder(&pDesktopShell);
+
+	wil::com_ptr_nothrow<IContextMenu> contextMenu;
+	hr = pDesktopShell->CreateViewObject(hwnd, IID_PPV_ARGS(&contextMenu));
+
+	contextMenu->QueryContextMenu(menu.get(), 0,
+		MIN_SHELL_MENU_ID, MAX_SHELL_MENU_ID, CMF_NORMAL);
+
+	// 添加自定义内容
+	d->updateMenu(menu.get());
+
+	QPoint pos = QCursor::pos();
+	UINT cmd = TrackPopupMenu(menu.get(), TPM_LEFTALIGN | TPM_RETURNCMD,
+		pos.x(), pos.y(), 0, hwnd, nullptr);
+
+	if (cmd == 0) {
+		return;
+	}
+	else if (cmd >= MIN_SHELL_MENU_ID && cmd <= MAX_SHELL_MENU_ID)
+	{
+		CMINVOKECOMMANDINFO commandInfo = {};
+		commandInfo.cbSize = sizeof(commandInfo);
+		commandInfo.fMask = 0;
+		commandInfo.hwnd = hwnd;
+		commandInfo.lpVerb = reinterpret_cast<LPCSTR>(MAKEINTRESOURCE(cmd - MIN_SHELL_MENU_ID));
+		commandInfo.lpDirectory = m_param->dirPath.toStdString().c_str();
+		commandInfo.nShow = SW_SHOWNORMAL;
+		contextMenu->InvokeCommand(&commandInfo);
+	}
 }
 
 void HzDesktopBlankMenu::initViewSubMenu()
@@ -162,23 +203,4 @@ void HzDesktopBlankMenu::initSortSubMenu()
 		sortByType->setChecked(m_param->sortRole == FileTypeRole);
 		sortByTime->setChecked(m_param->sortRole == FileLastModifiedRole);
 	}
-}
-
-void HzDesktopBlankMenu::initSystemSubMenu()
-{
-	HZQ_D(HzDesktopBlankMenu);
-
-	addSeparator();
-
-	addActions(d->getBackgroundShellActions());
-
-	QList<QAction*> exActionList = d->getBackgroundShellExActions();
-	for (QAction* action : exActionList) {
-		addSeparator();
-		addAction(action);
-	}
-
-	addSeparator();
-
-	addActions(d->getDesktopBackgroundActions());
 }

@@ -1,10 +1,27 @@
 #pragma once
 
+#include <wil/resource.h>
+
 #include <QObject>
 
 #include "HzItemMenu.h"
 #include "common/QtpqReimp.h"
 
+
+class MenuHelper
+{
+public:
+
+	static inline void appendMenuItem(HMENU menu, UINT id);
+
+	static inline void insertMenuItem(HMENU menu, UINT id, UINT item);
+
+	static inline void appendSeparator(HMENU menu);
+
+	static inline void addSubMenuItem(HMENU menu, UINT id, wil::unique_hmenu subMenu);
+	
+	static inline void insertSubMenuItem(HMENU menu, UINT id, wil::unique_hmenu subMenu, UINT item);
+};
 
 class HzDesktopBlankMenuPrivate : public HzDesktopPrivate
 {
@@ -16,9 +33,8 @@ public:
 	HzDesktopBlankMenuPrivate();
 	~HzDesktopBlankMenuPrivate();
 
-	QList<QAction*> getBackgroundShellActions();
+	void updateMenu(HMENU menu);
 
-	QList<QAction*> getBackgroundShellExActions();
-
-	QList<QAction*> getDesktopBackgroundActions();
+private:
+	wil::unique_hmenu buildViewsMenu();
 };

@@ -99,6 +99,9 @@
     <ClCompile Include="view\menu\HzItemMenu_p.cpp">
       <Filter>view\menu</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\include\common\ResourceHelper.cpp">
+      <Filter>include\common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HzDesktopMgr.h" />
@@ -128,6 +131,10 @@
     </ClInclude>
     <ClInclude Include="config\HzDesktopParam.h">
       <Filter>config</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="..\..\include\common\ResourceHelper.h">
+      <Filter>include\common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -170,5 +177,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="HzDesktopMgr.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

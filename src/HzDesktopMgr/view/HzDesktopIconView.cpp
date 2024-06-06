@@ -383,7 +383,8 @@ void HzDesktopIconView::contextMenuEvent(QContextMenuEvent* event)
 	QStringList selectedPathList = getSelectedPaths();
 
 	if (selectedPathList.empty()) {
-		m_desktopBlankMenu->exec(QCursor::pos());
+		//m_desktopBlankMenu->exec(QCursor::pos());
+		m_desktopBlankMenu->showMenu();
 	}
 	else {
 		m_itemMenu->showMenu(selectedPathList);

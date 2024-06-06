@@ -1,14 +1,69 @@
 ﻿#include <Windows.h>
 #include <shellapi.h>
+#include <wil/com.h>
 
 #include <QUrl>
 #include <QProcess>
 #include <QSettings>
 #include <QDesktopServices>
 
+#include "resource.h"
 #include "HzItemMenu_p.h"
 #include "windows/UiOperation.h"
 #include "windows/tools.h"
+#include "common/ResourceHelper.h"
+
+static HMODULE s_resInstance = GetModuleHandle(nullptr);
+
+inline void MenuHelper::appendMenuItem(HMENU menu, UINT id)
+{
+	insertMenuItem(menu, id, GetMenuItemCount(menu));
+}
+
+inline void MenuHelper::insertMenuItem(HMENU menu, UINT id, UINT item)
+{
+	std::string text = ResourceHelper::LoadString(s_resInstance, id);
+	UINT fMask = MIIM_ID | MIIM_STRING;
+	//if (hBitmap) { 获取成功就加此标志位
+	//	fMask |= MIIM_BITMAP;
+	//}
+
+	MENUITEMINFO menuItemInfo = {};
+	menuItemInfo.cbSize = sizeof(menuItemInfo);
+	menuItemInfo.fMask = fMask;
+	menuItemInfo.wID = id;
+	//menuItemInfo.hbmpItem = hBitmap;
+	menuItemInfo.dwTypeData = const_cast<LPSTR>(text.c_str());
+
+	InsertMenuItem(menu, item, TRUE, &menuItemInfo);
+}
+
+inline void MenuHelper::appendSeparator(HMENU menu)
+{
+	MENUITEMINFO menuItemInfo = {};
+	menuItemInfo.cbSize = sizeof(menuItemInfo);
+	menuItemInfo.fMask = MIIM_FTYPE;
+	menuItemInfo.fType = MFT_SEPARATOR;
+	InsertMenuItem(menu, GetMenuItemCount(menu), TRUE, &menuItemInfo);
+}
+
+inline void MenuHelper::addSubMenuItem(HMENU menu, UINT id, wil::unique_hmenu subMenu)
+{
+	insertSubMenuItem(menu, id, std::move(subMenu), GetMenuItemCount(menu));
+}
+
+inline void MenuHelper::insertSubMenuItem(HMENU menu, UINT id, wil::unique_hmenu subMenu, UINT item)
+{
+	std::string text = ResourceHelper::LoadString(s_resInstance, id);
+
+	MENUITEMINFO menuItemInfo = {};
+	menuItemInfo.cbSize = sizeof(menuItemInfo);
+	menuItemInfo.fMask = MIIM_ID | MIIM_STRING | MIIM_SUBMENU;
+	menuItemInfo.wID = id;
+	menuItemInfo.dwTypeData = const_cast<LPSTR>(text.c_str());
+	menuItemInfo.hSubMenu = subMenu.release();
+	InsertMenuItem(menu, item, TRUE, &menuItemInfo);
+}
 
 // TODO 处理private部分的资源释放
 HzDesktopBlankMenuPrivate::HzDesktopBlankMenuPrivate()
@@ -19,105 +74,29 @@ HzDesktopBlankMenuPrivate::HzDesktopBlankMenuPrivate()
 HzDesktopBlankMenuPrivate::~HzDesktopBlankMenuPrivate()
 {}
 
-QList<QAction*> HzDesktopBlankMenuPrivate::getBackgroundShellActions()
+void HzDesktopBlankMenuPrivate::updateMenu(HMENU menu)
 {
-	HZQ_Q(HzDesktopBlankMenu);
+	UINT position = 0;
 
-	QList<QAction*> actions;
-	QSettings menuReg("HKEY_CLASSES_ROOT\\Directory\\Background\\shell", QSettings::NativeFormat);
-	QStringList groupList = menuReg.childGroups();
-
-	foreach(QString group, groupList)
-	{
-		menuReg.beginGroup(group);
-		QIcon icon = HZ::getIconFromLocation(menuReg.value("Icon").toString());
-		QString text = HZ::getDirectString(menuReg.value(".").toString());
-		// ��ȡִ������
-		menuReg.beginGroup("command");
-		QString command = menuReg.value(".").toString();
-
-		if (!icon.isNull() && !text.isEmpty() && !command.isEmpty()) {
-			QAction* action = new QAction(icon, text);
-			connect(action, &QAction::triggered, [command, q]() {
-				QString commandFormatted = command;
-				commandFormatted.replace("%V", q->m_param->dirPath, Qt::CaseInsensitive);
-
-				int argCnt = 0;
-				LPWSTR* wszArglist = CommandLineToArgvW(commandFormatted.toStdWString().c_str(), &argCnt);
-
-				QStringList args;
-				for (int i = 1; i < argCnt; ++i) {
-					args << QString::fromStdWString(wszArglist[i]);
-				}
-
-				QProcess process;
-				process.setWorkingDirectory(q->m_param->dirPath);
-				process.setProgram(QString::fromStdWString(wszArglist[0]));
-				process.setArguments(args);
-				process.startDetached();
-				});
-
-			actions.push_back(action);
-		}
-
-		menuReg.endGroup();
-		menuReg.endGroup();
-	}
-
-	return actions;
+	// TODO 为什么用unique
+	auto viewMenu = buildViewsMenu();
+	MenuHelper::insertSubMenuItem(menu, IDS_VIEW_BKG_MENU, std::move(viewMenu), position++);
 }
 
-QList<QAction*> HzDesktopBlankMenuPrivate::getBackgroundShellExActions()
+wil::unique_hmenu HzDesktopBlankMenuPrivate::buildViewsMenu()
 {
-	HZQ_Q(HzDesktopBlankMenu);
+	HMENU viewMenu = CreatePopupMenu();
 
-	QList<QAction*> actions;
-	QSettings menuReg("HKEY_CLASSES_ROOT\\Directory\\Background\\shellex\\ContextMenuHandlers", QSettings::NativeFormat);
-	QStringList groupList = menuReg.childGroups();
+	MenuHelper::appendMenuItem(viewMenu, IDM_VIEW_LARGE_ICON);
+	MenuHelper::appendMenuItem(viewMenu, IDM_VIEW_MEDIUM_ICON);
+	MenuHelper::appendMenuItem(viewMenu, IDM_VIEW_SMALL_ICON);
+	MenuHelper::appendSeparator(viewMenu);
+	MenuHelper::appendMenuItem(viewMenu, IDM_VIEW_AUTO_ARRANGE);
+	MenuHelper::appendSeparator(viewMenu);
+	MenuHelper::appendMenuItem(viewMenu, IDM_VIEW_DOUBLE_CLICK);
+	MenuHelper::appendMenuItem(viewMenu, IDM_VIEW_SHOW_DESKTOP);
+	MenuHelper::appendSeparator(viewMenu);
+	MenuHelper::appendMenuItem(viewMenu, IDM_VIEW_LNK_ARROW);
 
-	foreach(QString group, groupList)
-	{
-		menuReg.beginGroup(group);
-		QIcon icon = HZ::getIconFromLocation(menuReg.value("Icon").toString());
-		QString text = HZ::getTextFromGUID(menuReg.value(".").toString());
-
-		//!icon.isNull() &&
-		if (!text.isEmpty()) {
-			QAction* action = new QAction(icon, text);
-
-			actions.push_back(action);
-		}
-
-		menuReg.endGroup();
-	}
-
-	return actions;
-}
-
-QList<QAction*> HzDesktopBlankMenuPrivate::getDesktopBackgroundActions()
-{
-    QList<QAction*> actions;
-	QSettings menuReg("HKEY_CLASSES_ROOT\\DesktopBackground\\Shell", QSettings::NativeFormat);
-	QStringList groupList = menuReg.childGroups();
-
-    foreach(QString group, groupList)
-    {
-        menuReg.beginGroup(group);
-        QIcon icon = HZ::getIconFromLocation(menuReg.value("Icon").toString());
-        QString text = HZ::getDirectString(menuReg.value(".").toString());
-        QString url = menuReg.value("SettingsUri").toString();
-
-        if (!icon.isNull() && !text.isEmpty() && !url.isEmpty()) {
-            QAction* action = new QAction(icon, text);
-            connect(action, &QAction::triggered, [url]() {
-                QDesktopServices::openUrl(url);
-            });
-
-            actions.push_back(action);
-        }
-
-        menuReg.endGroup();
-    }
-
-	return actions;
+	return wil::unique_hmenu(viewMenu);
 }

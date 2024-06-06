@@ -50,12 +50,12 @@ public:
 	HzDesktopBlankMenu(QWidget* parent, HzDesktopParam* param);
 	~HzDesktopBlankMenu();
 
+	void showMenu();
+
 private:
 	void initViewSubMenu();
 
 	void initSortSubMenu();
-
-	void initSystemSubMenu();
 
 signals:
 	void onSetIconSizeMode(IconSizeMode mode);
