@@ -214,7 +214,7 @@ namespace HZ
 
 	QMimeData* multiDrag(const QStringList& pathList)
 	{
-		if (pathList.empty()) return false;
+		if (pathList.empty()) return nullptr;
 		std::vector<ITEMIDLIST*> idvec;
 		std::vector<LPCITEMIDLIST> idChildvec;
 		QList<QUrl> urls;
@@ -238,7 +238,7 @@ namespace HZ
 		}
 		FItemIdListVectorReleaser vecReleaser(idvec);
 		FComInterfaceReleaser ifolderReleaser(ifolder);
-		if (ifolder == nullptr || idChildvec.empty()) return false;
+		if (ifolder == nullptr || idChildvec.empty()) return nullptr;
 		
 		QMimeData* mimeData = new QMimeData;
 		mimeData->setUrls(urls);
@@ -306,6 +306,25 @@ namespace HZ
 
 	QIcon getIconFromLocation(const QString& location)
 	{
+		{
+			SHFILEINFO sfi; // 用于存储文件信息结构
+
+			if (SHGetFileInfoA(
+				"shell:MyComputerFolder",
+				0,
+				&sfi,
+				sizeof(sfi),
+				SHGFI_ICON | SHGFI_LARGEICON
+			) != 0)
+			{
+				// 返回图标句柄
+				return QtWin::fromHICON(sfi.hIcon);
+			}
+
+			// 如果出错，返回NULL
+			return {};
+		}
+
 		HICON hIcon = nullptr;
 
 		// 分离图标路径和图标索引

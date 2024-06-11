@@ -73,14 +73,14 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>$(COMMON_INCLUDE_DIR)\third-party;$(COMMON_INCLUDE_DIR)\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <PostBuildEvent>
       <Command>rmdir /s /q x64</Command>
       <Message>删除Qt的一些未找到指定路径的生成文件</Message>
     </PostBuildEvent>
     <Link>
-      <AdditionalDependencies>fmt.lib;spdlog.lib;Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>fmt.lib;spdlog.lib;Shlwapi.lib;Comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(PREBUILD_DIR)\spdlog-v2.x;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -115,6 +115,7 @@
     <ClCompile Include="..\..\include\windows\FileInfoGather.cpp" />
     <ClCompile Include="..\..\include\windows\tools.cpp" />
     <ClCompile Include="..\..\include\windows\UiOperation.cpp" />
+    <ClCompile Include="..\..\include\windows\WindowSubclassWrapper.cpp" />
     <ClCompile Include="config\HzDesktopParam.cpp" />
     <ClCompile Include="view\DesktopBackgroundView.cpp" />
     <ClCompile Include="view\DesktopViewMgr.cpp" />
@@ -146,6 +147,7 @@
     <QtMoc Include="view\showItem\HzDesktopItemModel.h" />
     <QtMoc Include="view\showItem\HzDesktopItemModel_p.h" />
     <QtMoc Include="view\HzDesktopIconView_p.h" />
+    <ClInclude Include="..\..\include\windows\WindowSubclassWrapper.h" />
     <ClInclude Include="config\HzDesktopParam.h" />
     <QtMoc Include="view\menu\HzItemMenu_p.h" />
     <ClInclude Include="resource.h" />

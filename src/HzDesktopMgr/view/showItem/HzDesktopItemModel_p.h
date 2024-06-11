@@ -36,13 +36,13 @@ signals:
 private:
 	bool initWatcher();
 
-	QStandardItem* genQStandardItem(const QString& clsidValue);
+	QStandardItem* genQStandardItem(const QString& clsidPath);
 
-	QString getSystemAppDisplayName(const QString& csidlPath);
+	QString getSystemAppDisplayName(const QString& clsidPath);
 
-	bool setSystemAppDisplayName(const QString& csidlPath, const QString& name);
+	bool setSystemAppDisplayName(const QString& clsidPath, const QString& name);
 
-	QIcon getSystemAppIcon(const QString& csidlPath);
+	QIcon getSystemAppIcon(const QString& clsidPath);
 
 protected:
 	void run() override;

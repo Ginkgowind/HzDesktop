@@ -102,6 +102,9 @@
     <ClCompile Include="..\..\include\common\ResourceHelper.cpp">
       <Filter>include\common</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\include\windows\WindowSubclassWrapper.cpp">
+      <Filter>include\windows</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HzDesktopMgr.h" />
@@ -135,6 +138,9 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="..\..\include\common\ResourceHelper.h">
       <Filter>include\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\windows\WindowSubclassWrapper.h">
+      <Filter>include\windows</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -182,5 +188,8 @@
     <ResourceCompile Include="HzDesktopMgr.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="$(MSBuildThisFileDirectory)..\..\natvis\wil.natvis" />
   </ItemGroup>
 </Project>

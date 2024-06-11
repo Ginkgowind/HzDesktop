@@ -1,6 +1,7 @@
 #pragma once
 
 #include <wil/resource.h>
+#include <shobjidl_core.h>
 
 #include <QObject>
 
@@ -17,6 +18,8 @@ public:
 	static inline void insertMenuItem(HMENU menu, UINT id, UINT item);
 
 	static inline void appendSeparator(HMENU menu);
+
+	static inline void insertSeparator(HMENU menu, UINT item);
 
 	static inline void addSubMenuItem(HMENU menu, UINT id, wil::unique_hmenu subMenu);
 	
@@ -36,5 +39,7 @@ public:
 	void updateMenu(HMENU menu);
 
 private:
+	LRESULT ParentWindowSubclass(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 	wil::unique_hmenu buildViewsMenu();
 };

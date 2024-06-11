@@ -204,7 +204,7 @@ QPixmap HzItemDelegate::paintIconText(
 	);
 	m_painter->drawPixmap(
 		iconShowRC,
-		item->icon().pixmap(param.iconSize)
+		item->icon().pixmap(MAX_ICON_SIZE, MAX_ICON_SIZE).scaled(param.iconSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)
 	);
 
 	// ªÊ÷∆œ‘ æ√˚◊÷

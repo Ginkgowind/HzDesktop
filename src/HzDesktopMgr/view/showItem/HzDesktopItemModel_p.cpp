@@ -1,3 +1,4 @@
+#include <QtWinExtras/QtWin>
 #include <QSettings>
 #include <QDebug>
 #include <QUrl>
@@ -44,7 +45,7 @@ void DesktopSystemItemWatcher::refreshSystemAppsInfo()
 	for (const QString& clsidValue : clsidValueList) {
 		bool bHidden = settings.value(clsidValue).toBool();
 		if (!bHidden) {
-			QStandardItem* newItem = genQStandardItem(clsidValue);
+			QStandardItem* newItem = genQStandardItem("::" + clsidValue);
 			systemItems.push_back(newItem);
 		}
 	}
@@ -80,15 +81,15 @@ bool DesktopSystemItemWatcher::initWatcher()
 	return bRet;
 }
 
-QStandardItem* DesktopSystemItemWatcher::genQStandardItem(const QString& clsidValue)
+QStandardItem* DesktopSystemItemWatcher::genQStandardItem(const QString& clsidPath)
 {
 	QStandardItem* newItem = new QStandardItem();
-	QIcon itemIcon = getSystemAppIcon(clsidValue);
-	HZ::correctPixmapIfIsInvalid(itemIcon);
+	QIcon itemIcon = getSystemAppIcon(clsidPath);
+	//HZ::correctPixmapIfIsInvalid(itemIcon);
 	newItem->setIcon(itemIcon);
-	newItem->setText(getSystemAppDisplayName("::" + clsidValue));
-	newItem->setData("::" + clsidValue, CustomRoles::FilePathRole);
-	
+	newItem->setText(getSystemAppDisplayName(clsidPath));
+	newItem->setData(clsidPath, CustomRoles::FilePathRole);
+
 	return newItem;
 }
 
@@ -186,45 +187,41 @@ QIcon DesktopSystemItemWatcher::getSystemAppIcon(const QString& clsidValue)
 {
 	QIcon retIcon;
 
-	HICON hIcon = NULL;
-	HKEY hKey;
-
 	do
 	{
-		// 打开注册表键
-		std::string strSubKey = "CLSID\\" + clsidValue.toStdString() + "\\DefaultIcon";
-		LSTATUS lRet = RegOpenKeyExA(HKEY_CLASSES_ROOT,
-			strSubKey.c_str(),
-			0, KEY_READ, &hKey);
-		if (lRet != ERROR_SUCCESS) {
+		IShellItemImageFactory* itemImageFactory;
+		HBITMAP bitmap;
+		SIZE s = { MAX_ICON_SIZE, MAX_ICON_SIZE };
+
+		HRESULT hRet = SHCreateItemFromParsingName(
+			clsidValue.toStdWString().c_str(), NULL, IID_PPV_ARGS(&itemImageFactory));
+		if (FAILED(hRet)) {
 			break;
 		}
 
-		// 查询图标路径
-		char value[MAX_PATH];
-		DWORD valueLength = sizeof(value);
-		lRet = RegQueryValueExA(
-			hKey, NULL,	// 默认值
-			NULL, NULL,
-			(LPBYTE)value,
-			&valueLength);
-		if (lRet != ERROR_SUCCESS) {
-			break;
+		itemImageFactory->GetImage(s, SIIGBF_ICONBACKGROUND, &bitmap);
+		itemImageFactory->Release();
+
+		// TODO 将图片缓存起来？不过好像不会变更也不需要
+		QImage image = QtWin::imageFromHBITMAP(bitmap, QtWin::HBitmapAlpha).mirrored(false, true);
+
+		// 将黑色像素转换为透明
+		for (int y = 0; y < image.height(); ++y) {
+			for (int x = 0; x < image.width(); ++x) {
+				// 获取当前像素的颜色
+				QColor currentColor = image.pixelColor(x, y);
+				// 检查颜色是否为黑色
+				if (currentColor == Qt::white) {
+					// 将黑色像素设置为透明
+					image.setPixelColor(x, y, Qt::transparent);
+					//image.setPixelColor(x, y, Qt::white);
+				}
+			}
 		}
 
-		retIcon = HZ::getIconFromLocation(value);
-		auto test = retIcon.availableSizes();
-		int a = 1;
+		retIcon = QPixmap::fromImage(image);
 
 	} while (false);
-
-	if (hKey) {
-		RegCloseKey(hKey);
-	}
-
-	if (hIcon) {
-		DestroyIcon(hIcon);
-	}
 
 	return retIcon;
 }
@@ -302,6 +299,7 @@ void DesktopFileItemWatcher::run()
 {
 	// 每个目录关联一个事件以及句柄
 	int nDirCount = m_observerInfos.size();
+	int monitorSucCount = 0;
 	QVector<HANDLE> hEventArray;
 	FILE_NOTIFY_INFORMATION* pNotification = NULL;
 	BOOL watchState = FALSE;
@@ -319,7 +317,6 @@ void DesktopFileItemWatcher::run()
 		goto _end; // 初始化失败，去做资源清理
 	}
 
-	int monitorSucCount = 0;
 	for (int i = 0; i < nDirCount; ++i) {
 		if (m_observerInfos[i].hEvent != NULL) {
 			hEventArray.append(m_observerInfos[i].hEvent);
@@ -386,9 +383,9 @@ _end:
 
 bool DesktopFileItemWatcher::initWatcherDir()
 {
-	for (auto csidl : { CSIDL_DESKTOPDIRECTORY, CSIDL_COMMON_DESKTOPDIRECTORY }) {
+	for (auto clsid : { CSIDL_DESKTOPDIRECTORY, CSIDL_COMMON_DESKTOPDIRECTORY }) {
 		WCHAR path[MAX_PATH] = { 0 };
-		HRESULT hr = SHGetFolderPathW(NULL, csidl, NULL, 0, path);
+		HRESULT hr = SHGetFolderPathW(NULL, clsid, NULL, 0, path);
 		if (FAILED(hr)) {
 			//LOG_ERROR_W("SHGetFolderPathW index(%d) failed hr(0x%x), err(%d).", i, hr, GetLastError());
 			continue;
@@ -467,6 +464,11 @@ QStandardItem* DesktopFileItemWatcher::genQStandardItem(const QFileInfo& fileInf
 	QStandardItem* newItem = new QStandardItem();
 	
 	QIcon itemIcon = getUltimateIcon(fileInfo);
+
+	QString test = fileInfo.absoluteFilePath();
+	auto test2 = itemIcon.availableSizes();
+	auto test3 = itemIcon.actualSize({ 90, 90 });
+
 	HZ::correctPixmapIfIsInvalid(itemIcon);
 	newItem->setIcon(itemIcon);
 	newItem->setText(getFileShowText(fileInfo));
@@ -530,6 +532,7 @@ QIcon DesktopFileItemWatcher::getUltimateIcon(const QFileInfo& fileInfo)
 	}
 	else {
 		return QFileIconProvider().icon(fileInfo);
+		//return QFileIconProvider().icon(QFileInfo("shell:MyComputerFolder"));
 	}
 
 	return QIcon();

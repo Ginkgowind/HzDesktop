@@ -2,6 +2,10 @@
 
 #include <QMenu>
 #include <memory>
+#include <shlwapi.h>
+#include <ShlObj.h>
+#include <wil/resource.h>
+#include <wil/com.h>
 
 #include "common/QtpqReimp.h"
 #include "config/HzDesktopParam.h"
@@ -52,6 +56,8 @@ public:
 
 	void showMenu();
 
+	void HandleCustomMenuItem(UINT cmd);
+
 private:
 	void initViewSubMenu();
 
@@ -71,6 +77,8 @@ signals:
 	void refreshDesktop();
 
 private:
+
+	wil::com_ptr_nothrow<IContextMenu> m_contextMenu;
 
 	HzDesktopParam* m_param;
 

@@ -1,18 +1,19 @@
 ﻿#include <QDebug>
+#include <QDir>
 #include <QUrl>
 #include <QApplication>
 #include <QClipboard>
 #include <QDesktopServices>
 #include <windows.h>
 #include <shellapi.h>
-#include <shlwapi.h>
-#include <ShlObj.h>
-#include <wil/resource.h>
-#include <wil/com.h>
+#include <functional>
+#include <memory>
 
 #include "HzItemMenu.h"
 #include "HzItemMenu_p.h"
 #include "windows/UiOperation.h"
+#include "windows/WindowSubclassWrapper.h"
+#include "resource.h"
 
 static const int MIN_SHELL_MENU_ID = 1;
 static const int MAX_SHELL_MENU_ID = 1000;
@@ -108,18 +109,24 @@ void HzDesktopBlankMenu::showMenu()
 	IShellFolder* pDesktopShell = nullptr;
 	HRESULT hr = SHGetDesktopFolder(&pDesktopShell);
 
-	wil::com_ptr_nothrow<IContextMenu> contextMenu;
-	hr = pDesktopShell->CreateViewObject(hwnd, IID_PPV_ARGS(&contextMenu));
+	hr = pDesktopShell->CreateViewObject(hwnd, IID_PPV_ARGS(&m_contextMenu));
 
-	contextMenu->QueryContextMenu(menu.get(), 0,
+	m_contextMenu->QueryContextMenu(menu.get(), 0,
 		MIN_SHELL_MENU_ID, MAX_SHELL_MENU_ID, CMF_NORMAL);
 
 	// 添加自定义内容
 	d->updateMenu(menu.get());
 
+	//WindowSubclassWrapper(hwnd, std::bind(&HzDesktopBlankMenuPrivate::ParentWindowSubclass, d));
+
+	auto subclass = std::make_unique<WindowSubclassWrapper>(hwnd,
+		std::bind_front(&HzDesktopBlankMenuPrivate::ParentWindowSubclass, d));
+
 	QPoint pos = QCursor::pos();
 	UINT cmd = TrackPopupMenu(menu.get(), TPM_LEFTALIGN | TPM_RETURNCMD,
 		pos.x(), pos.y(), 0, hwnd, nullptr);
+
+	subclass.reset();
 
 	if (cmd == 0) {
 		return;
@@ -131,76 +138,52 @@ void HzDesktopBlankMenu::showMenu()
 		commandInfo.fMask = 0;
 		commandInfo.hwnd = hwnd;
 		commandInfo.lpVerb = reinterpret_cast<LPCSTR>(MAKEINTRESOURCE(cmd - MIN_SHELL_MENU_ID));
-		commandInfo.lpDirectory = m_param->dirPath.toStdString().c_str();
+		commandInfo.lpDirectory = StrDupA(QDir::toNativeSeparators(m_param->dirPath).toStdString().c_str());
 		commandInfo.nShow = SW_SHOWNORMAL;
-		contextMenu->InvokeCommand(&commandInfo);
+		m_contextMenu->InvokeCommand(&commandInfo);
+	}
+	else {
+		HandleCustomMenuItem(cmd);
+	}
+}
+
+void HzDesktopBlankMenu::HandleCustomMenuItem(UINT cmd)
+{
+	switch (cmd)
+	{
+	case IDM_VIEW_LARGE_ICON:
+		emit onSetIconSizeMode(LargeIcon);
+		break;
+	case IDM_VIEW_MEDIUM_ICON:
+		emit onSetIconSizeMode(MediumIcon);
+		break;
+	case IDM_VIEW_SMALL_ICON:
+		emit onSetIconSizeMode(SmallIcon);
+		break;
+	case IDM_VIEW_AUTO_ARRANGE:
+		emit switchAutoArrangeStatus();
+		break;
+	case IDM_VIEW_DOUBLE_CLICK:
+		emit switchDoubleClickStatus();
+		break;
+	case IDM_VIEW_SHOW_DESKTOP:
+		emit onHide();
+		break;
+	case IDM_VIEW_LNK_ARROW:
+
+		break;
+
+	default:
+		break;
 	}
 }
 
 void HzDesktopBlankMenu::initViewSubMenu()
 {
-	QActionGroup* viewModeGroup = new QActionGroup(this);
-	QMenu* viewModeSubMenu = addMenu(tr("View"));
-
-	QAction* largeIcon = viewModeSubMenu->addAction(
-		tr("Large icons"), [this]() {emit onSetIconSizeMode(LargeIcon); });
-	QAction* mediumIcon = viewModeSubMenu->addAction(
-		tr("Medium icons"), [this]() {emit onSetIconSizeMode(MediumIcon); });
-	QAction* smallIcon = viewModeSubMenu->addAction(
-		tr("Small icons"), [this]() {emit onSetIconSizeMode(SmallIcon); });
-
-	viewModeGroup->addAction(largeIcon)->setCheckable(true);
-	viewModeGroup->addAction(mediumIcon)->setCheckable(true);
-	viewModeGroup->addAction(smallIcon)->setCheckable(true);
-
-	largeIcon->setChecked(m_param->iconMode == LargeIcon);
-	mediumIcon->setChecked(m_param->iconMode == MediumIcon);
-	smallIcon->setChecked(m_param->iconMode == SmallIcon);
-
-	viewModeSubMenu->addSeparator();
-
-	QAction* autoArrange = viewModeSubMenu->addAction(tr("Auto arrange icons"),
-		[this]() {emit switchAutoArrangeStatus(); });
-	autoArrange->setCheckable(true);
-	autoArrange->setChecked(m_param->bAutoArrange);
-
-	viewModeSubMenu->addSeparator();
-
-	QAction* enableDoubleClick = viewModeSubMenu->addAction(tr("Double click hide desktop"),
-		[this]() {emit switchDoubleClickStatus(); });
-	enableDoubleClick->setCheckable(true);
-	enableDoubleClick->setChecked(m_param->bEnableDoubleClick);
-
-	// 这个要保持选中状态
-	QAction* action = viewModeSubMenu->addAction(tr("Show desktop"));
-	action->setCheckable(true);
-	action->setChecked(true);
-	connect(action, &QAction::triggered,
-		[this, action]() {emit onHide(); action->setChecked(true); });
+	
 }
 
 void HzDesktopBlankMenu::initSortSubMenu()
 {
-	QActionGroup* sortModeGroup = new QActionGroup(this);
-	QMenu* sortModeSubMenu = addMenu(tr("Sort by"));
-	QAction* sortByName = sortModeSubMenu->addAction(tr("Name"),
-		[this]() {emit onSetItemSortRole(FileNameRole); });
-	QAction* sortBySize = sortModeSubMenu->addAction(tr("Size"),
-		[this]() {emit onSetItemSortRole(FileSizeRole); });
-	QAction* sortByType = sortModeSubMenu->addAction(tr("ItemType"),
-		[this]() {emit onSetItemSortRole(FileTypeRole); });
-	QAction* sortByTime = sortModeSubMenu->addAction(tr("DateModified"),
-		[this]() {emit onSetItemSortRole(FileLastModifiedRole); });
-
-	sortModeGroup->addAction(sortByName)->setCheckable(true);
-	sortModeGroup->addAction(sortBySize)->setCheckable(true);
-	sortModeGroup->addAction(sortByType)->setCheckable(true);
-	sortModeGroup->addAction(sortByTime)->setCheckable(true);
-
-	if (m_param->bAutoArrange) {
-		sortByName->setChecked(m_param->sortRole == FileNameRole);
-		sortBySize->setChecked(m_param->sortRole == FileSizeRole);
-		sortByType->setChecked(m_param->sortRole == FileTypeRole);
-		sortByTime->setChecked(m_param->sortRole == FileLastModifiedRole);
-	}
+	
 }

@@ -3,6 +3,8 @@
 #include <QSize>
 #include <QDateTime>
 
+#define MAX_ICON_SIZE 256
+
 enum MenuShowStyle
 {
 	HzStyle,

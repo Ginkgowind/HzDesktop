@@ -40,12 +40,18 @@ inline void MenuHelper::insertMenuItem(HMENU menu, UINT id, UINT item)
 
 inline void MenuHelper::appendSeparator(HMENU menu)
 {
+	insertSeparator(menu, GetMenuItemCount(menu));
+}
+
+inline void MenuHelper::insertSeparator(HMENU menu, UINT item)
+{
 	MENUITEMINFO menuItemInfo = {};
 	menuItemInfo.cbSize = sizeof(menuItemInfo);
 	menuItemInfo.fMask = MIIM_FTYPE;
 	menuItemInfo.fType = MFT_SEPARATOR;
-	InsertMenuItem(menu, GetMenuItemCount(menu), TRUE, &menuItemInfo);
+	InsertMenuItem(menu, item, TRUE, &menuItemInfo);
 }
+
 
 inline void MenuHelper::addSubMenuItem(HMENU menu, UINT id, wil::unique_hmenu subMenu)
 {
@@ -81,7 +87,50 @@ void HzDesktopBlankMenuPrivate::updateMenu(HMENU menu)
 	// TODO 为什么用unique
 	auto viewMenu = buildViewsMenu();
 	MenuHelper::insertSubMenuItem(menu, IDS_VIEW_BKG_MENU, std::move(viewMenu), position++);
+	MenuHelper::insertSeparator(menu, position++);
 }
+
+LRESULT HzDesktopBlankMenuPrivate::ParentWindowSubclass(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	HZQ_Q(HzDesktopBlankMenu);
+
+	switch (msg)
+	{
+	case WM_MEASUREITEM:
+	case WM_DRAWITEM:
+	case WM_INITMENUPOPUP:
+	case WM_MENUCHAR:
+		// wParam is 0 if this item was sent by a menu.
+		if ((msg == WM_MEASUREITEM || msg == WM_DRAWITEM) && wParam != 0)
+		{
+			break;
+		}
+
+		if (!q->m_contextMenu)
+		{
+			break;
+		}
+
+		if (auto contextMenu3 = q->m_contextMenu.try_query<IContextMenu3>())
+		{
+			LRESULT result;
+			HRESULT hr = contextMenu3->HandleMenuMsg2(msg, wParam, lParam, &result);
+
+			if (SUCCEEDED(hr))
+			{
+				return result;
+			}
+		}
+		else if (auto contextMenu2 = q->m_contextMenu.try_query<IContextMenu2>())
+		{
+			contextMenu2->HandleMenuMsg(msg, wParam, lParam);
+		}
+		break;
+	}
+
+	return DefSubclassProc(hwnd, msg, wParam, lParam);
+}
+
 
 wil::unique_hmenu HzDesktopBlankMenuPrivate::buildViewsMenu()
 {
