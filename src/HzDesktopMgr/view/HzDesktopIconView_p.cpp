@@ -122,6 +122,7 @@ void HzDesktopIconViewPrivate::handleDelete()
 
 	QModelIndexList indexList = q->selectedIndexes();
 
+	// TODO 目前无法删除文件夹
 	for (const QModelIndex& index : indexList) {
 		FILEOP_FLAGS dwOpFlags = FOF_ALLOWUNDO | FOF_NO_UI;
 

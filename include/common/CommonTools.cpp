@@ -121,4 +121,19 @@ namespace HZ
 		return strRetPath;
 	}
 
+	QString formatFileSize(qint64 size)
+	{
+		if (size >= 1024 * 1024 * 1024) { // 大于等于GB
+			return QString("%1 GB").arg((double)size / (1024.0 * 1024.0 * 1024.0), 0, 'f', 2);
+		}
+		else if (size >= 1024 * 1024) { // 大于等于MB
+			return QString("%1 MB").arg((double)size / (1024.0 * 1024.0), 0, 'f', 2);
+		}
+		else if (size >= 1024) { // 大于等于KB
+			return QString("%1 KB").arg((double)size / 1024.0, 0, 'f', 2);
+		}
+		else { // 小于KB
+			return QString("%1 B").arg(size);
+		}
+	}
 }

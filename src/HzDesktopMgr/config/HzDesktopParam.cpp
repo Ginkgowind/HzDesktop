@@ -3,13 +3,15 @@
 #define TEXT_MAX_HEIGHT			40
 
 HzDesktopParam::HzDesktopParam()
-	: iconMargin(5, 5)
+	: workMode(GridMode)
+	, iconMargin(5, 5)
 	, itemSpaceSize(10, 20)
 	, bEnableDoubleClick(true)
-	, bAutoArrange(false)
+	//, bAutoArrange(false)
+	, bAutoArrange(true)
 	, iconMode(MediumIcon)
 	, sortRole(FileNameRole)
-	, sortOrder(Qt::AscendingOrder)
+	, sortOrder(Qt::DescendingOrder)
 {
 	setIconSizeMode(iconMode);
 }

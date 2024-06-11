@@ -31,8 +31,6 @@ HzDesktopIconView::HzDesktopIconView(QWidget *parent)
 	m_desktopBlankMenu = new HzDesktopBlankMenu(this, &m_param);
 
 	m_itemProxyModel = new HzItemSortProxyModel(this, &m_param);
-	// TODO 动态设置
-	m_itemProxyModel->setDynamicSortFilter(false);
 	m_itemModel = new HzDesktopItemModel(m_itemProxyModel);
 	m_itemProxyModel->setSourceModel(m_itemModel);
 	setModel(m_itemProxyModel);
@@ -118,10 +116,10 @@ void HzDesktopIconView::initSignalAndSlot()
 		this, &HzDesktopIconView::handleSetIconSizeMode);
 	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::onSetItemSortRole,
 		this, &HzDesktopIconView::handleSetItemSortRole);
-	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::switchAutoArrangeStatus,
-		this, &HzDesktopIconView::handleSwitchAutoArrangeStatus);
-	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::switchDoubleClickStatus,
-		[this]() {m_param.bEnableDoubleClick = !m_param.bEnableDoubleClick; });
+	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::onSetItemSortOrder,
+		this, &HzDesktopIconView::handleSetItemSortOrder);
+	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::enableAutoArrange,
+		this, &HzDesktopIconView::handleEnableAutoArrange);
 	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::onHide, [this]() {setVisible(false); });
 
 	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::refreshDesktop,
@@ -178,7 +176,7 @@ void HzDesktopIconView::setSelection(const QRect& rect, QItemSelectionModel::Sel
 	QItemSelection selection;
 
 	if (rect.width() == 1 && rect.height() == 1) {
-		const QVector<QModelIndex> intersectVector = intersectingSet(rect);
+		const QModelIndexList intersectVector = intersectingSet(rect);
 		QModelIndex tl;
 		if (!intersectVector.isEmpty())
 			tl = intersectVector.last(); // special case for mouse press; only select the top item
@@ -187,7 +185,7 @@ void HzDesktopIconView::setSelection(const QRect& rect, QItemSelectionModel::Sel
 	}
 	else {
 		if (state() == DragSelectingState) { // visual selection mode (rubberband selection)
-			selection = getSelection(rect);
+			selection = getSelectionFromRect(rect);
 		}
 		else {
 		}
@@ -376,7 +374,18 @@ void HzDesktopIconView::dropEvent(QDropEvent* e)
 	}
 
 	setState(NoState);
+
+	// TODO 为什么下面的函数用内联会找不到定义，难道是因为两边都有inline？
+	// TODO 根据是否有变化来判断是否取消显示状态
+	m_desktopBlankMenu->hideSortStatus();
 }
+
+//void HzDesktopIconView::dragMoveEvent(QDragMoveEvent* e)
+//{
+//	QAbstractItemView::dragMoveEvent(e);
+//
+//	// 判断当前是否拖拽到了两个item之间，并绘制提示条
+//}
 
 void HzDesktopIconView::contextMenuEvent(QContextMenuEvent* event)
 {
@@ -403,7 +412,7 @@ void HzDesktopIconView::paintEvent(QPaintEvent* e)
 	painter.restore();
 
 	QStyleOptionViewItem option = QAbstractItemView::viewOptions();
-	const QVector<QModelIndex> toBeRendered = intersectingSet(e->rect());
+	const QModelIndexList toBeRendered = intersectingSet(e->rect());
 	const QModelIndex current = currentIndex();
 	const QModelIndex hover = m_hoverIndex;
 	const bool focus = (hasFocus() || viewport()->hasFocus()) && current.isValid();
@@ -412,8 +421,8 @@ void HzDesktopIconView::paintEvent(QPaintEvent* e)
 	const bool enabled = (state & QStyle::State_Enabled) != 0;
 
 	//e->rect() TODO 利用这个rect来决定要绘制哪些modelindex
-	QVector<QModelIndex>::const_iterator end = toBeRendered.constEnd();
-	for (QVector<QModelIndex>::const_iterator it = toBeRendered.constBegin(); it != end; ++it) {
+	QModelIndexList::const_iterator end = toBeRendered.constEnd();
+	for (QModelIndexList::const_iterator it = toBeRendered.constBegin(); it != end; ++it) {
 		option.rect = visualRect(*it);
 		option.state = state;
 		if (selectionModel() && selectionModel()->isSelected(*it))
@@ -479,22 +488,35 @@ void HzDesktopIconView::handleInternalDrop(QDropEvent* e)
 {
 	QModelIndexList indexList = selectedIndexes();
 	QList<QStandardItem*> dropItems;
+	
+	if (m_param.bAutoArrange) {
+		// 按照row从大到小进行排序，从而先删除大的
+		qSort(indexList.begin(), indexList.end(), [](const QModelIndex& index1, const QModelIndex& index2) {
+			return index1.row() > index2.row(); });
 
-	// 按照row从大到小进行排序
-	qSort(indexList.begin(), indexList.end(), [](const QModelIndex& index1, const QModelIndex& index2) {
-		return index1.row() > index2.row(); });
+		for (const QModelIndex& index : indexList) {
+			QModelIndex sourceIndex = m_itemProxyModel->mapToSource(index);
+			dropItems.push_back(m_itemModel->takeItem(sourceIndex.row()));
+			m_itemProxyModel->removeRow(index.row());
+		}
 
-	for (const QModelIndex& index : indexList) {
-		dropItems.push_back(m_itemModel->takeItem(index.row()));
-		m_itemModel->removeRow(index.row());
+		for (auto it = dropItems.rbegin(); it < dropItems.rend(); it++) {
+			m_itemModel->appendRow(*it);
+		}
 	}
+	else {
 
-	// 获取鼠标位置对应的row
-	QPoint dropPos = e->pos();
-	int insertRow = dropPos.x() / m_param.gridSize.width() * m_maxViewRow
-		+ dropPos.y() / m_param.gridSize.height();
+	}
+	
+	
+	{
+		//// 获取鼠标位置对应的row
+		//QPoint dropPos = e->pos();
+		//int insertRow = dropPos.x() / m_param.gridSize.width() * m_maxViewRow
+		//	+ dropPos.y() / m_param.gridSize.height();
 
-	m_itemModel->insertItems(insertRow, dropItems);
+		//m_itemModel->insertItems(insertRow, dropItems);
+	}
 
 	//updateGeometries();
 	viewport()->update(viewport()->rect());
@@ -506,11 +528,16 @@ void HzDesktopIconView::handleExternalDrop(QDropEvent* e)
 
 void HzDesktopIconView::handleSetIconSizeMode(IconSizeMode mode)
 {
-	m_param.setIconSizeMode(mode);
-
 	handleLayoutChanged();
 
 	update();
+}
+
+void HzDesktopIconView::handleEnableAutoArrange()
+{
+	m_itemModel->removeAllDisableItem();
+
+	m_itemProxyModel->sort(0, m_param.sortOrder);
 }
 
 void HzDesktopIconView::handleSetItemSortRole(CustomRoles role)
@@ -518,41 +545,27 @@ void HzDesktopIconView::handleSetItemSortRole(CustomRoles role)
 	// 触发排序时，先删除掉所有的占位item
 	m_itemModel->removeAllDisableItem();
 
-	// 如果设置的role相同，就取反排序顺序
-	if (m_param.sortRole == role) {
-		m_param.sortOrder = (m_param.sortOrder == Qt::AscendingOrder ?
-			Qt::DescendingOrder : Qt::AscendingOrder);
-	}
-
-	m_param.sortRole = role;
-
 	m_itemProxyModel->setSortRole(role);
 	m_itemProxyModel->sort(0, m_param.sortOrder);
 }
 
-void HzDesktopIconView::handleSwitchAutoArrangeStatus()
+void HzDesktopIconView::handleSetItemSortOrder(Qt::SortOrder order)
 {
-	if (m_param.bAutoArrange) {
-		m_itemProxyModel->setDynamicSortFilter(false);
-	}
-	else {
-		m_itemModel->removeAllDisableItem();
+	// 触发排序时，先删除掉所有的占位item
+	m_itemModel->removeAllDisableItem();
 
-		m_itemProxyModel->setDynamicSortFilter(true);
-		m_itemProxyModel->sort(0, m_param.sortOrder);
-	}
-
-	m_param.bAutoArrange = !m_param.bAutoArrange;
+	m_itemProxyModel->sort(0, m_param.sortOrder);
 }
+
 
 bool HzDesktopIconView::isAutoArrange()
 {
 	return m_itemProxyModel->dynamicSortFilter();
 }
 
-QVector<QModelIndex> HzDesktopIconView::intersectingSet(const QRect& area) const
+QModelIndexList HzDesktopIconView::intersectingSet(const QRect& area) const
 {
-	QVector<QModelIndex> ret;
+	QModelIndexList ret;
 
 	int rowCount = model()->rowCount();
 	for (int i = 0; i < rowCount; ++i) {
@@ -565,13 +578,13 @@ QVector<QModelIndex> HzDesktopIconView::intersectingSet(const QRect& area) const
 	return ret;
 }
 
-QItemSelection HzDesktopIconView::getSelection(const QRect& rect) const
+QItemSelection HzDesktopIconView::getSelectionFromRect(const QRect& rect) const
 {
 	QItemSelection selection;
 	QModelIndex tl, br;
 	// TODO 这里为什么要normalized
-	const QVector<QModelIndex> intersectVector = intersectingSet(rect.normalized());
-	QVector<QModelIndex>::const_iterator it = intersectVector.begin();
+	const QModelIndexList intersectVector = intersectingSet(rect.normalized());
+	QModelIndexList::const_iterator it = intersectVector.begin();
 	for (; it != intersectVector.end(); ++it) {
 		if (!tl.isValid() && !br.isValid()) {
 			tl = br = *it;

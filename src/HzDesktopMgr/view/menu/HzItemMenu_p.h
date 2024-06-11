@@ -24,6 +24,8 @@ public:
 	static inline void addSubMenuItem(HMENU menu, UINT id, wil::unique_hmenu subMenu);
 	
 	static inline void insertSubMenuItem(HMENU menu, UINT id, wil::unique_hmenu subMenu, UINT item);
+
+	static inline void CheckItem(HMENU hMenu, UINT itemID, bool bCheck);
 };
 
 class HzDesktopBlankMenuPrivate : public HzDesktopPrivate
@@ -41,5 +43,7 @@ public:
 private:
 	LRESULT ParentWindowSubclass(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-	wil::unique_hmenu buildViewsMenu();
+	wil::unique_hmenu buildViewMenu();
+
+	wil::unique_hmenu buildSortMenu();
 };

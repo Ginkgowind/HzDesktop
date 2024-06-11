@@ -12,6 +12,8 @@ public:
 	HzItemSortProxyModel(QObject *parent, HzDesktopParam* param);
 	~HzItemSortProxyModel();
 
+	QModelIndexList mapListToSource(const QModelIndexList& proxyIndexList);
+
 	QString name(const QModelIndex& index) const;
 	qint64 size(const QModelIndex& index) const;
 	QString type(const QModelIndex& index) const;

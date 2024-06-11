@@ -105,8 +105,6 @@ private:
 
 	QIcon getUltimateIcon(const QFileInfo& fileInfo);
 
-	QString getFileShowText(const QFileInfo& fileInfo);
-
 	void handleObserveResult(
 		const QString& strWatchDirectory,
 		const FILE_NOTIFY_INFORMATION* pNotification

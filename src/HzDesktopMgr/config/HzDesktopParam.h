@@ -5,6 +5,13 @@
 
 #define MAX_ICON_SIZE 256
 
+enum WorkMode
+{
+	DesktopMode,
+	GridMode,
+	FileMappingMode
+};
+
 enum MenuShowStyle
 {
 	HzStyle,
@@ -39,11 +46,16 @@ private:
 	void updateGridSize();
 
 public:
+	WorkMode workMode;
+
 	QString dirPath;
 
 	bool bEnableDoubleClick;
 
+	// 仅表示会紧密排列，而不是自动排序
 	bool bAutoArrange;
+
+	bool bShowLnkArrow;
 
 	IconSizeMode iconMode;
 

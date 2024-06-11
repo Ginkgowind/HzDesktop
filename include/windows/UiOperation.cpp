@@ -59,9 +59,6 @@ namespace HZ
 		IContextMenu* pContextMenu = nullptr;
 		HMENU hMenu = nullptr;
 
-		testComMenu(hOwnerWnd);
-		return true;
-
 		do
 		{
 			if (pathList.empty()) {

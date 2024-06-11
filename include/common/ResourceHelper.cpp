@@ -4,17 +4,17 @@
 
 namespace ResourceHelper
 {
-	std::string LoadString(HINSTANCE resourceInstance, UINT stringId)
+	std::wstring LoadStringFromRC(HINSTANCE resourceInstance, UINT stringId)
 	{
-		CHAR str[MAX_MENU_TEXT_LEN] = { 0 };
+		TCHAR str[MAX_MENU_TEXT_LEN] = { 0 };
 		int numCharacters =
 			LoadString(resourceInstance, stringId, str, MAX_MENU_TEXT_LEN);
 
 		if (numCharacters == 0) {
-			return "";
+			return L"";
 		}
 
 		// TODO 这里如果不带参数2有区别吗
-		return std::string(str, numCharacters);
+		return std::wstring(str, numCharacters);
 	}
 }

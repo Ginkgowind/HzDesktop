@@ -71,6 +71,8 @@ protected:
 
 	//void dragEnterEvent(QDragEnterEvent* event) override;
 
+	//void dragMoveEvent(QDragMoveEvent* event) override;
+
 	void dropEvent(QDropEvent* e) override;
 
 	void contextMenuEvent(QContextMenuEvent* event) override;
@@ -90,17 +92,19 @@ private:
 
 	void handleSetIconSizeMode(IconSizeMode mode);
 
+	void handleEnableAutoArrange();
+
 	void handleSetItemSortRole(CustomRoles role);
 
-	void handleSwitchAutoArrangeStatus();
+	void handleSetItemSortOrder(Qt::SortOrder order);
 
 private:
 
 	bool isAutoArrange();
 
-	QVector<QModelIndex> intersectingSet(const QRect& area) const;
+	QModelIndexList intersectingSet(const QRect& area) const;
 
-	QItemSelection getSelection(const QRect& rect) const;
+	QItemSelection getSelectionFromRect(const QRect& rect) const;
 
 private:
 

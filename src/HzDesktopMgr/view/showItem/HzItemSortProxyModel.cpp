@@ -15,7 +15,7 @@ HzItemSortProxyModel::HzItemSortProxyModel(QObject *parent, HzDesktopParam* para
 		itemModel->removeAllDisableItem();
 
 		setSortRole(m_param->sortRole);
-		setDynamicSortFilter(m_param->bAutoArrange);
+		setDynamicSortFilter(false);
 
 		if (m_param->bAutoArrange) {
 			sort(0, m_param->sortOrder);
@@ -25,6 +25,17 @@ HzItemSortProxyModel::HzItemSortProxyModel(QObject *parent, HzDesktopParam* para
 
 HzItemSortProxyModel::~HzItemSortProxyModel()
 {}
+
+QModelIndexList HzItemSortProxyModel::mapListToSource(const QModelIndexList & proxyIndexList)
+{
+	QModelIndexList sourceIndexList;
+
+	for (const QModelIndex& index : proxyIndexList) {
+		sourceIndexList.push_back(mapToSource(index));
+	}
+
+	return sourceIndexList;
+}
 
 //bool HzItemSortProxyModel::lessThan(const QModelIndex & source_left, const QModelIndex & source_right) const
 //{

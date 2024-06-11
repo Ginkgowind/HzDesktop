@@ -56,23 +56,29 @@ public:
 
 	void showMenu();
 
-	void HandleCustomMenuItem(UINT cmd);
+	void handleCustomMenuItem(UINT cmd);
+
+	void hideSortStatus();
 
 private:
 	void initViewSubMenu();
 
 	void initSortSubMenu();
 
+	inline void setItemSortRole(CustomRoles role);
+
+	inline void setItemSortOrder(Qt::SortOrder order);
+
 signals:
 	void onSetIconSizeMode(IconSizeMode mode);
 
-	void onSetItemSortRole(CustomRoles role);
-
-	void switchAutoArrangeStatus();
-
-	void switchDoubleClickStatus();
+	void enableAutoArrange();
 
 	void onHide();
+
+	void onSetItemSortRole(CustomRoles role);
+
+	void onSetItemSortOrder(Qt::SortOrder order);
 
 	void refreshDesktop();
 
@@ -81,6 +87,8 @@ private:
 	wil::com_ptr_nothrow<IContextMenu> m_contextMenu;
 
 	HzDesktopParam* m_param;
+
+	bool m_showSortStatus;
 
 private:
 	HZQ_DECLARE_PRIVATE(HzDesktopBlankMenu)

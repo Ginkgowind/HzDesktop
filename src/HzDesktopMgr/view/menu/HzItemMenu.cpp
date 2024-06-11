@@ -87,12 +87,8 @@ HzDesktopBlankMenu::HzDesktopBlankMenu(QWidget* parent, HzDesktopParam* param)
 	: QMenu(parent)
 	, HzDesktopPublic(new HzDesktopBlankMenuPrivate())
 	, m_param(param)
+	, m_showSortStatus(false)
 {
-	initViewSubMenu();
-
-	initSortSubMenu();
-
-	addAction(tr("Refresh"), this, [this]() {emit refreshDesktop(); });
 }
 
 HzDesktopBlankMenu::~HzDesktopBlankMenu()
@@ -116,8 +112,6 @@ void HzDesktopBlankMenu::showMenu()
 
 	// 添加自定义内容
 	d->updateMenu(menu.get());
-
-	//WindowSubclassWrapper(hwnd, std::bind(&HzDesktopBlankMenuPrivate::ParentWindowSubclass, d));
 
 	auto subclass = std::make_unique<WindowSubclassWrapper>(hwnd,
 		std::bind_front(&HzDesktopBlankMenuPrivate::ParentWindowSubclass, d));
@@ -143,28 +137,34 @@ void HzDesktopBlankMenu::showMenu()
 		m_contextMenu->InvokeCommand(&commandInfo);
 	}
 	else {
-		HandleCustomMenuItem(cmd);
+		handleCustomMenuItem(cmd);
 	}
 }
 
-void HzDesktopBlankMenu::HandleCustomMenuItem(UINT cmd)
+void HzDesktopBlankMenu::handleCustomMenuItem(UINT cmd)
 {
 	switch (cmd)
 	{
 	case IDM_VIEW_LARGE_ICON:
+		m_param->setIconSizeMode(LargeIcon);
 		emit onSetIconSizeMode(LargeIcon);
 		break;
 	case IDM_VIEW_MEDIUM_ICON:
+		m_param->setIconSizeMode(MediumIcon);
 		emit onSetIconSizeMode(MediumIcon);
 		break;
 	case IDM_VIEW_SMALL_ICON:
+		m_param->setIconSizeMode(SmallIcon);
 		emit onSetIconSizeMode(SmallIcon);
 		break;
 	case IDM_VIEW_AUTO_ARRANGE:
-		emit switchAutoArrangeStatus();
+		if (!m_param->bAutoArrange) {
+			emit enableAutoArrange();
+		}
+		m_param->bAutoArrange = !m_param->bAutoArrange;
 		break;
 	case IDM_VIEW_DOUBLE_CLICK:
-		emit switchDoubleClickStatus();
+		m_param->bEnableDoubleClick = !m_param->bEnableDoubleClick;
 		break;
 	case IDM_VIEW_SHOW_DESKTOP:
 		emit onHide();
@@ -172,10 +172,42 @@ void HzDesktopBlankMenu::HandleCustomMenuItem(UINT cmd)
 	case IDM_VIEW_LNK_ARROW:
 
 		break;
+	case IDM_SORT_BY_NAME:
+		setItemSortRole(FileNameRole);
+		break;
+	case IDM_SORT_BY_SIZE:
+		setItemSortRole(FileSizeRole);
+		break;
+	case IDM_SORT_BY_TYPE:
+		setItemSortRole(FileTypeRole);
+		break;
+	case IDM_SORT_BY_TIME:
+		setItemSortRole(FileLastModifiedRole);
+		break;
+	case IDM_SORT_ASCENDING:
+		setItemSortOrder(Qt::AscendingOrder);
+		break;
+	case IDM_SORT_DESCENDING:
+		setItemSortOrder(Qt::DescendingOrder);
+		break;
+	case IDM_REFRESH:
+		emit refreshDesktop();
+		break;
+	case IDM_PASTE:
+
+		break;
+	case IDM_PASTE_SHORTCUT:
+
+		break;
 
 	default:
 		break;
 	}
+}
+
+void HzDesktopBlankMenu::hideSortStatus()
+{
+	m_showSortStatus = false;
 }
 
 void HzDesktopBlankMenu::initViewSubMenu()
@@ -186,4 +218,18 @@ void HzDesktopBlankMenu::initViewSubMenu()
 void HzDesktopBlankMenu::initSortSubMenu()
 {
 	
+}
+
+inline void HzDesktopBlankMenu::setItemSortRole(CustomRoles role)
+{
+	m_param->sortRole = role;
+	m_showSortStatus = true;
+	emit onSetItemSortRole(role);
+}
+
+inline void HzDesktopBlankMenu::setItemSortOrder(Qt::SortOrder order)
+{
+	m_param->sortOrder = order;
+	m_showSortStatus = true;
+	emit onSetItemSortOrder(order);
 }

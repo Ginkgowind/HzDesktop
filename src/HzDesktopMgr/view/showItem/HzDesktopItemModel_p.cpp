@@ -1,5 +1,6 @@
-#include <QtWinExtras/QtWin>
+ï»¿#include <QtWinExtras/QtWin>
 #include <QSettings>
+#include <QTextCodec>
 #include <QDebug>
 #include <QUrl>
 #include <QDir>
@@ -13,7 +14,7 @@
 #include "common/CommonTools.h"
 #include "windows/UiOperation.h"
 
-// ¿ØÖÆÏµÍ³Í¼±êµÄÏÔÊ¾ÓëÒş²Ø£¬·ÂÕÕÌÚÑ¶×ÀÃæÕûÀí£¬´Ë´¦´Ó¼ò£¬Ö»¼àÌıÏÔÊ¾ÓëÒş²Ø
+// æ§åˆ¶ç³»ç»Ÿå›¾æ ‡çš„æ˜¾ç¤ºä¸éšè—ï¼Œä»¿ç…§è…¾è®¯æ¡Œé¢æ•´ç†ï¼Œæ­¤å¤„ä»ç®€ï¼Œåªç›‘å¬æ˜¾ç¤ºä¸éšè—
 #define SYSTEM_ICON_REG_SUBPATH \
 	"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\HideDesktopIcons\\NewStartPanel"
 
@@ -85,10 +86,12 @@ QStandardItem* DesktopSystemItemWatcher::genQStandardItem(const QString& clsidPa
 {
 	QStandardItem* newItem = new QStandardItem();
 	QIcon itemIcon = getSystemAppIcon(clsidPath);
+	QString itemName = getSystemAppDisplayName(clsidPath);
 	//HZ::correctPixmapIfIsInvalid(itemIcon);
 	newItem->setIcon(itemIcon);
-	newItem->setText(getSystemAppDisplayName(clsidPath));
+	newItem->setText(itemName);
 	newItem->setData(clsidPath, CustomRoles::FilePathRole);
+	newItem->setToolTip(itemName);
 
 	return newItem;
 }
@@ -122,7 +125,7 @@ QString DesktopSystemItemWatcher::getSystemAppDisplayName(const QString& clsidPa
 			break;
 		}
 
-		hRet = StrRetToBuf(&strDisplayName, systemAppPidl, szDisplayName, MAX_PATH);
+		hRet = StrRetToBufW(&strDisplayName, systemAppPidl, szDisplayName, MAX_PATH);
 		if (FAILED(hRet)) {
 			break;
 		}
@@ -136,7 +139,7 @@ QString DesktopSystemItemWatcher::getSystemAppDisplayName(const QString& clsidPa
 		desktopFolder->Release();
 	}
 
-	return szDisplayName;
+	return QString::fromStdWString(szDisplayName);
 }
 
 bool DesktopSystemItemWatcher::setSystemAppDisplayName(const QString& clsidPath, const QString& name)
@@ -182,7 +185,7 @@ bool DesktopSystemItemWatcher::setSystemAppDisplayName(const QString& clsidPath,
 	return bRet;
 }
 
-// TODO ÕâÀï»ñµÃµÄicon³ß´çÆ«Ğ¡£¬µ¼ÖÂÏÔÊ¾³öÀ´µÄÍ¼Æ¬±È½Ïºı
+// TODO è¿™é‡Œè·å¾—çš„iconå°ºå¯¸åå°ï¼Œå¯¼è‡´æ˜¾ç¤ºå‡ºæ¥çš„å›¾ç‰‡æ¯”è¾ƒç³Š
 QIcon DesktopSystemItemWatcher::getSystemAppIcon(const QString& clsidValue)
 {
 	QIcon retIcon;
@@ -202,17 +205,17 @@ QIcon DesktopSystemItemWatcher::getSystemAppIcon(const QString& clsidValue)
 		itemImageFactory->GetImage(s, SIIGBF_ICONBACKGROUND, &bitmap);
 		itemImageFactory->Release();
 
-		// TODO ½«Í¼Æ¬»º´æÆğÀ´£¿²»¹ıºÃÏñ²»»á±ä¸üÒ²²»ĞèÒª
+		// TODO å°†å›¾ç‰‡ç¼“å­˜èµ·æ¥ï¼Ÿä¸è¿‡å¥½åƒä¸ä¼šå˜æ›´ä¹Ÿä¸éœ€è¦
 		QImage image = QtWin::imageFromHBITMAP(bitmap, QtWin::HBitmapAlpha).mirrored(false, true);
 
-		// ½«ºÚÉ«ÏñËØ×ª»»ÎªÍ¸Ã÷
+		// å°†é»‘è‰²åƒç´ è½¬æ¢ä¸ºé€æ˜
 		for (int y = 0; y < image.height(); ++y) {
 			for (int x = 0; x < image.width(); ++x) {
-				// »ñÈ¡µ±Ç°ÏñËØµÄÑÕÉ«
+				// è·å–å½“å‰åƒç´ çš„é¢œè‰²
 				QColor currentColor = image.pixelColor(x, y);
-				// ¼ì²éÑÕÉ«ÊÇ·ñÎªºÚÉ«
+				// æ£€æŸ¥é¢œè‰²æ˜¯å¦ä¸ºé»‘è‰²
 				if (currentColor == Qt::white) {
-					// ½«ºÚÉ«ÏñËØÉèÖÃÎªÍ¸Ã÷
+					// å°†é»‘è‰²åƒç´ è®¾ç½®ä¸ºé€æ˜
 					image.setPixelColor(x, y, Qt::transparent);
 					//image.setPixelColor(x, y, Qt::white);
 				}
@@ -251,7 +254,7 @@ void DesktopSystemItemWatcher::run()
 
 		if (dwWait == WAIT_OBJECT_0)
 		{
-			// µÈ´ı1ÃëÔÙ¸üĞÂ£¬·ÀÖ¹×¢²á±í²ÅĞ´ÁËÒ»°ëµÄÇé¿ö
+			// ç­‰å¾…1ç§’å†æ›´æ–°ï¼Œé˜²æ­¢æ³¨å†Œè¡¨æ‰å†™äº†ä¸€åŠçš„æƒ…å†µ
 			QThread::msleep(1000);
 		}
 		else
@@ -297,7 +300,7 @@ void DesktopFileItemWatcher::refreshFileItem()
 
 void DesktopFileItemWatcher::run()
 {
-	// Ã¿¸öÄ¿Â¼¹ØÁªÒ»¸öÊÂ¼şÒÔ¼°¾ä±ú
+	// æ¯ä¸ªç›®å½•å…³è”ä¸€ä¸ªäº‹ä»¶ä»¥åŠå¥æŸ„
 	int nDirCount = m_observerInfos.size();
 	int monitorSucCount = 0;
 	QVector<HANDLE> hEventArray;
@@ -309,12 +312,12 @@ void DesktopFileItemWatcher::run()
 		FILE_NOTIFY_CHANGE_ATTRIBUTES |
 		FILE_NOTIFY_CHANGE_LAST_WRITE;
 
-	// ³õÊ¼»¯£¬
-	// ÏÖÔÚÓĞÁ½¸öinit£¬ÒªÕûºÏÒ»ÏÂ
+	// åˆå§‹åŒ–ï¼Œ
+	// ç°åœ¨æœ‰ä¸¤ä¸ªinitï¼Œè¦æ•´åˆä¸€ä¸‹
 	if (!initWatcher(dwNotifyFilter))
 	{
 		//LOG_ERROR_W("_InitObserver failed");
-		goto _end; // ³õÊ¼»¯Ê§°Ü£¬È¥×ö×ÊÔ´ÇåÀí
+		goto _end; // åˆå§‹åŒ–å¤±è´¥ï¼Œå»åšèµ„æºæ¸…ç†
 	}
 
 	for (int i = 0; i < nDirCount; ++i) {
@@ -329,7 +332,7 @@ void DesktopFileItemWatcher::run()
 		if (WAIT_OBJECT_0 <= dwWait && dwWait < WAIT_OBJECT_0 + monitorSucCount) {
 			int eventIndex = dwWait - WAIT_OBJECT_0;
 			int watchInfoIndex = -1;
-			// Æ¥ÅäÊÇÄÄ¸öÂ·¾¶
+			// åŒ¹é…æ˜¯å“ªä¸ªè·¯å¾„
 			for (size_t i = 0; i < m_observerInfos.size(); ++i) {
 				if (m_observerInfos[i].hEvent == hEventArray[eventIndex]) {
 					watchInfoIndex = i;
@@ -349,7 +352,7 @@ void DesktopFileItemWatcher::run()
 				&bytesReturned,
 				TRUE)) {
 				//LOG_ERROR_W("GetOverlappedResult failed, error=%d", ::GetLastError());
-				continue;   // ¼ÌĞø¼àÌı
+				continue;   // ç»§ç»­ç›‘å¬
 			}
 
 			pNotification = (FILE_NOTIFY_INFORMATION*)m_observerInfos[watchInfoIndex].notifyDataBuf;
@@ -358,7 +361,7 @@ void DesktopFileItemWatcher::run()
 				pNotification);
 			ZeroMemory(m_observerInfos[watchInfoIndex].notifyDataBuf, OBSERVE_DIR_BUFFER_SIZE);
 
-			// Ê¹ÓÃÒì²½µÄReadDirectoryChangesW
+			// ä½¿ç”¨å¼‚æ­¥çš„ReadDirectoryChangesW
 			if (::ReadDirectoryChangesW(
 				m_observerInfos[watchInfoIndex].hDirectory,
 				m_observerInfos[watchInfoIndex].notifyDataBuf,
@@ -426,7 +429,7 @@ bool DesktopFileItemWatcher::initWatcher(DWORD dwNotifyFilter)
 			continue;
 		}
 
-		// Ê¹ÓÃÒì²½µÄReadDirectoryChangesW
+		// ä½¿ç”¨å¼‚æ­¥çš„ReadDirectoryChangesW
 		if (::ReadDirectoryChangesW(
 			observer.hDirectory,
 			observer.notifyDataBuf,
@@ -463,20 +466,32 @@ QStandardItem* DesktopFileItemWatcher::genQStandardItem(const QFileInfo& fileInf
 {
 	QStandardItem* newItem = new QStandardItem();
 	
+	SHFILEINFOW shFileInfo = { 0 };
+	SHGetFileInfoW(fileInfo.absoluteFilePath().toStdWString().c_str(), 0, &shFileInfo, sizeof(SHFILEINFO), 
+		SHGFI_ICON | SHGFI_LARGEICON | SHGFI_TYPENAME | SHGFI_DISPLAYNAME | SHGFI_USEFILEATTRIBUTES);
 	QIcon itemIcon = getUltimateIcon(fileInfo);
 
-	QString test = fileInfo.absoluteFilePath();
-	auto test2 = itemIcon.availableSizes();
-	auto test3 = itemIcon.actualSize({ 90, 90 });
+	QString displayName = QFileInfo(QString::fromStdWString(shFileInfo.szDisplayName)).fileName();
 
 	HZ::correctPixmapIfIsInvalid(itemIcon);
 	newItem->setIcon(itemIcon);
-	newItem->setText(getFileShowText(fileInfo));
+	newItem->setText(displayName);
 	newItem->setData(fileInfo.absoluteFilePath(), CustomRoles::FilePathRole);
 	newItem->setData(fileInfo.fileName(), CustomRoles::FileNameRole);
 	newItem->setData(fileInfo.size(), CustomRoles::FileSizeRole);
 	newItem->setData(fileInfo.suffix(), CustomRoles::FileTypeRole);
 	newItem->setData(fileInfo.lastModified(), CustomRoles::FileLastModifiedRole);
+	QString toolTip = displayName
+		+ QStringLiteral("\nç±»å‹ï¼š") + QString::fromStdWString(shFileInfo.szTypeName)
+		+ QStringLiteral("\nä¿®æ”¹æ—¥æœŸï¼š") + fileInfo.lastModified().toString(Qt::LocalDate)
+		+ QStringLiteral("\nå¤§å°ï¼š") + HZ::formatFileSize(fileInfo.size());
+	newItem->setToolTip(toolTip);
+
+	// TODO äº†è§£utf8 unicode char wchar çš„åŒºåˆ«ï¼Œä»¥åŠæ­¤å¤„ç”¨stringå°±ä¼šä¹±ç çš„é—®é¢˜
+
+	//QString test = fileInfo.absoluteFilePath();
+	//auto test2 = itemIcon.availableSizes();
+	//auto test3 = itemIcon.actualSize({ 90, 90 });
 
 	return newItem;
 }
@@ -486,7 +501,7 @@ QIcon getIconFromUrlFile(const QFileInfo& urlFileInfo) {
 
 	do
 	{
-		// »ñÈ¡ IShellLink ½Ó¿Ú
+		// è·å– IShellLink æ¥å£
 		IShellLink* psl;
 		HRESULT hRes = CoCreateInstance(CLSID_InternetShortcut, NULL, 
 			CLSCTX_INPROC_SERVER, IID_IShellLink, (LPVOID*)&psl);
@@ -500,22 +515,23 @@ QIcon getIconFromUrlFile(const QFileInfo& urlFileInfo) {
 			break;
 		}
 
-		// ¼ÓÔØ .url ÎÄ¼ş
+		// åŠ è½½ .url æ–‡ä»¶
 		hRes = ppf->Load((LPCOLESTR)urlFileInfo.absoluteFilePath().utf16(), STGM_READ);
 		if (FAILED(hRes)) {
 			break;
 		}
 
-		// »ñÈ¡Í¼±êÎ»ÖÃ
+		// è·å–å›¾æ ‡ä½ç½®
 		WIN32_FIND_DATA wfd;
-		char path[MAX_PATH];
+		TCHAR path[MAX_PATH];
 		int index = 0;
 		hRes = psl->GetIconLocation(path, MAX_PATH, &index);
 		if (FAILED(hRes)) {
 			break;
 		}
 
-		retIcon = QFileIconProvider().icon(QFileInfo(QUrl(path).toLocalFile()));
+		QString url = QUrl(QString::fromStdWString(path)).toLocalFile();
+		retIcon = QFileIconProvider().icon(QFileInfo(url));
 	} while (false);
 
 	return retIcon;
@@ -536,25 +552,6 @@ QIcon DesktopFileItemWatcher::getUltimateIcon(const QFileInfo& fileInfo)
 	}
 
 	return QIcon();
-}
-
-QString DesktopFileItemWatcher::getFileShowText(const QFileInfo& fileInfo)
-{
-	// QtµÄQFileInfo::isShortcut Î´ÅĞ¶Ï.urlºó×º
-	bool bIsShortCut
-		= fileInfo.suffix().compare("lnk", Qt::CaseInsensitive) == 0
-		|| fileInfo.suffix().compare("url", Qt::CaseInsensitive) == 0
-		|| fileInfo.suffix().compare("pif", Qt::CaseInsensitive) == 0
-		|| fileInfo.suffix().compare("scf", Qt::CaseInsensitive) == 0;
-
-	// TODO ºóĞø¸ÄÎª¶ÁÅäÖÃ
-	bool bShowSuffix = true;
-
-	if (bIsShortCut || !bShowSuffix) {
-		return fileInfo.baseName();
-	}
-
-	return fileInfo.fileName();
 }
 
 void DesktopFileItemWatcher::handleObserveResult(const QString& strWatchDirectory, const FILE_NOTIFY_INFORMATION* pNotification)
@@ -614,7 +611,7 @@ void DesktopFileItemWatcher::handleObserveResult(const QString& strWatchDirector
 
 		if (cbOffset)
 		{
-			// »ñÈ¡ĞÂµÄÂ·¾¶ĞÅÏ¢
+			// è·å–æ–°çš„è·¯å¾„ä¿¡æ¯
 			strFileName = QString::fromStdWString(
 				std::wstring(pNotification->FileName,
 					pNotification->FileNameLength / sizeof(wchar_t)));
@@ -639,10 +636,10 @@ void HzDesktopItemModelPrivate::init()
 		&DesktopSystemItemWatcher::systemAppRefreshed,
 		this, [&](QList<QStandardItem*> itemList) {
 			for (QStandardItem* item : itemList) {
-				// TODO ÕâÀïÏÈ°´Ë³ĞòÀ´£¬ºóÃæ¸ÄÎª¶ÁÅäÖÃ
+				// TODO è¿™é‡Œå…ˆæŒ‰é¡ºåºæ¥ï¼Œåé¢æ”¹ä¸ºè¯»é…ç½®
 				q->appendRow(item);
 			}
-			// TODO ÎªÊ²Ã´ÏÂÃæÕâÑù²»ĞĞ£¿
+			// TODO ä¸ºä»€ä¹ˆä¸‹é¢è¿™æ ·ä¸è¡Œï¼Ÿ
 			//hzq_ptr->appendRow(itemList);
 		});
 
@@ -654,7 +651,7 @@ void HzDesktopItemModelPrivate::init()
 			}
 		});
 
-	// TODO Ä¿Ç°ÔöÌíºÍÉ¾³ı£¬Êó±ê²»ÒÆ¶¯µ½½çÃæÉÏ¾ÍË¢ĞÂ²»³öÀ´£¬¿´¿´ÎªÊ²Ã´
+	// TODO ç›®å‰å¢æ·»å’Œåˆ é™¤ï¼Œé¼ æ ‡ä¸ç§»åŠ¨åˆ°ç•Œé¢ä¸Šå°±åˆ·æ–°ä¸å‡ºæ¥ï¼Œçœ‹çœ‹ä¸ºä»€ä¹ˆ
 	connect(&m_fileItemWatcher, &DesktopFileItemWatcher::onFileCreated,
 		this, &HzDesktopItemModelPrivate::handleFileCreated);
 
@@ -670,7 +667,7 @@ void HzDesktopItemModelPrivate::init()
 	m_systemItemWatcher.init();
 	m_fileItemWatcher.init();
 
-	// TODO ¾ö¶¨ÓÅÏÈ¼¶
+	// TODO å†³å®šä¼˜å…ˆçº§
 	m_systemItemWatcher.start();
 	m_fileItemWatcher.start();
 }
@@ -679,7 +676,7 @@ void HzDesktopItemModelPrivate::handleFileCreated(QStandardItem* item)
 {
 	HZQ_Q(HzDesktopItemModel);
 
-	// ²éÕÒµÚÒ»¸ö¿Õ¸ñÉèÖÃµ½¸ÃÎ»ÖÃ£¬·ñÔò¾ÍÌí¼Óµ½Ä©Î²
+	// æŸ¥æ‰¾ç¬¬ä¸€ä¸ªç©ºæ ¼è®¾ç½®åˆ°è¯¥ä½ç½®ï¼Œå¦åˆ™å°±æ·»åŠ åˆ°æœ«å°¾
 	for (int i = 0; i < q->rowCount(); i++) {
 		QStandardItem* tmpItem = q->itemFromIndex(q->index(i, 0));
 		if (!tmpItem->isEnabled()) {

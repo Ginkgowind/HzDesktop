@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <QString>
 
 namespace HZ
 {
@@ -23,4 +24,6 @@ namespace HZ
 		const std::wstring& parentPath,
 		const std::wstring& subPath
 	);
+
+	QString formatFileSize(qint64 size);
 }

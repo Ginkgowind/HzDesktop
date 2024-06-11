@@ -6,6 +6,6 @@
 namespace ResourceHelper
 {
 
-	std::string LoadString(HINSTANCE resourceInstance, UINT stringId);
+	std::wstring LoadStringFromRC(HINSTANCE resourceInstance, UINT stringId);
 
 }
