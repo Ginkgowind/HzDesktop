@@ -1,4 +1,5 @@
 #include <QPainter>
+#include <QDebug>
 #include <QAbstractItemView>
 
 #include "HzItemDelegate.h"
@@ -14,10 +15,11 @@
 
 static int s_textFlags = Qt::AlignHCenter | Qt::AlignTop | Qt::TextWordWrap;
 
-HzItemDelegate::HzItemDelegate(QObject* parent)
+HzItemDelegate::HzItemDelegate(QObject* parent, HzDesktopParam* param)
 	: QStyledItemDelegate(parent)
 	, m_painter(new QPainter)
 	, m_metrics(nullptr)
+	, m_param(param)
 {
 	QFont itemFont("Microsoft YaHei");
 	itemFont.setPixelSize(16);
@@ -31,7 +33,6 @@ HzItemDelegate::~HzItemDelegate()
 {
 	delete m_painter;
 }
-
 
 QSize HzItemDelegate::sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
@@ -78,10 +79,12 @@ void HzItemDelegate::paint(
 	paintBackground(painter, option);
 
 	QPixmap showPixmap;
-	const QString& path = item->data(CustomRoles::FilePathRole).toString();
-	if (!m_showPixmapCache.find(path, &showPixmap)) {
+	// 索引设置为 图标大小枚举+路径
+	const QString& key = QString::number(m_param->iconMode) + item->data(CustomRoles::FilePathRole).toString();
+
+	if (!QPixmapCache::find(key, &showPixmap)) {
 		showPixmap = paintIconText(option, itemView->getParam(), item);
-		m_showPixmapCache.insert(path, showPixmap);
+		QPixmapCache::insert(key, showPixmap);
 	}
 
 	painter->drawPixmap(option.rect, showPixmap);

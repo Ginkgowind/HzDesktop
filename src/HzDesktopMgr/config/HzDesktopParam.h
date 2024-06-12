@@ -74,3 +74,4 @@ public:
 	QSize gridSize;
 };
 
+void removePixmapCache(const QString& filePath);

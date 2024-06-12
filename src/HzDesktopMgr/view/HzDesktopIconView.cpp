@@ -35,7 +35,7 @@ HzDesktopIconView::HzDesktopIconView(QWidget *parent)
 	m_itemProxyModel->setSourceModel(m_itemModel);
 	setModel(m_itemProxyModel);
 
-	m_itemDelegate = new HzItemDelegate(this);
+	m_itemDelegate = new HzItemDelegate(this, &m_param);
 	setItemDelegate(m_itemDelegate);
 
 	m_itemMenu = new HzItemMenu(this);
@@ -124,11 +124,6 @@ void HzDesktopIconView::initSignalAndSlot()
 
 	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::refreshDesktop,
 		m_itemModel, &HzDesktopItemModel::refreshItems);
-
-	//connect(m_itemModel, &QStandardItemModel::itemChanged,
-	//	[this](QStandardItem* item) {
-	//		qDebug() << item->data(FilePathRole);
-	//	});
 }
 
 void HzDesktopIconView::initParam()
@@ -380,12 +375,13 @@ void HzDesktopIconView::dropEvent(QDropEvent* e)
 	m_desktopBlankMenu->hideSortStatus();
 }
 
-//void HzDesktopIconView::dragMoveEvent(QDragMoveEvent* e)
-//{
-//	QAbstractItemView::dragMoveEvent(e);
-//
-//	// 判断当前是否拖拽到了两个item之间，并绘制提示条
-//}
+void HzDesktopIconView::dragMoveEvent(QDragMoveEvent* e)
+{
+	QAbstractItemView::dragMoveEvent(e);
+
+	// 判断当前是否拖拽到了两个item之间，并绘制提示条
+	const QPoint& pos = e->pos();
+}
 
 void HzDesktopIconView::contextMenuEvent(QContextMenuEvent* event)
 {
@@ -420,7 +416,7 @@ void HzDesktopIconView::paintEvent(QPaintEvent* e)
 	const QAbstractItemView::State viewState = this->state();
 	const bool enabled = (state & QStyle::State_Enabled) != 0;
 
-	//e->rect() TODO 利用这个rect来决定要绘制哪些modelindex
+	//e->rect() TODO 利用这个rect来决定要绘制哪些modelindex 以此来优化性能
 	QModelIndexList::const_iterator end = toBeRendered.constEnd();
 	for (QModelIndexList::const_iterator it = toBeRendered.constBegin(); it != end; ++it) {
 		option.rect = visualRect(*it);
@@ -505,7 +501,7 @@ void HzDesktopIconView::handleInternalDrop(QDropEvent* e)
 		}
 	}
 	else {
-
+		QPoint delta = e->pos() - m_pressedPos;
 	}
 	
 	
@@ -518,7 +514,6 @@ void HzDesktopIconView::handleInternalDrop(QDropEvent* e)
 		//m_itemModel->insertItems(insertRow, dropItems);
 	}
 
-	//updateGeometries();
 	viewport()->update(viewport()->rect());
 }
 
@@ -530,7 +525,7 @@ void HzDesktopIconView::handleSetIconSizeMode(IconSizeMode mode)
 {
 	handleLayoutChanged();
 
-	update();
+	viewport()->update();
 }
 
 void HzDesktopIconView::handleEnableAutoArrange()

@@ -19,7 +19,7 @@ namespace HZ
 		int y
 	);
 
-	void testComMenu(HWND hwnd);
+	void removePixmapCache(const QString& filePath);
 
 	QMimeData* multiDrag(const QStringList& pathList);
 

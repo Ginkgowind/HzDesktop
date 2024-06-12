@@ -1,3 +1,5 @@
+#include <QPixmapCache>
+
 #include "HzDesktopParam.h"
 
 #define TEXT_MAX_HEIGHT			40
@@ -43,4 +45,11 @@ void HzDesktopParam::updateGridSize()
 		+ iconMargin
 		+ QSize(0, TEXT_MAX_HEIGHT)
 		+ itemSpaceSize;
+}
+
+void removePixmapCache(const QString& filePath)
+{
+	QPixmapCache::remove(QString::number(LargeIcon) + filePath);
+	QPixmapCache::remove(QString::number(MediumIcon) + filePath);
+	QPixmapCache::remove(QString::number(SmallIcon) + filePath);
 }

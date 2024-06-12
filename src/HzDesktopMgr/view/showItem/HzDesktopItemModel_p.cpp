@@ -530,8 +530,13 @@ QIcon getIconFromUrlFile(const QFileInfo& urlFileInfo) {
 			break;
 		}
 
-		QString url = QUrl(QString::fromStdWString(path)).toLocalFile();
-		retIcon = QFileIconProvider().icon(QFileInfo(url));
+		//QString filePath = QUrl(QString::fromStdWString(path)).toLocalFile();
+		//HICON hIcon = (HICON)LoadImage(NULL, filePath.toStdWString().c_str(), IMAGE_ICON,
+		//	0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE);
+		//retIcon = QtWin::fromHICON(hIcon);
+
+		QString filePath = QUrl(QString::fromStdWString(path)).toLocalFile();
+		retIcon = QFileIconProvider().icon(QFileInfo(filePath));
 	} while (false);
 
 	return retIcon;
@@ -694,6 +699,8 @@ void HzDesktopItemModelPrivate::handleFileDeleted(const QString& filePath)
 {
 	HZQ_Q(HzDesktopItemModel);
 
+	removePixmapCache(filePath);
+
 	for (int i = 0; i < q->rowCount(); i++) {
 		if (q->filePath(q->index(i, 0)) == filePath) {
 			q->removeRow(i);
@@ -705,6 +712,8 @@ void HzDesktopItemModelPrivate::handleFileDeleted(const QString& filePath)
 void HzDesktopItemModelPrivate::handleFileModified(const QString& filePath, QStandardItem* item)
 {
 	HZQ_Q(HzDesktopItemModel);
+
+	removePixmapCache(filePath);
 
 	for (int i = 0; i < q->rowCount(); i++) {
 		if (q->filePath(q->index(i, 0)) == filePath) {
@@ -721,6 +730,8 @@ void HzDesktopItemModelPrivate::handleFileRenamed(
 )
 {
 	HZQ_Q(HzDesktopItemModel);
+
+	removePixmapCache(oldPath);
 
 	for (int i = 0; i < q->rowCount(); i++) {
 		if (q->filePath(q->index(i, 0)) == oldPath) {

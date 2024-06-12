@@ -14,7 +14,7 @@ class HzItemDelegate  : public QStyledItemDelegate
 	Q_OBJECT
 
 public:
-	HzItemDelegate(QObject *parent);
+	HzItemDelegate(QObject *parent, HzDesktopParam* param);
 	~HzItemDelegate();
 
 protected:
@@ -59,9 +59,13 @@ private:
 	) const;
 
 private:
-	QPixmapCache m_showPixmapCache;
+
+	QPixmapCache* test1;
+	QPixmapCache* test2;
 
 	QPainter* m_painter;
 
 	QFontMetrics* m_metrics;
+
+	HzDesktopParam* m_param;
 };
