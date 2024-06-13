@@ -42,7 +42,7 @@ void HzDesktopParam::setIconSizeMode(IconSizeMode mode)
 void HzDesktopParam::updateGridSize()
 {
 	gridSize = iconSize
-		+ iconMargin
+		+ 2 * iconMargin
 		+ QSize(0, TEXT_MAX_HEIGHT)
 		+ itemSpaceSize;
 }

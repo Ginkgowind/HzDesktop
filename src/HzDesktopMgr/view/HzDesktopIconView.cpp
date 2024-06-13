@@ -368,6 +368,8 @@ void HzDesktopIconView::dropEvent(QDropEvent* e)
 		handleExternalDrop(e);
 	}
 
+	m_insertRow = -1;
+
 	setState(NoState);
 
 	// TODO 为什么下面的函数用内联会找不到定义，难道是因为两边都有inline？
@@ -380,7 +382,18 @@ void HzDesktopIconView::dragMoveEvent(QDragMoveEvent* e)
 	QAbstractItemView::dragMoveEvent(e);
 
 	// 判断当前是否拖拽到了两个item之间，并绘制提示条
-	const QPoint& pos = e->pos();
+	const QPoint pos = e->pos() - QPoint(0, 0);
+	if (indexAt(pos).isValid()) {
+		// 暂不处理
+	}
+	else {
+		// 计算出当前鼠标所处的网格
+		m_insertRow = pos.x() / m_param.gridSize.width() * m_maxViewRow
+			+ pos.y() / m_param.gridSize.height();
+		if (pos.y() % m_param.gridSize.height() > m_param.gridSize.height() / 2) {
+			m_insertRow += 1;
+		}
+	}
 }
 
 void HzDesktopIconView::contextMenuEvent(QContextMenuEvent* event)
@@ -445,6 +458,16 @@ void HzDesktopIconView::paintEvent(QPaintEvent* e)
 		itemDelegate()->paint(&painter, option, *it);
 	}
 
+	if (m_insertRow >= 0) {
+		painter.save();
+		// 计算出插入线的位置
+		QPoint TMP_DELTA(0, -5);
+		QRect rect = visualRect(model()->index(m_insertRow, 0));
+		painter.setPen(QPen(Qt::blue, 2));
+		painter.drawLine(rect.topLeft() + TMP_DELTA, rect.topRight() + TMP_DELTA);
+		painter.restore();
+	}
+
 	if (m_elasticBand.isValid()) {
 		QStyleOptionRubberBand opt;
 		opt.initFrom(this);
@@ -484,7 +507,14 @@ void HzDesktopIconView::handleInternalDrop(QDropEvent* e)
 {
 	QModelIndexList indexList = selectedIndexes();
 	QList<QStandardItem*> dropItems;
-	
+
+	if (m_insertRow < 0) {
+		return;
+	}
+
+	int insertRow = m_insertRow;
+
+	// 自动排序时按照鼠标位置挨个插入进去，否则每一个都根据各自位置进行插入
 	if (m_param.bAutoArrange) {
 		// 按照row从大到小进行排序，从而先删除大的
 		qSort(indexList.begin(), indexList.end(), [](const QModelIndex& index1, const QModelIndex& index2) {
@@ -493,15 +523,26 @@ void HzDesktopIconView::handleInternalDrop(QDropEvent* e)
 		for (const QModelIndex& index : indexList) {
 			QModelIndex sourceIndex = m_itemProxyModel->mapToSource(index);
 			dropItems.push_back(m_itemModel->takeItem(sourceIndex.row()));
-			m_itemProxyModel->removeRow(index.row());
+			m_itemModel->removeRow(sourceIndex.row());
 		}
 
-		for (auto it = dropItems.rbegin(); it < dropItems.rend(); it++) {
-			m_itemModel->appendRow(*it);
+		for (auto it = dropItems.rbegin(); it < dropItems.rend(); it++, insertRow++) {
+			m_itemProxyModel->insertRows(insertRow, 1);
+			//QModelIndex sourceIndex = m_itemProxyModel->mapToSource(m_itemProxyModel->index(insertRow, 0));
+			//m_itemModel->setItem(sourceIndex.row(), *it);
+			//m_itemModel->insertRow(insertRow++, *it);
 		}
 	}
 	else {
+		// 按照row从小到大进行排序，从而先插入小的
+		qSort(indexList.begin(), indexList.end(), [](const QModelIndex& index1, const QModelIndex& index2) {
+			return index1.row() < index2.row(); });
+
 		QPoint delta = e->pos() - m_pressedPos;
+		QList<QPersistentModelIndex> pstIndexList;
+		for (auto& index : indexList) {
+			pstIndexList.push_back(index);
+		}
 	}
 	
 	

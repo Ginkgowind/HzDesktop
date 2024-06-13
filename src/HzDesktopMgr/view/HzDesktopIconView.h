@@ -122,6 +122,9 @@ private:
 
 	QRect m_elasticBand;
 
+	// 插入的位置
+	int m_insertRow = -1;
+
 	// QAbstractItemView的下列数据未暴露，故自己实现一个
 	QPoint m_pressedPos;
 	QPersistentModelIndex m_hoverIndex;

@@ -200,15 +200,35 @@ QPixmap HzItemDelegate::paintIconText(
 	 //切换绘制目标
 	m_painter->begin(&retPixmap);
 
+
+	QPixmap iconPixmap = item->icon().pixmap(MAX_ICON_SIZE, MAX_ICON_SIZE);
+	QPoint iconPos(param.iconMargin.width(), param.iconMargin.height());
+	if (iconPixmap.size().width() < param.iconSize.width() &&
+		iconPixmap.size().height() < param.iconSize.height()) {
+		iconPos += QPoint(
+			(param.iconSize.width() - iconPixmap.size().width()) / 2,
+			(param.iconSize.height() - iconPixmap.size().height()) / 2
+		);
+	}
+	else {
+		iconPixmap = iconPixmap.scaled(param.iconSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+	}
+
 	// 绘制icon
-	QRect iconShowRC(
-		QPoint(param.iconMargin.width(), param.iconMargin.height()),
-		param.iconSize
-	);
-	m_painter->drawPixmap(
-		iconShowRC,
-		item->icon().pixmap(MAX_ICON_SIZE, MAX_ICON_SIZE).scaled(param.iconSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)
-	);
+	m_painter->drawPixmap(iconPos, iconPixmap);
+
+	// 图标过小就绘制边框
+	if (iconPixmap.size().width() < param.iconSize.width() * 2 / 3 &&
+		iconPixmap.size().height() < param.iconSize.height() * 2 / 3) {
+		m_painter->save();
+		m_painter->setBrush(Qt::NoBrush);
+		m_painter->setPen(Qt::white);
+		m_painter->drawRect(
+			param.iconMargin.width(), param.iconMargin.width(),
+			param.iconSize.width(), param.iconSize.height()
+		);
+		m_painter->restore();
+	}
 
 	// 绘制显示名字
 	//m_painter->setPen(Qt::white);
