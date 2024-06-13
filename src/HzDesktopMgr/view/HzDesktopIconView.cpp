@@ -15,7 +15,6 @@
 #include "HzDesktopIconView_p.h"
 #include "showItem/HzItemDelegate.h"
 #include "showItem/HzFileItem.h"
-#include "showItem/HzItemSortProxyModel.h"
 #include "windows/UiOperation.h"
 #include "windows/tools.h"
 
@@ -30,10 +29,8 @@ HzDesktopIconView::HzDesktopIconView(QWidget *parent)
 
 	m_desktopBlankMenu = new HzDesktopBlankMenu(this, &m_param);
 
-	m_itemProxyModel = new HzItemSortProxyModel(this, &m_param);
-	m_itemModel = new HzDesktopItemModel(m_itemProxyModel);
-	m_itemProxyModel->setSourceModel(m_itemModel);
-	setModel(m_itemProxyModel);
+	m_itemModel = new HzDesktopItemModel(this, &m_param);
+	setModel(m_itemModel);
 
 	m_itemDelegate = new HzItemDelegate(this, &m_param);
 	setItemDelegate(m_itemDelegate);
@@ -124,6 +121,10 @@ void HzDesktopIconView::initSignalAndSlot()
 
 	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::refreshDesktop,
 		m_itemModel, &HzDesktopItemModel::refreshItems);
+
+	// TODO item一有变化时清理menu的排序状态
+	connect(m_itemModel, &HzDesktopItemModel::itemChanged,
+		[this](QStandardItem* item) {m_desktopBlankMenu->hideSortStatus(); });
 }
 
 void HzDesktopIconView::initParam()
@@ -491,7 +492,7 @@ QStringList HzDesktopIconView::getSelectedPaths()
 	// TODO 了解此处直接调用函数与复制变量，有什么区别？
 	QModelIndexList indexList = selectedIndexes();
 	for (const QModelIndex& index : indexList) {
-		pathList.append(m_itemProxyModel->filePath(index));
+		pathList.append(m_itemModel->filePath(index));
 	}
 		
 	return pathList;
@@ -521,16 +522,12 @@ void HzDesktopIconView::handleInternalDrop(QDropEvent* e)
 			return index1.row() > index2.row(); });
 
 		for (const QModelIndex& index : indexList) {
-			QModelIndex sourceIndex = m_itemProxyModel->mapToSource(index);
-			dropItems.push_back(m_itemModel->takeItem(sourceIndex.row()));
-			m_itemModel->removeRow(sourceIndex.row());
+			dropItems.push_back(m_itemModel->takeItem(index.row()));
+			m_itemModel->removeRow(index.row());
 		}
 
-		for (auto it = dropItems.rbegin(); it < dropItems.rend(); it++, insertRow++) {
-			m_itemProxyModel->insertRows(insertRow, 1);
-			//QModelIndex sourceIndex = m_itemProxyModel->mapToSource(m_itemProxyModel->index(insertRow, 0));
-			//m_itemModel->setItem(sourceIndex.row(), *it);
-			//m_itemModel->insertRow(insertRow++, *it);
+		for (auto it = dropItems.rbegin(); it < dropItems.rend(); it++) {
+			m_itemModel->insertRow(insertRow++, *it);
 		}
 	}
 	else {
@@ -573,16 +570,19 @@ void HzDesktopIconView::handleEnableAutoArrange()
 {
 	m_itemModel->removeAllDisableItem();
 
-	m_itemProxyModel->sort(0, m_param.sortOrder);
+	m_itemModel->sort(0, m_param.sortOrder);
 }
 
 void HzDesktopIconView::handleSetItemSortRole(CustomRoles role)
 {
+	// 这里没有使用QSortFilterProxyModel，因为桌面在排序之后还能进行拖动图标，
+	// 但是QSortFilterProxyModel仅仅是对原始model的映射，不能理想地添加数据
+
 	// 触发排序时，先删除掉所有的占位item
 	m_itemModel->removeAllDisableItem();
 
-	m_itemProxyModel->setSortRole(role);
-	m_itemProxyModel->sort(0, m_param.sortOrder);
+	m_itemModel->setSortRole(role);
+	m_itemModel->sort(0, m_param.sortOrder);
 }
 
 void HzDesktopIconView::handleSetItemSortOrder(Qt::SortOrder order)
@@ -590,13 +590,7 @@ void HzDesktopIconView::handleSetItemSortOrder(Qt::SortOrder order)
 	// 触发排序时，先删除掉所有的占位item
 	m_itemModel->removeAllDisableItem();
 
-	m_itemProxyModel->sort(0, m_param.sortOrder);
-}
-
-
-bool HzDesktopIconView::isAutoArrange()
-{
-	return m_itemProxyModel->dynamicSortFilter();
+	m_itemModel->sort(0, m_param.sortOrder);
 }
 
 QModelIndexList HzDesktopIconView::intersectingSet(const QRect& area) const

@@ -151,6 +151,8 @@ private:
 	);
 
 private:
+	int m_initFinishedCnt;
+
 	DesktopSystemItemWatcher m_systemItemWatcher;
 	
 	DesktopFileItemWatcher m_fileItemWatcher;

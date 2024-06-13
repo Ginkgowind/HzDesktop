@@ -5,8 +5,9 @@
 #include "HzDesktopItemModel_p.h"
 #include "config/HzDesktopParam.h"
 
-HzDesktopItemModel::HzDesktopItemModel(QObject *parent)
+HzDesktopItemModel::HzDesktopItemModel(QObject *parent, HzDesktopParam* param)
 	: QStandardItemModel(parent)
+	, m_param(param)
 	, HzDesktopPublic(new HzDesktopItemModelPrivate())
 {
 	HZQ_D(HzDesktopItemModel);
@@ -16,6 +17,17 @@ HzDesktopItemModel::HzDesktopItemModel(QObject *parent)
 
 HzDesktopItemModel::~HzDesktopItemModel()
 {
+}
+
+void HzDesktopItemModel::sortItemsLayout()
+{
+	removeAllDisableItem();
+
+	setSortRole(m_param->sortRole);
+
+	if (m_param->bAutoArrange) {
+		sort(0, m_param->sortOrder);
+	}
 }
 
 void HzDesktopItemModel::removeAllDisableItem()
@@ -28,31 +40,6 @@ void HzDesktopItemModel::removeAllDisableItem()
 			i++;
 		}
 	}
-}
-
-QString HzDesktopItemModel::name(const QModelIndex& index) const
-{
-	return data(index, CustomRoles::FileNameRole).toString();
-}
-
-qint64 HzDesktopItemModel::size(const QModelIndex& index) const
-{
-	return data(index, CustomRoles::FileSizeRole).toLongLong();
-}
-
-QString HzDesktopItemModel::type(const QModelIndex& index) const
-{
-	return data(index, CustomRoles::FileTypeRole).toString();
-}
-
-QDateTime HzDesktopItemModel::lastModified(const QModelIndex& index) const
-{
-	return data(index, CustomRoles::FileLastModifiedRole).toDateTime();
-}
-
-QString HzDesktopItemModel::filePath(const QModelIndex& index) const
-{
-	return data(index, CustomRoles::FilePathRole).toString();
 }
 
 void HzDesktopItemModel::refreshItems()
@@ -102,4 +89,29 @@ void HzDesktopItemModel::insertItems(int row, const QList<QStandardItem*>& items
 	for (const auto& item : items) {
 		insertRow(row++, item);
 	}
+}
+
+QString HzDesktopItemModel::name(const QModelIndex& index) const
+{
+	return data(index, CustomRoles::FileNameRole).toString();
+}
+
+qint64 HzDesktopItemModel::size(const QModelIndex& index) const
+{
+	return data(index, CustomRoles::FileSizeRole).toLongLong();
+}
+
+QString HzDesktopItemModel::type(const QModelIndex& index) const
+{
+	return data(index, CustomRoles::FileTypeRole).toString();
+}
+
+QDateTime HzDesktopItemModel::lastModified(const QModelIndex& index) const
+{
+	return data(index, CustomRoles::FileLastModifiedRole).toDateTime();
+}
+
+QString HzDesktopItemModel::filePath(const QModelIndex& index) const
+{
+	return data(index, CustomRoles::FilePathRole).toString();
 }

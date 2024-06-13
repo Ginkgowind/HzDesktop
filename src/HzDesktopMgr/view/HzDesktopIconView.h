@@ -15,7 +15,6 @@ QT_END_NAMESPACE
 
 class HzItemDelegate;
 class HzDesktopIconViewPrivate;
-class HzItemSortProxyModel;
 
 class HzDesktopIconView  
 	: public QAbstractItemView
@@ -100,15 +99,12 @@ private:
 
 private:
 
-	bool isAutoArrange();
-
 	QModelIndexList intersectingSet(const QRect& area) const;
 
 	QItemSelection getSelectionFromRect(const QRect& rect) const;
 
 private:
 
-	HzItemSortProxyModel* m_itemProxyModel;
 	HzDesktopItemModel* m_itemModel;
 	HzItemDelegate* m_itemDelegate;
 

@@ -5,7 +5,6 @@
 #include "HzItemDelegate.h"
 #include "../HzDesktopIconView.h"
 #include "HzDesktopItemModel.h"
-#include "HzItemSortProxyModel.h"
 #include "windows/UiOperation.h"
 
 #define FONT_PIXEL_SIZE	16
@@ -109,19 +108,13 @@ QStandardItem* HzItemDelegate::getItemFromOption(const QStyleOptionViewItem& opt
 			break;
 		}
 		
-		HzItemSortProxyModel* itemProxyModel = 
-			qobject_cast<HzItemSortProxyModel*>(itemView->model());
-		if (!itemProxyModel) {
-			break;
-		}
-
 		HzDesktopItemModel* itemModel =
-			qobject_cast<HzDesktopItemModel*>(itemProxyModel->sourceModel());
+			qobject_cast<HzDesktopItemModel*>(itemView->model());
 		if (!itemModel) {
 			break;
 		}
 
-		item = itemModel->itemFromIndex(itemProxyModel->mapToSource(index));
+		item = itemModel->itemFromIndex(index);
 	} while (false);
 
 	return item;

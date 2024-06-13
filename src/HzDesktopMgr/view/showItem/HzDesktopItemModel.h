@@ -4,6 +4,7 @@
 
 #include "common/QtpqReimp.h"
 
+class HzDesktopParam;
 class HzDesktopItemModel;
 class HzDesktopItemModelPrivate;
 
@@ -15,10 +16,19 @@ class HzDesktopItemModel
 
 public:
 	
-	HzDesktopItemModel(QObject *parent);
+	HzDesktopItemModel(QObject *parent, HzDesktopParam* param);
 	~HzDesktopItemModel();
 
+	void sortItemsLayout();
+
 	void removeAllDisableItem();
+
+	void refreshItems();
+
+	// 会自动消除占位符的插入函数
+	void insertItems(int row, const QList<QStandardItem*>& items);
+
+public:
 
 	QString name(const QModelIndex& index) const;
 	qint64 size(const QModelIndex& index) const;
@@ -26,14 +36,8 @@ public:
 	QDateTime lastModified(const QModelIndex& index) const;
 	QString filePath(const QModelIndex& index) const;
 
-public:
-	void refreshItems();
-
-	// 会自动消除占位符的插入函数
-	void insertItems(int row, const QList<QStandardItem*>& items);
-
-
-protected:
+private:
+	HzDesktopParam* m_param;
 
 private:
 	HZQ_DECLARE_PRIVATE(HzDesktopItemModel)

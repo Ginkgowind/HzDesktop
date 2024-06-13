@@ -11,7 +11,6 @@
 
 #include "HzDesktopIconView.h"
 #include "HzDesktopIconView_p.h"
-#include "showItem/HzItemSortProxyModel.h"
 
 HzDesktopIconViewPrivate::HzDesktopIconViewPrivate()
 {
@@ -27,7 +26,7 @@ void HzDesktopIconViewPrivate::handleOpen()
 
 	QModelIndexList indexList = q->selectedIndexes();
 	for (const QModelIndex& aindex : indexList) {
-		QDesktopServices::openUrl(QUrl::fromLocalFile(q->m_itemProxyModel->filePath(aindex)));
+		QDesktopServices::openUrl(QUrl::fromLocalFile(q->m_itemModel->filePath(aindex)));
 	}
 }
 
@@ -40,7 +39,7 @@ void HzDesktopIconViewPrivate::handleCopy()
 	QModelIndexList indexList = q->selectedIndexes();
 
 	for (const QModelIndex& index : indexList) {
-		urls.append(QUrl::fromLocalFile(q->m_itemProxyModel->filePath(index)));
+		urls.append(QUrl::fromLocalFile(q->m_itemModel->filePath(index)));
 	}
 
 	mimeData->setUrls(urls);
@@ -62,7 +61,7 @@ void HzDesktopIconViewPrivate::handleCut()
 	QModelIndexList indexList = q->selectedIndexes();
 
 	for (const QModelIndex& index : indexList) {
-		urls.append(QUrl::fromLocalFile(q->m_itemProxyModel->filePath(index)));
+		urls.append(QUrl::fromLocalFile(q->m_itemModel->filePath(index)));
 	}
 
 	mimeData->setUrls(urls);
@@ -129,7 +128,7 @@ void HzDesktopIconViewPrivate::handleDelete()
 		SHFILEOPSTRUCTA fileOp = { 0 };
 		fileOp.hwnd = NULL;
 		fileOp.wFunc = FO_DELETE; ///> ÎÄ¼þÉ¾³ý²Ù×÷
-		fileOp.pFrom = StrDupA(q->m_itemProxyModel->filePath(index).toStdString().c_str());
+		fileOp.pFrom = StrDupA(q->m_itemModel->filePath(index).toStdString().c_str());
 		fileOp.pTo = NULL;
 		fileOp.fFlags = dwOpFlags;
 		fileOp.hNameMappings = NULL;
