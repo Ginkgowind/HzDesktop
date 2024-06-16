@@ -33,6 +33,9 @@
     <Filter Include="view\model">
       <UniqueIdentifier>{f70da471-8966-45a6-9eac-8e8f03073bd0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="view\dragdrop">
+      <UniqueIdentifier>{86825328-00ff-42a2-9b8a-525f2cb208d9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="HzDesktopMgr.qrc">
@@ -102,6 +105,12 @@
     <ClCompile Include="..\..\include\windows\WindowSubclassWrapper.cpp">
       <Filter>include\windows</Filter>
     </ClCompile>
+    <ClCompile Include="view\dragdrop\HzDrag.cpp">
+      <Filter>view\dragdrop</Filter>
+    </ClCompile>
+    <ClCompile Include="view\dragdrop\HzDrag_p.cpp">
+      <Filter>view\dragdrop</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HzDesktopMgr.h" />
@@ -139,6 +148,12 @@
     <ClInclude Include="..\..\include\windows\WindowSubclassWrapper.h">
       <Filter>include\windows</Filter>
     </ClInclude>
+    <ClInclude Include="view\dragdrop\HzDrag_p.h">
+      <Filter>view\dragdrop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\windows\QWindowsComBase.h">
+      <Filter>include\windows</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="view\DesktopBackgroundView.h">
@@ -173,6 +188,9 @@
     </QtMoc>
     <QtMoc Include="view\menu\HzItemMenu_p.h">
       <Filter>view\menu</Filter>
+    </QtMoc>
+    <QtMoc Include="view\dragdrop\HzDrag.h">
+      <Filter>view\dragdrop</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>

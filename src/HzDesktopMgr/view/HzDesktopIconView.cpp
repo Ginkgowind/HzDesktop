@@ -11,10 +11,13 @@
 #include <QUrl>
 #include <QDebug>
 
+#include <winrt/base.h>
+
 #include "HzDesktopIconView.h"
 #include "HzDesktopIconView_p.h"
 #include "showItem/HzItemDelegate.h"
 #include "showItem/HzFileItem.h"
+#include "dragdrop/HzDrag.h"
 #include "windows/UiOperation.h"
 #include "windows/tools.h"
 
@@ -229,8 +232,7 @@ QRegion HzDesktopIconView::visualRegionForSelection(const QItemSelection& select
 
 bool HzDesktopIconView::isIndexHidden(const QModelIndex& index) const
 {
-	//const QModelIndex sourceIndex = m_
-	return !m_itemModel->item(index.row())->isEnabled();
+	return !m_itemModel->itemFromIndex(index)->isEnabled();
 }
 
 void HzDesktopIconView::resizeEvent(QResizeEvent* event)
@@ -337,28 +339,57 @@ void HzDesktopIconView::mouseDoubleClickEvent(QMouseEvent* event)
 	}
 }
 
+void HzDesktopIconView::startDrag(Qt::DropActions supportedActions)
+{
+	HZQ_D(HzDesktopIconView);
 
-//void HzDesktopIconView::startDrag(Qt::DropActions supportedActions)
-//{
-//	QMimeData* dragMimeData = HZ::multiDrag(getSelectedPaths());
-//
-//	QDrag* drag = new QDrag(this);
-//	drag->setMimeData(dragMimeData);
-//	//drag->setPixmap(item->icon().pixmap(iconSize()));
-//	drag->setPixmap(QPixmap(":/HzDesktopMgr/view/qrc/test/heart.png"));
-//	 //开始拖放操作
-//	Qt::DropAction dropAction = drag->exec(supportedActions);
-//	if (dropAction == Qt::MoveAction) {
-//		//currentFilePath.clear();
-//	}
-//
-//}
+	QRect rect;
+	QPixmap pixmap = d->renderToPixmap(selectedIndexes(), &rect);
+	HzDrag* drag = new HzDrag(this);
+	drag->setItemPaths(getSelectedPaths());
+	drag->setPixmap(pixmap);
+	Qt::DropAction dropAction = drag->exec(supportedActions);
 
-//void HzDesktopIconView::dragEnterEvent(QDragEnterEvent* event)
-//{
-//	event->setDropAction(Qt::MoveAction);
-//	event->accept();
-//}
+}
+
+void HzDesktopIconView::dragEnterEvent(QDragEnterEvent* e)
+{
+	e->accept();
+
+	if (e->source() == this) {
+
+	}
+	else {
+
+	}
+}
+
+void HzDesktopIconView::dragMoveEvent(QDragMoveEvent* e)
+{
+	QAbstractItemView::dragMoveEvent(e);
+
+	e->accept();
+
+	m_hoverIndex = indexAt(e->pos());
+
+	qDebug() << e->proposedAction() << e->pos() << m_hoverIndex.row();
+
+	const QPoint pos = e->pos() - QPoint(0, 0);
+	if (indexAt(pos).isValid()) {
+		// TODO 非自动排序时要处理
+	}
+	else {
+		// 计算出当前鼠标所处的网格
+		m_insertRow = getInsertRow(pos);
+	}
+}
+
+void HzDesktopIconView::dragLeaveEvent(QDragLeaveEvent* e)
+{
+	QAbstractItemView::dragLeaveEvent(e);
+
+	e->accept();
+}
 
 void HzDesktopIconView::dropEvent(QDropEvent* e)
 {
@@ -366,35 +397,19 @@ void HzDesktopIconView::dropEvent(QDropEvent* e)
 		handleInternalDrop(e);
 	}
 	else {
-		handleExternalDrop(e);
+		e->accept();
+		//QAbstractItemView::dropEvent(e);
+		//handleExternalDrop(e);
 	}
 
 	m_insertRow = -1;
+	
 
 	setState(NoState);
 
 	// TODO 为什么下面的函数用内联会找不到定义，难道是因为两边都有inline？
 	// TODO 根据是否有变化来判断是否取消显示状态
 	m_desktopBlankMenu->hideSortStatus();
-}
-
-void HzDesktopIconView::dragMoveEvent(QDragMoveEvent* e)
-{
-	QAbstractItemView::dragMoveEvent(e);
-
-	// 判断当前是否拖拽到了两个item之间，并绘制提示条
-	const QPoint pos = e->pos() - QPoint(0, 0);
-	if (indexAt(pos).isValid()) {
-		// 暂不处理
-	}
-	else {
-		// 计算出当前鼠标所处的网格
-		m_insertRow = pos.x() / m_param.gridSize.width() * m_maxViewRow
-			+ pos.y() / m_param.gridSize.height();
-		if (pos.y() % m_param.gridSize.height() > m_param.gridSize.height() / 2) {
-			m_insertRow += 1;
-		}
-	}
 }
 
 void HzDesktopIconView::contextMenuEvent(QContextMenuEvent* event)
@@ -507,7 +522,6 @@ void HzDesktopIconView::handleLayoutChanged()
 void HzDesktopIconView::handleInternalDrop(QDropEvent* e)
 {
 	QModelIndexList indexList = selectedIndexes();
-	QList<QStandardItem*> dropItems;
 
 	if (m_insertRow < 0) {
 		return;
@@ -521,11 +535,13 @@ void HzDesktopIconView::handleInternalDrop(QDropEvent* e)
 		qSort(indexList.begin(), indexList.end(), [](const QModelIndex& index1, const QModelIndex& index2) {
 			return index1.row() > index2.row(); });
 
+		QList<QStandardItem*> dropItems;
 		for (const QModelIndex& index : indexList) {
 			dropItems.push_back(m_itemModel->takeItem(index.row()));
 			m_itemModel->removeRow(index.row());
 		}
 
+		// TODO 拖拽到自身下一格会有问题
 		for (auto it = dropItems.rbegin(); it < dropItems.rend(); it++) {
 			m_itemModel->insertRow(insertRow++, *it);
 		}
@@ -535,21 +551,23 @@ void HzDesktopIconView::handleInternalDrop(QDropEvent* e)
 		qSort(indexList.begin(), indexList.end(), [](const QModelIndex& index1, const QModelIndex& index2) {
 			return index1.row() < index2.row(); });
 
-		QPoint delta = e->pos() - m_pressedPos;
-		QList<QPersistentModelIndex> pstIndexList;
+		QRect dragStartIndexRect = visualRect(indexAt(m_pressedPos));
+		//QMap<QPersistentModelIndex, QRect> indexRectMap;
+		QMap<QModelIndex, QRect> indexRectMap;
 		for (auto& index : indexList) {
-			pstIndexList.push_back(index);
+			indexRectMap[index] = visualRect(index);
 		}
-	}
-	
-	
-	{
-		//// 获取鼠标位置对应的row
-		//QPoint dropPos = e->pos();
-		//int insertRow = dropPos.x() / m_param.gridSize.width() * m_maxViewRow
-		//	+ dropPos.y() / m_param.gridSize.height();
 
-		//m_itemModel->insertItems(insertRow, dropItems);
+		// TODO 为什么QMap不支持如下迭代方式
+		for (auto& [index, rect] : indexRectMap.toStdMap()) {
+			QStandardItem* item = m_itemModel->takeItem(index.row());
+			// TODO 再细致了解itemFromIndex和item的区别，以及root和parent
+			m_itemModel->itemFromIndex(index)->setEnabled(false);
+
+			QPoint delta = rect.topLeft() - dragStartIndexRect.topLeft();
+			int nInsertRow = getInsertRow(e->pos() + delta);
+			m_itemModel->insertItems(nInsertRow, { item });
+		}
 	}
 
 	viewport()->update(viewport()->rect());
@@ -591,6 +609,17 @@ void HzDesktopIconView::handleSetItemSortOrder(Qt::SortOrder order)
 	m_itemModel->removeAllDisableItem();
 
 	m_itemModel->sort(0, m_param.sortOrder);
+}
+
+int HzDesktopIconView::getInsertRow(const QPoint& pos)
+{
+	int row = pos.x() / m_param.gridSize.width() * m_maxViewRow
+		+ pos.y() / m_param.gridSize.height();
+	if (pos.y() % m_param.gridSize.height() > m_param.gridSize.height() / 2) {
+		row += 1;
+	}
+
+	return row;
 }
 
 QModelIndexList HzDesktopIconView::intersectingSet(const QRect& area) const

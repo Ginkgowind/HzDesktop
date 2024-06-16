@@ -67,7 +67,6 @@ void HzItemDelegate::paint(
 {
 	HzDesktopIconView* itemView =
 		qobject_cast<HzDesktopIconView*>(option.styleObject);
-
 	QStandardItem* item = getItemFromOption(option, index);
 	if (!itemView || !item || !item->isEnabled()) {
 		return;
@@ -211,7 +210,8 @@ QPixmap HzItemDelegate::paintIconText(
 	m_painter->drawPixmap(iconPos, iconPixmap);
 
 	// 图标过小就绘制边框
-	if (iconPixmap.size().width() < param.iconSize.width() * 2 / 3 &&
+	if (!iconPixmap.size().isEmpty() &&
+		iconPixmap.size().width() < param.iconSize.width() * 2 / 3 &&
 		iconPixmap.size().height() < param.iconSize.height() * 2 / 3) {
 		m_painter->save();
 		m_painter->setBrush(Qt::NoBrush);

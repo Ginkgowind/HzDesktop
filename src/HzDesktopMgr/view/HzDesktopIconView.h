@@ -2,7 +2,6 @@
 
 #include <QListView>
 #include <QMimeData>
-#include <memory>
 
 #include "showItem/HzDesktopItemModel.h"
 #include "menu/HzItemMenu.h"
@@ -66,11 +65,13 @@ protected:
 
 	void mouseDoubleClickEvent(QMouseEvent* event) override;
 
-	//void startDrag(Qt::DropActions supportedActions) override;
+	void startDrag(Qt::DropActions supportedActions) override;
 
-	//void dragEnterEvent(QDragEnterEvent* event) override;
+	void dragEnterEvent(QDragEnterEvent* event) override;
 
 	void dragMoveEvent(QDragMoveEvent* event) override;
+
+	void dragLeaveEvent(QDragLeaveEvent* event) override;
 
 	void dropEvent(QDropEvent* e) override;
 
@@ -98,6 +99,8 @@ private:
 	void handleSetItemSortOrder(Qt::SortOrder order);
 
 private:
+
+	int getInsertRow(const QPoint& pos);
 
 	QModelIndexList intersectingSet(const QRect& area) const;
 

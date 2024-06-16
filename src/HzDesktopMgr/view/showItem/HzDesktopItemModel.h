@@ -36,6 +36,16 @@ public:
 	QDateTime lastModified(const QModelIndex& index) const;
 	QString filePath(const QModelIndex& index) const;
 
+protected:
+	QStringList mimeTypes() const override;
+
+	QMimeData* mimeData(const QModelIndexList& indexes) const override;
+	
+	bool dropMimeData(const QMimeData* data, Qt::DropAction action,
+		int row, int column, const QModelIndex& parent) override;
+	
+	Qt::DropActions supportedDropActions() const override;
+
 private:
 	HzDesktopParam* m_param;
 

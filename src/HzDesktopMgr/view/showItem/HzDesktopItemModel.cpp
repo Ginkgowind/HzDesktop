@@ -1,5 +1,13 @@
 #include <QDebug>
 #include <QDateTime>
+#include <QUrl>
+#include <QMimeData>
+
+#include <Windows.h>
+#include <shlwapi.h>
+#include <shlobj_core.h>
+#include <shobjidl_core.h>
+#include <wil/resource.h>
 
 #include "HzDesktopItemModel.h"
 #include "HzDesktopItemModel_p.h"
@@ -114,4 +122,65 @@ QDateTime HzDesktopItemModel::lastModified(const QModelIndex& index) const
 QString HzDesktopItemModel::filePath(const QModelIndex& index) const
 {
 	return data(index, CustomRoles::FilePathRole).toString();
+}
+
+QStringList HzDesktopItemModel::mimeTypes() const
+{
+	return QStringList()
+		<< QLatin1String("text/uri-list");
+		//<< QLatin1String("application/x-qt-windows-mime;value=\"Shell IDList Array\"");
+}
+
+QMimeData* HzDesktopItemModel::mimeData(const QModelIndexList& indexes) const
+{
+	typedef wil::unique_cotaskmem_ptr<LPITEMIDLIST> LPITEMIDLIST_PTR;
+
+	QList<QUrl> urls;
+	QByteArray idls;
+
+	std::vector<LPITEMIDLIST_PTR> idvec;
+	std::vector<LPCITEMIDLIST> idChildvec;
+
+	for (auto it = indexes.begin(); it != indexes.end(); ++it) {
+		QString path = filePath(*it);
+		urls << QUrl::fromLocalFile(path);
+		std::wstring windowsPath = path.toStdWString();
+		std::replace(windowsPath.begin(), windowsPath.end(), '/', '\\');
+		LPITEMIDLIST id = nullptr;
+		HRESULT res = SHParseDisplayName(windowsPath.c_str(), nullptr, &id, 0, nullptr);   //路径转PIDL
+		if (!SUCCEEDED(res) || !id) {
+			continue;
+		}
+		idvec.push_back(wil::make_unique_cotaskmem<LPITEMIDLIST>(id));
+		idChildvec.push_back(nullptr);
+		IShellFolder* ifolder = nullptr;
+		res = SHBindToParent(id, IID_IShellFolder, (void**)&ifolder, &idChildvec.back());   //获取ishellfolder
+		if (!SUCCEEDED(res) || !idChildvec.back()) {
+			idChildvec.pop_back();
+		}
+		else if (ifolder) {	/*path.compare(pathList.back()) != 0 && */
+			ifolder->Release();
+			UINT size = ILGetSize(id); // 获取ITEMIDLIST的大小
+			idls.append(reinterpret_cast<const char*>(id), size);
+		}
+	}
+
+	QMimeData* mimeData = new QMimeData();
+	mimeData->setUrls(urls);
+	mimeData->setData(
+		//"application/x-qt-windows-mime;value=\"Shell IDList Array\"",
+		"Shell IDList",
+		idls);
+
+	return mimeData;
+}
+
+bool HzDesktopItemModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent)
+{
+	return true;
+}
+
+Qt::DropActions HzDesktopItemModel::supportedDropActions() const
+{
+	return Qt::CopyAction | Qt::MoveAction | Qt::LinkAction;
 }

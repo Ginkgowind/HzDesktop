@@ -29,11 +29,6 @@ public:
 
 	void refreshSystemAppsInfo();
 
-signals:
-	// 因为是传递到主线程去处理，所以此处不传引用
-	void systemAppRefreshed(QList<QStandardItem*> systemAppList);
-
-private:
 	bool initWatcher();
 
 	QStandardItem* genQStandardItem(const QString& clsidPath);
@@ -43,6 +38,10 @@ private:
 	bool setSystemAppDisplayName(const QString& clsidPath, const QString& name);
 
 	QIcon getSystemAppIcon(const QString& clsidPath);
+
+signals:
+	// 因为是传递到主线程去处理，所以此处不传引用
+	void systemAppRefreshed(QList<QStandardItem*> systemAppList);
 
 protected:
 	void run() override;
