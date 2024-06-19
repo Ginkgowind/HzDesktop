@@ -122,6 +122,7 @@
     <ClCompile Include="view\DesktopViewMgr.cpp" />
     <ClCompile Include="view\dragdrop\HzDrag.cpp" />
     <ClCompile Include="view\dragdrop\HzDrag_p.cpp" />
+    <ClCompile Include="view\dragdrop\HzWindowsMimeIdl.cpp" />
     <ClCompile Include="view\HzDesktopIconView.cpp" />
     <ClCompile Include="view\HzDesktopIconView_p.cpp" />
     <ClCompile Include="view\HzSystemTray.cpp" />
@@ -155,6 +156,7 @@
     <ClInclude Include="resource.h" />
     <QtMoc Include="view\dragdrop\HzDrag.h" />
     <ClInclude Include="view\dragdrop\HzDrag_p.h" />
+    <ClInclude Include="view\dragdrop\HzWindowsMimeIdl.h" />
     <ClInclude Include="view\showItem\HzFileItem.h" />
     <QtMoc Include="view\HzDesktopIconView.h" />
     <QtMoc Include="view\DesktopBackgroundView.h" />

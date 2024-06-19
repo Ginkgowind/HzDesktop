@@ -111,6 +111,9 @@
     <ClCompile Include="view\dragdrop\HzDrag_p.cpp">
       <Filter>view\dragdrop</Filter>
     </ClCompile>
+    <ClCompile Include="view\dragdrop\HzWindowsMimeIdl.cpp">
+      <Filter>view\dragdrop</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HzDesktopMgr.h" />
@@ -153,6 +156,9 @@
     </ClInclude>
     <ClInclude Include="..\..\include\windows\QWindowsComBase.h">
       <Filter>include\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="view\dragdrop\HzWindowsMimeIdl.h">
+      <Filter>view\dragdrop</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

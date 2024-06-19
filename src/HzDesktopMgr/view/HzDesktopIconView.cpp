@@ -18,6 +18,7 @@
 #include "showItem/HzItemDelegate.h"
 #include "showItem/HzFileItem.h"
 #include "dragdrop/HzDrag.h"
+#include "dragdrop/HzWindowsMimeIdl.h"
 #include "windows/UiOperation.h"
 #include "windows/tools.h"
 
@@ -57,6 +58,8 @@ HzDesktopIconView::HzDesktopIconView(QWidget *parent)
 	initSignalAndSlot();
 
 	handleLayoutChanged();
+
+	new HzWindowsMimeIdl();
 }
 
 HzDesktopIconView::~HzDesktopIconView()
@@ -339,18 +342,30 @@ void HzDesktopIconView::mouseDoubleClickEvent(QMouseEvent* event)
 	}
 }
 
-void HzDesktopIconView::startDrag(Qt::DropActions supportedActions)
-{
-	HZQ_D(HzDesktopIconView);
-
-	QRect rect;
-	QPixmap pixmap = d->renderToPixmap(selectedIndexes(), &rect);
-	HzDrag* drag = new HzDrag(this);
-	drag->setItemPaths(getSelectedPaths());
-	drag->setPixmap(pixmap);
-	Qt::DropAction dropAction = drag->exec(supportedActions);
-
-}
+//void HzDesktopIconView::startDrag(Qt::DropActions supportedActions)
+//{
+//	HZQ_D(HzDesktopIconView);
+//
+//	QMimeData* dragMimeData = HZ::multiDrag(getSelectedPaths());
+//
+//	QDrag* drag = new QDrag(this);
+//	drag->setMimeData(dragMimeData);
+//	//drag->setPixmap(item->icon().pixmap(iconSize()));
+//	//drag->setPixmap(QPixmap(":/HzDesktopMgr/view/qrc/test/heart.png"));
+//	 //开始拖放操作
+//	Qt::DropAction dropAction = drag->exec(supportedActions);
+//	if (dropAction == Qt::MoveAction) {
+//		//currentFilePath.clear();
+//	}
+//
+//	//QRect rect;
+//	//QPixmap pixmap = d->renderToPixmap(selectedIndexes(), &rect);
+//	//HzDrag* drag = new HzDrag(this);
+//	//drag->setItemPaths(getSelectedPaths());
+//	//drag->setPixmap(pixmap);
+//	//Qt::DropAction dropAction = drag->exec(supportedActions);
+//
+//}
 
 void HzDesktopIconView::dragEnterEvent(QDragEnterEvent* e)
 {
@@ -367,6 +382,18 @@ void HzDesktopIconView::dragEnterEvent(QDragEnterEvent* e)
 void HzDesktopIconView::dragMoveEvent(QDragMoveEvent* e)
 {
 	QAbstractItemView::dragMoveEvent(e);
+	
+	HWND hWndTarget = ::WindowFromPoint({200, 250});
+	if (hWndTarget)
+	{
+		TCHAR szTitle[256];
+		if (::GetWindowText(hWndTarget, szTitle, _countof(szTitle)))
+		{
+			// szTitle现在包含了目标窗口的标题
+			//_tprintf(TEXT("拖放到 '%s'\n"), szTitle);
+			int a = 1;
+		}
+	}
 
 	e->accept();
 

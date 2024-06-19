@@ -167,9 +167,10 @@ QMimeData* HzDesktopItemModel::mimeData(const QModelIndexList& indexes) const
 
 	QMimeData* mimeData = new QMimeData();
 	mimeData->setUrls(urls);
+	// TODO 这里塞个值就行，具体的交给mimeidl
 	mimeData->setData(
-		//"application/x-qt-windows-mime;value=\"Shell IDList Array\"",
-		"Shell IDList",
+		"application/x-qt-windows-mime;value=\"Shell IDList Array\"",
+		//"Shell IDList",
 		idls);
 
 	return mimeData;

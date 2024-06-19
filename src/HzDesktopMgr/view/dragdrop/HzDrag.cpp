@@ -59,10 +59,14 @@ Qt::DropAction HzDrag::exec(Qt::DropActions supportedActions)
 			break;
 		}
 
+		POINT				pt = { 0,0 };
+		IDragSourceHelper* pDragSourceHelper = nullptr;
+		CoCreateInstance(CLSID_DragDropHelper, nullptr, CLSCTX_ALL,
+			IID_PPV_ARGS(&pDragSourceHelper));
+		hRet = pDragSourceHelper->InitializeFromWindow(HWND(0x123), &pt, dataObject.get());
+
 		hRet = SHDoDragDrop(
-			//NULL, 
-			//reinterpret_cast<HWND>(qobject_cast<QWidget*>(parent())->winId()),
-			(HWND)0x1234,
+			NULL, 
 			dataObject.get(), nullptr,
 			supportedActions, &finalEffect);
 		if (FAILED(hRet)) {

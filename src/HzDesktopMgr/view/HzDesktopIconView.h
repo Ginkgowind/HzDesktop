@@ -65,7 +65,7 @@ protected:
 
 	void mouseDoubleClickEvent(QMouseEvent* event) override;
 
-	void startDrag(Qt::DropActions supportedActions) override;
+	//void startDrag(Qt::DropActions supportedActions) override;
 
 	void dragEnterEvent(QDragEnterEvent* event) override;
 
