@@ -1,7 +1,7 @@
 #pragma once
 
-#include <QListView>
 #include <QMimeData>
+#include <QAbstractItemView>
 
 #include "showItem/HzDesktopItemModel.h"
 #include "menu/HzItemMenu.h"
@@ -10,6 +10,7 @@
 QT_BEGIN_NAMESPACE
 class QSortFilterProxyModel;
 class QStandardItemModel;
+class QDrag;
 QT_END_NAMESPACE
 
 class HzItemDelegate;
@@ -65,7 +66,7 @@ protected:
 
 	void mouseDoubleClickEvent(QMouseEvent* event) override;
 
-	//void startDrag(Qt::DropActions supportedActions) override;
+	void startDrag(Qt::DropActions supportedActions) override;
 
 	void dragEnterEvent(QDragEnterEvent* event) override;
 
@@ -115,6 +116,8 @@ private:
 	HzDesktopBlankMenu* m_desktopBlankMenu;
 
 	HzDesktopParam m_param;
+
+	QDrag* m_drag;
 
 	int m_maxViewRow;
 	int m_maxViewColumn;

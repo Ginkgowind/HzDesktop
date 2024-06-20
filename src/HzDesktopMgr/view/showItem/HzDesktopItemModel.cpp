@@ -127,8 +127,8 @@ QString HzDesktopItemModel::filePath(const QModelIndex& index) const
 QStringList HzDesktopItemModel::mimeTypes() const
 {
 	return QStringList()
-		<< QLatin1String("text/uri-list");
-		//<< QLatin1String("application/x-qt-windows-mime;value=\"Shell IDList Array\"");
+		<< QLatin1String("text/uri-list")
+		<< QLatin1String("application/x-qt-windows-mime;value=\"Shell IDList Array\"");
 }
 
 QMimeData* HzDesktopItemModel::mimeData(const QModelIndexList& indexes) const
@@ -142,36 +142,14 @@ QMimeData* HzDesktopItemModel::mimeData(const QModelIndexList& indexes) const
 	std::vector<LPCITEMIDLIST> idChildvec;
 
 	for (auto it = indexes.begin(); it != indexes.end(); ++it) {
-		QString path = filePath(*it);
-		urls << QUrl::fromLocalFile(path);
-		std::wstring windowsPath = path.toStdWString();
-		std::replace(windowsPath.begin(), windowsPath.end(), '/', '\\');
-		LPITEMIDLIST id = nullptr;
-		HRESULT res = SHParseDisplayName(windowsPath.c_str(), nullptr, &id, 0, nullptr);   //路径转PIDL
-		if (!SUCCEEDED(res) || !id) {
-			continue;
-		}
-		idvec.push_back(wil::make_unique_cotaskmem<LPITEMIDLIST>(id));
-		idChildvec.push_back(nullptr);
-		IShellFolder* ifolder = nullptr;
-		res = SHBindToParent(id, IID_IShellFolder, (void**)&ifolder, &idChildvec.back());   //获取ishellfolder
-		if (!SUCCEEDED(res) || !idChildvec.back()) {
-			idChildvec.pop_back();
-		}
-		else if (ifolder) {	/*path.compare(pathList.back()) != 0 && */
-			ifolder->Release();
-			UINT size = ILGetSize(id); // 获取ITEMIDLIST的大小
-			idls.append(reinterpret_cast<const char*>(id), size);
-		}
+		urls << QUrl::fromLocalFile(filePath(*it));
 	}
 
 	QMimeData* mimeData = new QMimeData();
 	mimeData->setUrls(urls);
-	// TODO 这里塞个值就行，具体的交给mimeidl
 	mimeData->setData(
 		"application/x-qt-windows-mime;value=\"Shell IDList Array\"",
-		//"Shell IDList",
-		idls);
+		"not empty");
 
 	return mimeData;
 }

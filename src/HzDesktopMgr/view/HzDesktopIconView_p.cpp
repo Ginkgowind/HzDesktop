@@ -12,13 +12,48 @@
 
 #include "HzDesktopIconView.h"
 #include "HzDesktopIconView_p.h"
+#include "windows/tools.h"
 
 HzDesktopIconViewPrivate::HzDesktopIconViewPrivate()
 {
+	initDragCursors();
 }
 
 HzDesktopIconViewPrivate::~HzDesktopIconViewPrivate()
 {
+}
+
+void HzDesktopIconViewPrivate::initDragCursors()
+{
+	QFont font("Microsoft YaHei", 8);
+
+	QPen textPen(Qt::blue);
+	textPen.setWidth(1);
+
+	QPen borderPen(Qt::black);
+	borderPen.setWidth(1);
+
+	QPainter painter;
+
+	auto drawFunc = [&](QPixmap pixmap, const QString& text) -> QPixmap
+		{
+			painter.begin(&pixmap);
+			painter.fillRect(pixmap.rect(), Qt::white);
+			painter.setFont(font);
+			painter.setPen(textPen);
+			painter.drawText(pixmap.rect(), Qt::AlignCenter, text);
+			painter.setPen(borderPen);
+			painter.drawRect(0, 0, pixmap.width() - 1, pixmap.height() - 1);
+			painter.end();
+
+			return pixmap;
+		};
+
+	m_dragCursorMap[Qt::CopyAction] = drawFunc(QPixmap(50, 22), QStringLiteral(" + 复制 "));
+	m_dragCursorMap[Qt::MoveAction] = drawFunc(QPixmap(50, 22), QStringLiteral(" > 移动 "));
+	if (HZ::getSystemVersion() == 11) {
+		m_dragCursorMap[Qt::LinkAction] = drawFunc(QPixmap(100, 22), QStringLiteral(" * 创建快捷方式 "));
+	}
 }
 
 QPixmap HzDesktopIconViewPrivate::renderToPixmap(const QModelIndexList& indexes, QRect* r) const

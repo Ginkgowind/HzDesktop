@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QObject>
+#include <QPixmap>
 
 class HzDrag  : public QObject
 {
@@ -18,4 +19,6 @@ public:
 
 private:
 	QStringList m_pathList;
+
+	QPixmap m_pixmap;
 };

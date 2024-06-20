@@ -21,6 +21,8 @@ public:
 	HzDesktopIconViewPrivate();
 	~HzDesktopIconViewPrivate();
 
+	void initDragCursors();
+
 	QPixmap renderToPixmap(const QModelIndexList& indexes, QRect* r) const;
 
 	QItemViewPaintPairs draggablePaintPairs(const QModelIndexList& indexes, QRect* r) const;
@@ -36,4 +38,6 @@ public:
 	void handleDelete();
 
 	void handleRename();
+
+	QMap<Qt::DropAction, QPixmap> m_dragCursorMap;
 };

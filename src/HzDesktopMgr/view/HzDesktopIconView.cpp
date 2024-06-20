@@ -1,4 +1,4 @@
-#include <QSortFilterProxyModel>
+ï»¿#include <QSortFilterProxyModel>
 #include <QStandardItemModel>
 #include <QDesktopServices>
 #include <QMouseEvent>
@@ -24,10 +24,11 @@
 
 #define TEXT_MAX_HEIGHT			40
 
-HzDesktopIconView::HzDesktopIconView(QWidget *parent)
+HzDesktopIconView::HzDesktopIconView(QWidget* parent)
 	: QAbstractItemView(parent)
 	, HzDesktopPublic(new HzDesktopIconViewPrivate())
 	, m_ctrlDragSelectionFlag(QItemSelectionModel::NoUpdate)
+	, m_drag(nullptr)
 {
 	initParam();
 
@@ -41,7 +42,7 @@ HzDesktopIconView::HzDesktopIconView(QWidget *parent)
 
 	m_itemMenu = new HzItemMenu(this);
 
-	//setDropIndicatorShown(true); // ÏÔÊ¾ÍÏ·ÅÎ»ÖÃÖ¸Ê¾Æ÷
+	//setDropIndicatorShown(true); // æ˜¾ç¤ºæ‹–æ”¾ä½ç½®æŒ‡ç¤ºå™¨
 
 	setStyleSheet("QAbstractItemView {background-color: transparent;}");
 	setAttribute(Qt::WA_TranslucentBackground, true);
@@ -71,50 +72,50 @@ void HzDesktopIconView::initSignalAndSlot()
 {
 	HZQ_D(HzDesktopIconView);
 
-	// ¸´ÖÆ£¬Ä¬ÈÏÎªCtrl + C
+	// å¤åˆ¶ï¼Œé»˜è®¤ä¸ºCtrl + C
 	connect(new QShortcut(QKeySequence::Copy, this), &QShortcut::activated, 
 		d, &HzDesktopIconViewPrivate::handleCopy);
 
-	// ¼ôÇĞ£¬ Ä¬ÈÏÎªCtrl + X
+	// å‰ªåˆ‡ï¼Œ é»˜è®¤ä¸ºCtrl + X
 	connect(new QShortcut(QKeySequence::Cut, this), &QShortcut::activated,
 		d, &HzDesktopIconViewPrivate::handleCut);
 
-	// Õ³Ìù£¬ Ä¬ÈÏÎªCtrl + V
+	// ç²˜è´´ï¼Œ é»˜è®¤ä¸ºCtrl + V
 	connect(new QShortcut(QKeySequence::Paste, this), &QShortcut::activated,
 		d, &HzDesktopIconViewPrivate::handlePaste);
 
-	// È«Ñ¡£¬ Ä¬ÈÏÎªCtrl + A
+	// å…¨é€‰ï¼Œ é»˜è®¤ä¸ºCtrl + A
 	/*QShortcut* pSelectAllShorcut = new QShortcut(QKeySequence(QKeySequence::SelectAll),
 		this, SLOT(handleSelectAll()), nullptr, Qt::WidgetWithChildrenShortcut);*/
 
-	// É¾³ı£¬ Ä¬ÈÏÎªDelete
+	// åˆ é™¤ï¼Œ é»˜è®¤ä¸ºDelete
 	connect(new QShortcut(QKeySequence::Delete, this), &QShortcut::activated,
 		d, &HzDesktopIconViewPrivate::handleDelete);
 	connect(new QShortcut(QKeySequence("Ctrl+D"), this), &QShortcut::activated,
 		d, &HzDesktopIconViewPrivate::handleDelete);
 
-	// Ë¢ĞÂ£¬Ä¬ÈÏÎªF5
+	// åˆ·æ–°ï¼Œé»˜è®¤ä¸ºF5
 	//new QShortcut(QKeySequence(QKeySequence::Refresh),
 	//	this, SLOT(handleRefreshFile()), nullptr, Qt::WidgetWithChildrenShortcut);
 
-	// ÖØÃüÃû£¬F2
+	// é‡å‘½åï¼ŒF2
 	connect(new QShortcut(QKeySequence(Qt::Key_F2), this), &QShortcut::activated,
 		d, &HzDesktopIconViewPrivate::handleRename);
 
-	// ´ò¿ªÑ¡ÖĞÎÄ¼ş£¬ Enter
+	// æ‰“å¼€é€‰ä¸­æ–‡ä»¶ï¼Œ Enter
 	connect(new QShortcut(QKeySequence(Qt::Key_Return), this), &QShortcut::activated,
 		d, &HzDesktopIconViewPrivate::handleOpen);
 	connect(new QShortcut(QKeySequence(Qt::Key_Enter), this), &QShortcut::activated,
 		d, &HzDesktopIconViewPrivate::handleOpen);
 
-	// itemÓÒ¼ü²Ëµ¥
+	// itemå³é”®èœå•
 	connect(m_itemMenu, &HzItemMenu::onOpen, d, &HzDesktopIconViewPrivate::handleOpen);
 	connect(m_itemMenu, &HzItemMenu::onCopy, d, &HzDesktopIconViewPrivate::handleCopy);
 	connect(m_itemMenu, &HzItemMenu::onCut, d, &HzDesktopIconViewPrivate::handleCut);
 	connect(m_itemMenu, &HzItemMenu::onDelete, d, &HzDesktopIconViewPrivate::handleDelete);
 	connect(m_itemMenu, &HzItemMenu::onRename, d, &HzDesktopIconViewPrivate::handleRename);
 
-	// ¿Õ°×´¦ÓÒ¼ü²Ëµ¥
+	// ç©ºç™½å¤„å³é”®èœå•
 	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::onSetIconSizeMode,
 		this, &HzDesktopIconView::handleSetIconSizeMode);
 	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::onSetItemSortRole,
@@ -128,7 +129,7 @@ void HzDesktopIconView::initSignalAndSlot()
 	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::refreshDesktop,
 		m_itemModel, &HzDesktopItemModel::refreshItems);
 
-	// TODO itemÒ»ÓĞ±ä»¯Ê±ÇåÀímenuµÄÅÅĞò×´Ì¬
+	// TODO itemä¸€æœ‰å˜åŒ–æ—¶æ¸…ç†menuçš„æ’åºçŠ¶æ€
 	connect(m_itemModel, &HzDesktopItemModel::itemChanged,
 		[this](QStandardItem* item) {m_desktopBlankMenu->hideSortStatus(); });
 }
@@ -140,7 +141,7 @@ void HzDesktopIconView::initParam()
 
 QRect HzDesktopIconView::visualRect(const QModelIndex& index) const
 {
-	// TODO ´¦ÀíºáÏòÊ±µÄÂß¼­
+	// TODO å¤„ç†æ¨ªå‘æ—¶çš„é€»è¾‘
 	int posIndexX = index.row() / m_maxViewRow;
 	int posIndexY = index.row() % m_maxViewRow;
 
@@ -191,7 +192,7 @@ void HzDesktopIconView::setSelection(const QRect& rect, QItemSelectionModel::Sel
 		}
 		else {
 		}
-		// TODO ´¦Àí logical selection mode (key and mouse click selection)
+		// TODO å¤„ç† logical selection mode (key and mouse click selection)
 	}
 
 	selectionModel()->select(selection, command);
@@ -286,12 +287,12 @@ void HzDesktopIconView::mouseMoveEvent(QMouseEvent* e)
 
 	QAbstractItemView::mouseMoveEvent(e);
 
-	// dropEventÖ®ºó×ÜÊÇ»áÓÖ´¥·¢Ò»´ÎmouseMoveEvent£¬ËùÒÔÕâÀïÒªÉèÖÃ¹ıÂËÌõ¼ş
+	// dropEventä¹‹åæ€»æ˜¯ä¼šåˆè§¦å‘ä¸€æ¬¡mouseMoveEventï¼Œæ‰€ä»¥è¿™é‡Œè¦è®¾ç½®è¿‡æ»¤æ¡ä»¶
 	bool bFilterDragSelecting = (state() == DraggingState) ||
 		(preState == DraggingState && (m_pressedPos - e->pos()).manhattanLength() > QApplication::startDragDistance());
 
 	if ((e->buttons() & Qt::LeftButton) && !bFilterDragSelecting) {
-		// ²Î¿¼ QAbstractItemView ÊµÏÖ×´Ì¬ÉèÖÃÓë¿òÑ¡Âß¼­
+		// å‚è€ƒ QAbstractItemView å®ç°çŠ¶æ€è®¾ç½®ä¸æ¡†é€‰é€»è¾‘
 		setState(DragSelectingState);
 
 		QPersistentModelIndex index = indexAt(e->pos());
@@ -305,7 +306,7 @@ void HzDesktopIconView::mouseMoveEvent(QMouseEvent* e)
 		QRect selectionRect = QRect(m_pressedPos, e->pos());
 		setSelection(selectionRect, command);
 
-		// ²Î¿¼QListView ÊµÏÖ¿òÑ¡¿ò»æÖÆ
+		// å‚è€ƒQListView å®ç°æ¡†é€‰æ¡†ç»˜åˆ¶
 		QRect rect(m_pressedPos, e->pos());
 		rect = rect.normalized();
 		viewport()->update(rect.united(m_elasticBand));
@@ -332,7 +333,7 @@ void HzDesktopIconView::mouseDoubleClickEvent(QMouseEvent* event)
 	HZQ_D(HzDesktopIconView);
 
 	if (selectedIndexes().empty()) {
-		// Òş²Ø×ÀÃæ
+		// éšè—æ¡Œé¢
 		if (m_param.bEnableDoubleClick) {
 			setVisible(false);
 		}
@@ -342,30 +343,41 @@ void HzDesktopIconView::mouseDoubleClickEvent(QMouseEvent* event)
 	}
 }
 
-//void HzDesktopIconView::startDrag(Qt::DropActions supportedActions)
-//{
-//	HZQ_D(HzDesktopIconView);
-//
-//	QMimeData* dragMimeData = HZ::multiDrag(getSelectedPaths());
-//
-//	QDrag* drag = new QDrag(this);
-//	drag->setMimeData(dragMimeData);
-//	//drag->setPixmap(item->icon().pixmap(iconSize()));
-//	//drag->setPixmap(QPixmap(":/HzDesktopMgr/view/qrc/test/heart.png"));
-//	 //¿ªÊ¼ÍÏ·Å²Ù×÷
-//	Qt::DropAction dropAction = drag->exec(supportedActions);
-//	if (dropAction == Qt::MoveAction) {
-//		//currentFilePath.clear();
-//	}
-//
-//	//QRect rect;
-//	//QPixmap pixmap = d->renderToPixmap(selectedIndexes(), &rect);
-//	//HzDrag* drag = new HzDrag(this);
-//	//drag->setItemPaths(getSelectedPaths());
-//	//drag->setPixmap(pixmap);
-//	//Qt::DropAction dropAction = drag->exec(supportedActions);
-//
-//}
+void HzDesktopIconView::startDrag(Qt::DropActions supportedActions)
+{
+	HZQ_D(HzDesktopIconView);
+
+	QRect testrect;
+	QModelIndexList testindexes = selectedIndexes();
+	QPixmap testpixmap = d->renderToPixmap(testindexes, &testrect);
+	HzDrag* drag = new HzDrag(this);
+	drag->setItemPaths(getSelectedPaths());
+	drag->setPixmap(testpixmap);
+	drag->exec(supportedActions);
+
+	return;
+
+	if (!m_drag) {
+		m_drag = new QDrag(this);
+		for (auto pair : d->m_dragCursorMap.toStdMap()) {
+			m_drag->setDragCursor(pair.second, pair.first);
+		}
+	}
+	
+	QRect rect;
+	QModelIndexList indexes = selectedIndexes();
+	QPixmap pixmap = d->renderToPixmap(indexes, &rect);
+	rect.adjust(horizontalOffset(), verticalOffset(), 0, 0);
+
+	m_drag->setPixmap(pixmap);
+	m_drag->setMimeData(model()->mimeData(indexes));
+	m_drag->setHotSpot(m_pressedPos - rect.topLeft());
+
+	Qt::DropAction dropAction = m_drag->exec(supportedActions);
+	if (dropAction == Qt::MoveAction) {
+
+	}
+}
 
 void HzDesktopIconView::dragEnterEvent(QDragEnterEvent* e)
 {
@@ -383,18 +395,6 @@ void HzDesktopIconView::dragMoveEvent(QDragMoveEvent* e)
 {
 	QAbstractItemView::dragMoveEvent(e);
 	
-	HWND hWndTarget = ::WindowFromPoint({200, 250});
-	if (hWndTarget)
-	{
-		TCHAR szTitle[256];
-		if (::GetWindowText(hWndTarget, szTitle, _countof(szTitle)))
-		{
-			// szTitleÏÖÔÚ°üº¬ÁËÄ¿±ê´°¿ÚµÄ±êÌâ
-			//_tprintf(TEXT("ÍÏ·Åµ½ '%s'\n"), szTitle);
-			int a = 1;
-		}
-	}
-
 	e->accept();
 
 	m_hoverIndex = indexAt(e->pos());
@@ -403,10 +403,10 @@ void HzDesktopIconView::dragMoveEvent(QDragMoveEvent* e)
 
 	const QPoint pos = e->pos() - QPoint(0, 0);
 	if (indexAt(pos).isValid()) {
-		// TODO ·Ç×Ô¶¯ÅÅĞòÊ±Òª´¦Àí
+		// TODO éè‡ªåŠ¨æ’åºæ—¶è¦å¤„ç†
 	}
 	else {
-		// ¼ÆËã³öµ±Ç°Êó±êËù´¦µÄÍø¸ñ
+		// è®¡ç®—å‡ºå½“å‰é¼ æ ‡æ‰€å¤„çš„ç½‘æ ¼
 		m_insertRow = getInsertRow(pos);
 	}
 }
@@ -416,6 +416,7 @@ void HzDesktopIconView::dragLeaveEvent(QDragLeaveEvent* e)
 	QAbstractItemView::dragLeaveEvent(e);
 
 	e->accept();
+	//qDebug() << e->proposedAction() << e->pos() << m_hoverIndex.row();
 }
 
 void HzDesktopIconView::dropEvent(QDropEvent* e)
@@ -434,8 +435,8 @@ void HzDesktopIconView::dropEvent(QDropEvent* e)
 
 	setState(NoState);
 
-	// TODO ÎªÊ²Ã´ÏÂÃæµÄº¯ÊıÓÃÄÚÁª»áÕÒ²»µ½¶¨Òå£¬ÄÑµÀÊÇÒòÎªÁ½±ß¶¼ÓĞinline£¿
-	// TODO ¸ù¾İÊÇ·ñÓĞ±ä»¯À´ÅĞ¶ÏÊÇ·ñÈ¡ÏûÏÔÊ¾×´Ì¬
+	// TODO ä¸ºä»€ä¹ˆä¸‹é¢çš„å‡½æ•°ç”¨å†…è”ä¼šæ‰¾ä¸åˆ°å®šä¹‰ï¼Œéš¾é“æ˜¯å› ä¸ºä¸¤è¾¹éƒ½æœ‰inlineï¼Ÿ
+	// TODO æ ¹æ®æ˜¯å¦æœ‰å˜åŒ–æ¥åˆ¤æ–­æ˜¯å¦å–æ¶ˆæ˜¾ç¤ºçŠ¶æ€
 	m_desktopBlankMenu->hideSortStatus();
 }
 
@@ -456,7 +457,7 @@ void HzDesktopIconView::paintEvent(QPaintEvent* e)
 {
 	QPainter painter(viewport());
 
-	// TODO »æÖÆÒ»¸öÍ¸Ã÷ÄÚÈİ£¬ÎªÊ²Ã´²»»æÖÆ¾Í»á´©Í¸
+	// TODO ç»˜åˆ¶ä¸€ä¸ªé€æ˜å†…å®¹ï¼Œä¸ºä»€ä¹ˆä¸ç»˜åˆ¶å°±ä¼šç©¿é€
 	painter.save();
 	painter.setPen(Qt::transparent);
 	painter.setBrush(QColor(0, 0, 0, 1));
@@ -472,7 +473,7 @@ void HzDesktopIconView::paintEvent(QPaintEvent* e)
 	const QAbstractItemView::State viewState = this->state();
 	const bool enabled = (state & QStyle::State_Enabled) != 0;
 
-	//e->rect() TODO ÀûÓÃÕâ¸örectÀ´¾ö¶¨Òª»æÖÆÄÄĞ©modelindex ÒÔ´ËÀ´ÓÅ»¯ĞÔÄÜ
+	//e->rect() TODO åˆ©ç”¨è¿™ä¸ªrectæ¥å†³å®šè¦ç»˜åˆ¶å“ªäº›modelindex ä»¥æ­¤æ¥ä¼˜åŒ–æ€§èƒ½
 	QModelIndexList::const_iterator end = toBeRendered.constEnd();
 	for (QModelIndexList::const_iterator it = toBeRendered.constBegin(); it != end; ++it) {
 		option.rect = visualRect(*it);
@@ -503,7 +504,7 @@ void HzDesktopIconView::paintEvent(QPaintEvent* e)
 
 	if (m_insertRow >= 0) {
 		painter.save();
-		// ¼ÆËã³ö²åÈëÏßµÄÎ»ÖÃ
+		// è®¡ç®—å‡ºæ’å…¥çº¿çš„ä½ç½®
 		QPoint TMP_DELTA(0, -5);
 		QRect rect = visualRect(model()->index(m_insertRow, 0));
 		painter.setPen(QPen(Qt::blue, 2));
@@ -531,7 +532,7 @@ QStringList HzDesktopIconView::getSelectedPaths()
 {
 	QStringList pathList;
 
-	// TODO ÁË½â´Ë´¦Ö±½Óµ÷ÓÃº¯ÊıÓë¸´ÖÆ±äÁ¿£¬ÓĞÊ²Ã´Çø±ğ£¿
+	// TODO äº†è§£æ­¤å¤„ç›´æ¥è°ƒç”¨å‡½æ•°ä¸å¤åˆ¶å˜é‡ï¼Œæœ‰ä»€ä¹ˆåŒºåˆ«ï¼Ÿ
 	QModelIndexList indexList = selectedIndexes();
 	for (const QModelIndex& index : indexList) {
 		pathList.append(m_itemModel->filePath(index));
@@ -556,9 +557,9 @@ void HzDesktopIconView::handleInternalDrop(QDropEvent* e)
 
 	int insertRow = m_insertRow;
 
-	// ×Ô¶¯ÅÅĞòÊ±°´ÕÕÊó±êÎ»ÖÃ°¤¸ö²åÈë½øÈ¥£¬·ñÔòÃ¿Ò»¸ö¶¼¸ù¾İ¸÷×ÔÎ»ÖÃ½øĞĞ²åÈë
+	// è‡ªåŠ¨æ’åºæ—¶æŒ‰ç…§é¼ æ ‡ä½ç½®æŒ¨ä¸ªæ’å…¥è¿›å»ï¼Œå¦åˆ™æ¯ä¸€ä¸ªéƒ½æ ¹æ®å„è‡ªä½ç½®è¿›è¡Œæ’å…¥
 	if (m_param.bAutoArrange) {
-		// °´ÕÕrow´Ó´óµ½Ğ¡½øĞĞÅÅĞò£¬´Ó¶øÏÈÉ¾³ı´óµÄ
+		// æŒ‰ç…§rowä»å¤§åˆ°å°è¿›è¡Œæ’åºï¼Œä»è€Œå…ˆåˆ é™¤å¤§çš„
 		qSort(indexList.begin(), indexList.end(), [](const QModelIndex& index1, const QModelIndex& index2) {
 			return index1.row() > index2.row(); });
 
@@ -568,13 +569,13 @@ void HzDesktopIconView::handleInternalDrop(QDropEvent* e)
 			m_itemModel->removeRow(index.row());
 		}
 
-		// TODO ÍÏ×§µ½×ÔÉíÏÂÒ»¸ñ»áÓĞÎÊÌâ
+		// TODO æ‹–æ‹½åˆ°è‡ªèº«ä¸‹ä¸€æ ¼ä¼šæœ‰é—®é¢˜
 		for (auto it = dropItems.rbegin(); it < dropItems.rend(); it++) {
 			m_itemModel->insertRow(insertRow++, *it);
 		}
 	}
 	else {
-		// °´ÕÕrow´ÓĞ¡µ½´ó½øĞĞÅÅĞò£¬´Ó¶øÏÈ²åÈëĞ¡µÄ
+		// æŒ‰ç…§rowä»å°åˆ°å¤§è¿›è¡Œæ’åºï¼Œä»è€Œå…ˆæ’å…¥å°çš„
 		qSort(indexList.begin(), indexList.end(), [](const QModelIndex& index1, const QModelIndex& index2) {
 			return index1.row() < index2.row(); });
 
@@ -585,10 +586,10 @@ void HzDesktopIconView::handleInternalDrop(QDropEvent* e)
 			indexRectMap[index] = visualRect(index);
 		}
 
-		// TODO ÎªÊ²Ã´QMap²»Ö§³ÖÈçÏÂµü´ú·½Ê½
+		// TODO ä¸ºä»€ä¹ˆQMapä¸æ”¯æŒå¦‚ä¸‹è¿­ä»£æ–¹å¼
 		for (auto& [index, rect] : indexRectMap.toStdMap()) {
 			QStandardItem* item = m_itemModel->takeItem(index.row());
-			// TODO ÔÙÏ¸ÖÂÁË½âitemFromIndexºÍitemµÄÇø±ğ£¬ÒÔ¼°rootºÍparent
+			// TODO å†ç»†è‡´äº†è§£itemFromIndexå’Œitemçš„åŒºåˆ«ï¼Œä»¥åŠrootå’Œparent
 			m_itemModel->itemFromIndex(index)->setEnabled(false);
 
 			QPoint delta = rect.topLeft() - dragStartIndexRect.topLeft();
@@ -620,10 +621,10 @@ void HzDesktopIconView::handleEnableAutoArrange()
 
 void HzDesktopIconView::handleSetItemSortRole(CustomRoles role)
 {
-	// ÕâÀïÃ»ÓĞÊ¹ÓÃQSortFilterProxyModel£¬ÒòÎª×ÀÃæÔÚÅÅĞòÖ®ºó»¹ÄÜ½øĞĞÍÏ¶¯Í¼±ê£¬
-	// µ«ÊÇQSortFilterProxyModel½ö½öÊÇ¶ÔÔ­Ê¼modelµÄÓ³Éä£¬²»ÄÜÀíÏëµØÌí¼ÓÊı¾İ
+	// è¿™é‡Œæ²¡æœ‰ä½¿ç”¨QSortFilterProxyModelï¼Œå› ä¸ºæ¡Œé¢åœ¨æ’åºä¹‹åè¿˜èƒ½è¿›è¡Œæ‹–åŠ¨å›¾æ ‡ï¼Œ
+	// ä½†æ˜¯QSortFilterProxyModelä»…ä»…æ˜¯å¯¹åŸå§‹modelçš„æ˜ å°„ï¼Œä¸èƒ½ç†æƒ³åœ°æ·»åŠ æ•°æ®
 
-	// ´¥·¢ÅÅĞòÊ±£¬ÏÈÉ¾³ıµôËùÓĞµÄÕ¼Î»item
+	// è§¦å‘æ’åºæ—¶ï¼Œå…ˆåˆ é™¤æ‰æ‰€æœ‰çš„å ä½item
 	m_itemModel->removeAllDisableItem();
 
 	m_itemModel->setSortRole(role);
@@ -632,7 +633,7 @@ void HzDesktopIconView::handleSetItemSortRole(CustomRoles role)
 
 void HzDesktopIconView::handleSetItemSortOrder(Qt::SortOrder order)
 {
-	// ´¥·¢ÅÅĞòÊ±£¬ÏÈÉ¾³ıµôËùÓĞµÄÕ¼Î»item
+	// è§¦å‘æ’åºæ—¶ï¼Œå…ˆåˆ é™¤æ‰æ‰€æœ‰çš„å ä½item
 	m_itemModel->removeAllDisableItem();
 
 	m_itemModel->sort(0, m_param.sortOrder);
@@ -668,7 +669,7 @@ QItemSelection HzDesktopIconView::getSelectionFromRect(const QRect& rect) const
 {
 	QItemSelection selection;
 	QModelIndex tl, br;
-	// TODO ÕâÀïÎªÊ²Ã´Òªnormalized
+	// TODO è¿™é‡Œä¸ºä»€ä¹ˆè¦normalized
 	const QModelIndexList intersectVector = intersectingSet(rect.normalized());
 	QModelIndexList::const_iterator it = intersectVector.begin();
 	for (; it != intersectVector.end(); ++it) {

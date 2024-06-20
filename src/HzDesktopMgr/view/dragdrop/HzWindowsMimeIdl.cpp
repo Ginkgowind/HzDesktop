@@ -5,7 +5,10 @@
 
 #include "HzWindowsMimeIdl.h"
 
-FORMATETC test_data;
+#define CHECK_FAILED_RETURN_FALSE(hr)	\
+	if (FAILED(hr)) {					\
+		return false;					\
+	}
 
 static int getCf(const FORMATETC& formatetc)
 {
@@ -141,118 +144,114 @@ QVariant HzWindowsMimeIdl::convertToMime(const QString& mime, IDataObject* pData
 
 bool HzWindowsMimeIdl::convertFromMime(const FORMATETC& formatetc, const QMimeData* mimeData, STGMEDIUM* pmedium) const
 {
-	if (canConvertFromMime(formatetc, mimeData)) {
-		QByteArray data = mimeData->data(shellIdlLiteral());
-		QByteArray result = data;
-
-		return setData(result, pmedium);
-
-
-		auto urls = mimeData->urls();
-		QVector<QString> paths;
-		for (QUrl url : urls) {
-			paths.push_back(url.toLocalFile());
-		}
-
-		std::vector<PITEMID_CHILD> pidlList;
-
-		PIDLIST_ABSOLUTE pidlDirectory = NULL;
-		HRESULT res = S_OK;
-		res = SHParseDisplayName(L"C:\\Users\\Ginkgo\\Desktop", nullptr, &pidlDirectory, 0, nullptr);
-
-		wil::com_ptr<IShellFolder> pShellFolder;
-		IShellFolder* pDesktop = NULL;
-		res = SHGetDesktopFolder(&pDesktop);
-		res = pDesktop->BindToObject(pidlDirectory, NULL, IID_PPV_ARGS(&pShellFolder));
-
-		for (auto path : paths) {
-			QString fileName = QFileInfo(path).fileName();
-			LPITEMIDLIST id = nullptr;
-			res = pShellFolder->ParseDisplayName(nullptr, nullptr, (LPWSTR)fileName.toStdWString().c_str(), nullptr,
-				&id, nullptr);
-			pidlList.push_back(id);
-
-			//LPITEMIDLIST id = nullptr;
-			//path.replace('/', "\\");
-			//res = pDesktop->ParseDisplayName(nullptr, nullptr, (LPWSTR)path.toStdWString().c_str(), nullptr,
-			//	&id, nullptr);
-			//pidlList.push_back(id);
-		}
-
-		/* First, we need to decide how much memory to
-		allocate to the structure. This is based on
-		the number of items that will be stored in
-		this structure. */
-		UINT uSize = 0;
-
-		UINT nItems = static_cast<UINT>(pidlList.size());
-
-		/* Size of the base structure + offset array. */
-		UINT uBaseSize = sizeof(CIDA) + (sizeof(UINT) * nItems);
-
-		uSize += uBaseSize;
-
-		/* Size of the parent pidl. */
-		uSize += ILGetSize(pidlDirectory);
-
-		/* Add the total size of the child pidl's. */
-		for (auto pidl : pidlList)
-		{
-			uSize += ILGetSize(pidl);
-		}
-
-		HGLOBAL hglbIDList = GlobalAlloc(GMEM_MOVEABLE, uSize);
-
-		if (hglbIDList == NULL)
-		{
-			return E_FAIL;
-		}
-
-		auto pcidaData = static_cast<LPVOID>(GlobalLock(hglbIDList));
-
-		CIDA* pcida = static_cast<CIDA*>(pcidaData);
-
-		pcida->cidl = nItems;
-
-		UINT* pOffsets = pcida->aoffset;
-
-		pOffsets[0] = uBaseSize;
-
-		LPBYTE pData;
-
-		pData = (LPBYTE)(((LPBYTE)pcida) + pcida->aoffset[0]);
-
-		memcpy(pData, (LPVOID)pidlDirectory, ILGetSize(pidlDirectory));
-
-
-		UINT uPreviousSize;
-		int i = 0;
-
-		uPreviousSize = ILGetSize(pidlDirectory);
-
-		/* Store each of the pidl's. */
-		for (auto pidl : pidlList)
-		{
-			pOffsets[i + 1] = pOffsets[i] + uPreviousSize;
-
-			pData = (LPBYTE)(((LPBYTE)pcida) + pcida->aoffset[i + 1]);
-
-			memcpy(pData, (LPVOID)pidl, ILGetSize(pidl));
-
-			uPreviousSize = ILGetSize(pidl);
-
-			i++;
-		}
-
-		GlobalUnlock(hglbIDList);
-
-		pmedium->pUnkForRelease = 0;
-		pmedium->hGlobal = hglbIDList;
-		//pmedium->hGlobal = OleDuplicateData(hglbIDList, 49363, 0);
-		pmedium->tymed = TYMED_HGLOBAL;
-
-		return true;
+	if (!canConvertFromMime(formatetc, mimeData) || !mimeData->hasUrls()) {
+		return false;
 	}
 
-	return false;
+	QVector<QString> paths;
+	for (QUrl url : mimeData->urls()) {
+		paths.push_back(url.toLocalFile());
+	}
+
+	// 找出父路径，有不同就直接返回
+	QString parentPath(QFileInfo(paths[0]).absolutePath());
+	for (int i = 1; i < paths.size(); ++i) {
+		if (QFileInfo(paths[i]).absolutePath() != parentPath) {
+			return false;
+		}
+	}
+
+	PIDLIST_ABSOLUTE pidlDirectory = NULL;
+	HRESULT hr = SHParseDisplayName(parentPath.replace('/', '\\').toStdWString().c_str(), nullptr, &pidlDirectory, 0, nullptr);
+	CHECK_FAILED_RETURN_FALSE(hr);
+
+	IShellFolder* pDesktop = NULL;
+	hr = SHGetDesktopFolder(&pDesktop);
+	CHECK_FAILED_RETURN_FALSE(hr);
+
+	wil::com_ptr<IShellFolder> pShellFolder;
+	hr = pDesktop->BindToObject(pidlDirectory, NULL, IID_PPV_ARGS(&pShellFolder));
+	CHECK_FAILED_RETURN_FALSE(hr);
+
+	std::vector<PITEMID_CHILD> pidlList;
+	for (auto path : paths) {
+		QString fileName = QFileInfo(path).fileName();
+		LPITEMIDLIST id = nullptr;
+		hr = pShellFolder->ParseDisplayName(nullptr, nullptr, (LPWSTR)fileName.toStdWString().c_str(), nullptr,
+			&id, nullptr);
+		CHECK_FAILED_RETURN_FALSE(hr);
+		pidlList.push_back(id);
+	}
+
+	/* First, we need to decide how much memory to
+	allocate to the structure. This is based on
+	the number of items that will be stored in
+	this structure. */
+	UINT uSize = 0;
+
+	UINT nItems = static_cast<UINT>(pidlList.size());
+
+	/* Size of the base structure + offset array. */
+	UINT uBaseSize = sizeof(CIDA) + (sizeof(UINT) * nItems);
+
+	uSize += uBaseSize;
+
+	/* Size of the parent pidl. */
+	uSize += ILGetSize(pidlDirectory);
+
+	/* Add the total size of the child pidl's. */
+	for (auto pidl : pidlList)
+	{
+		uSize += ILGetSize(pidl);
+	}
+
+	HGLOBAL hglbIDList = GlobalAlloc(GMEM_MOVEABLE, uSize);
+
+	if (hglbIDList == NULL)
+	{
+		return false;
+	}
+
+	auto pcidaData = static_cast<LPVOID>(GlobalLock(hglbIDList));
+
+	CIDA* pcida = static_cast<CIDA*>(pcidaData);
+
+	pcida->cidl = nItems;
+
+	UINT* pOffsets = pcida->aoffset;
+
+	pOffsets[0] = uBaseSize;
+
+	LPBYTE pData;
+
+	pData = (LPBYTE)(((LPBYTE)pcida) + pcida->aoffset[0]);
+
+	memcpy(pData, (LPVOID)pidlDirectory, ILGetSize(pidlDirectory));
+
+
+	UINT uPreviousSize;
+	int i = 0;
+
+	uPreviousSize = ILGetSize(pidlDirectory);
+
+	/* Store each of the pidl's. */
+	for (auto pidl : pidlList) {
+		pOffsets[i + 1] = pOffsets[i] + uPreviousSize;
+
+		pData = (LPBYTE)(((LPBYTE)pcida) + pcida->aoffset[i + 1]);
+
+		memcpy(pData, (LPVOID)pidl, ILGetSize(pidl));
+
+		uPreviousSize = ILGetSize(pidl);
+
+		i++;
+	}
+
+	GlobalUnlock(hglbIDList);
+
+	pmedium->pUnkForRelease = 0;
+	pmedium->hGlobal = hglbIDList;
+	pmedium->tymed = TYMED_HGLOBAL;
+
+	return true;
 }
