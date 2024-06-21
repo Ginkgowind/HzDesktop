@@ -91,6 +91,7 @@ QStandardItem* DesktopSystemItemWatcher::genQStandardItem(const QString& clsidPa
 	newItem->setIcon(itemIcon);
 	newItem->setText(itemName);
 	newItem->setData(clsidPath, CustomRoles::FilePathRole);
+	newItem->setData(QDateTime({ 1, 1, 1 }, { 1, 1, 1 }), CustomRoles::FileLastModifiedRole);
 	newItem->setToolTip(itemName);
 
 	return newItem;
@@ -185,7 +186,6 @@ bool DesktopSystemItemWatcher::setSystemAppDisplayName(const QString& clsidPath,
 	return bRet;
 }
 
-// TODO 这里获得的icon尺寸偏小，导致显示出来的图片比较糊
 QIcon DesktopSystemItemWatcher::getSystemAppIcon(const QString& clsidValue)
 {
 	QIcon retIcon;
@@ -205,7 +205,6 @@ QIcon DesktopSystemItemWatcher::getSystemAppIcon(const QString& clsidValue)
 		itemImageFactory->GetImage(s, SIIGBF_ICONBACKGROUND, &bitmap);
 		itemImageFactory->Release();
 
-		// TODO 将图片缓存起来？不过好像不会变更也不需要
 		QImage image = QtWin::imageFromHBITMAP(bitmap, QtWin::HBitmapAlpha).mirrored(false, true);
 
 		// 将黑色像素转换为透明

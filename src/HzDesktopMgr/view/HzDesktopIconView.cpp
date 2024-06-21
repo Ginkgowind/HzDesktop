@@ -28,7 +28,6 @@ HzDesktopIconView::HzDesktopIconView(QWidget* parent)
 	: QAbstractItemView(parent)
 	, HzDesktopPublic(new HzDesktopIconViewPrivate())
 	, m_ctrlDragSelectionFlag(QItemSelectionModel::NoUpdate)
-	, m_drag(nullptr)
 {
 	initParam();
 
@@ -129,9 +128,15 @@ void HzDesktopIconView::initSignalAndSlot()
 	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::refreshDesktop,
 		m_itemModel, &HzDesktopItemModel::refreshItems);
 
-	// TODO item一有变化时清理menu的排序状态
+	// item一有变化时清理menu的排序状态
 	connect(m_itemModel, &HzDesktopItemModel::itemChanged,
 		[this](QStandardItem* item) {m_desktopBlankMenu->hideSortStatus(); });
+
+	connect(this, &QAbstractItemView::clicked, [this](const QModelIndex& index) {
+		qDebug()
+			<< index.row()
+			<< m_itemModel->item(index.row())->data(FileLastModifiedRole).toDateTime();
+		});
 }
 
 void HzDesktopIconView::initParam()
@@ -347,33 +352,17 @@ void HzDesktopIconView::startDrag(Qt::DropActions supportedActions)
 {
 	HZQ_D(HzDesktopIconView);
 
-	QRect testrect;
-	QModelIndexList testindexes = selectedIndexes();
-	QPixmap testpixmap = d->renderToPixmap(testindexes, &testrect);
-	HzDrag* drag = new HzDrag(this);
-	drag->setItemPaths(getSelectedPaths());
-	drag->setPixmap(testpixmap);
-	drag->exec(supportedActions);
-
-	return;
-
-	if (!m_drag) {
-		m_drag = new QDrag(this);
-		for (auto pair : d->m_dragCursorMap.toStdMap()) {
-			m_drag->setDragCursor(pair.second, pair.first);
-		}
-	}
-	
+	// 这里没有使用QDrag而是使用的自定义的HzDrag，是因为根据索引渲染出的pixmap在拖拽途中无法改变
+	// 但是在拖拽到任务栏上时，希望隐藏掉pixmap而显示系统的行为，使用QDrag不满足需求
 	QRect rect;
 	QModelIndexList indexes = selectedIndexes();
 	QPixmap pixmap = d->renderToPixmap(indexes, &rect);
-	rect.adjust(horizontalOffset(), verticalOffset(), 0, 0);
+	HzDrag* drag = new HzDrag(this);
+	drag->setItemPaths(getSelectedPaths());
+	drag->setPixmap(pixmap);
+	drag->setHotSpot(m_pressedPos - rect.topLeft());
+	Qt::DropAction dropAction = drag->exec(supportedActions);
 
-	m_drag->setPixmap(pixmap);
-	m_drag->setMimeData(model()->mimeData(indexes));
-	m_drag->setHotSpot(m_pressedPos - rect.topLeft());
-
-	Qt::DropAction dropAction = m_drag->exec(supportedActions);
 	if (dropAction == Qt::MoveAction) {
 
 	}
@@ -383,7 +372,9 @@ void HzDesktopIconView::dragEnterEvent(QDragEnterEvent* e)
 {
 	e->accept();
 
-	if (e->source() == this) {
+	//qDebug() << e->mimeData()->urls()[0];
+
+	if (HzDrag::source() == this) {
 
 	}
 	else {
@@ -397,23 +388,31 @@ void HzDesktopIconView::dragMoveEvent(QDragMoveEvent* e)
 	
 	e->accept();
 
-	m_hoverIndex = indexAt(e->pos());
+	const QPoint pos = e->pos();	// TODO 后续再统一处理offset
 
-	qDebug() << e->proposedAction() << e->pos() << m_hoverIndex.row();
-
-	const QPoint pos = e->pos() - QPoint(0, 0);
-	if (indexAt(pos).isValid()) {
+	m_hoverIndex = indexAt(pos);	
+	
+	if (m_hoverIndex.isValid()) {
+		m_insertRow = -1;
 		// TODO 非自动排序时要处理
 	}
 	else {
 		// 计算出当前鼠标所处的网格
 		m_insertRow = getInsertRow(pos);
 	}
+
+	//qDebug()
+	//	<< m_insertRow
+	//	<< e->proposedAction()
+	//	<< e->pos()
+	//	<< m_hoverIndex.row();
 }
 
 void HzDesktopIconView::dragLeaveEvent(QDragLeaveEvent* e)
 {
 	QAbstractItemView::dragLeaveEvent(e);
+
+	m_insertRow = -1;
 
 	e->accept();
 	//qDebug() << e->proposedAction() << e->pos() << m_hoverIndex.row();
@@ -421,7 +420,7 @@ void HzDesktopIconView::dragLeaveEvent(QDragLeaveEvent* e)
 
 void HzDesktopIconView::dropEvent(QDropEvent* e)
 {
-	if (e->source() == this) {
+	if (HzDrag::source() == this) {
 		handleInternalDrop(e);
 	}
 	else {
@@ -473,7 +472,6 @@ void HzDesktopIconView::paintEvent(QPaintEvent* e)
 	const QAbstractItemView::State viewState = this->state();
 	const bool enabled = (state & QStyle::State_Enabled) != 0;
 
-	//e->rect() TODO 利用这个rect来决定要绘制哪些modelindex 以此来优化性能
 	QModelIndexList::const_iterator end = toBeRendered.constEnd();
 	for (QModelIndexList::const_iterator it = toBeRendered.constBegin(); it != end; ++it) {
 		option.rect = visualRect(*it);

@@ -117,8 +117,6 @@ private:
 
 	HzDesktopParam m_param;
 
-	QDrag* m_drag;
-
 	int m_maxViewRow;
 	int m_maxViewColumn;
 

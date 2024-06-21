@@ -9,11 +9,11 @@ HzDesktopParam::HzDesktopParam()
 	, iconMargin(5, 5)
 	, itemSpaceSize(10, 20)
 	, bEnableDoubleClick(true)
-	, bAutoArrange(false)	
+	, bAutoArrange(false)
 	//, bAutoArrange(true)
 	, iconMode(MediumIcon)
 	, sortRole(FileNameRole)
-	, sortOrder(Qt::DescendingOrder)
+	, sortOrder(Qt::AscendingOrder)
 {
 	setIconSizeMode(iconMode);
 }
