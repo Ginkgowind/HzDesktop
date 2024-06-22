@@ -241,7 +241,7 @@ QRegion HzDesktopIconView::visualRegionForSelection(const QItemSelection& select
 
 bool HzDesktopIconView::isIndexHidden(const QModelIndex& index) const
 {
-	return !m_itemModel->itemFromIndex(index)->isEnabled();
+	return !index.isValid() || !m_itemModel->itemFromIndex(index)->isEnabled();
 }
 
 void HzDesktopIconView::resizeEvent(QResizeEvent* event)
@@ -390,22 +390,20 @@ void HzDesktopIconView::dragMoveEvent(QDragMoveEvent* e)
 
 	const QPoint pos = e->pos();	// TODO 后续再统一处理offset
 
-	m_hoverIndex = indexAt(pos);	
+	m_hoverIndex = indexAt(pos);
 	
-	if (m_hoverIndex.isValid()) {
+	if (!m_hoverIndex.isValid() || isIndexHidden(m_hoverIndex)) {
+		// 如果不在已显示的图标上，就根据鼠标位置计算出当前鼠标所处的网格
+		m_insertRow = getInsertRow(pos);
+	}
+	else {
 		m_insertRow = -1;
 		// TODO 非自动排序时要处理
 	}
-	else {
-		// 计算出当前鼠标所处的网格
-		m_insertRow = getInsertRow(pos);
-	}
 
-	//qDebug()
-	//	<< m_insertRow
-	//	<< e->proposedAction()
-	//	<< e->pos()
-	//	<< m_hoverIndex.row();
+	qDebug()
+		<< m_hoverIndex.row()
+		<< m_insertRow;
 }
 
 void HzDesktopIconView::dragLeaveEvent(QDragLeaveEvent* e)
@@ -500,7 +498,8 @@ void HzDesktopIconView::paintEvent(QPaintEvent* e)
 		itemDelegate()->paint(&painter, option, *it);
 	}
 
-	if (m_insertRow >= 0) {
+	// 仅在当前插入位置是有图标显示的网格时，才显示指示线
+	if (m_insertRow >= 0 && !isIndexHidden(m_itemModel->index(m_insertRow, 0))) {
 		painter.save();
 		// 计算出插入线的位置
 		QPoint TMP_DELTA(0, -5);
@@ -549,7 +548,7 @@ void HzDesktopIconView::handleInternalDrop(QDropEvent* e)
 {
 	QModelIndexList indexList = selectedIndexes();
 
-	if (m_insertRow < 0) {
+	if (m_insertRow < 0 || (indexList.count() == 1 && indexList[0].row() == m_insertRow)) {
 		return;
 	}
 
@@ -565,9 +564,19 @@ void HzDesktopIconView::handleInternalDrop(QDropEvent* e)
 		for (const QModelIndex& index : indexList) {
 			dropItems.push_back(m_itemModel->takeItem(index.row()));
 			m_itemModel->removeRow(index.row());
+
+			// 修正insertRow
+			if (index.row() <= m_insertRow) {
+				insertRow--;
+			}
 		}
 
-		// TODO 拖拽到自身下一格会有问题
+		//auto it = std::upper_bound(indexList.rbegin(), indexList.rend(), indexAt(m_pressedPos));
+		//int c = std::distance(indexList.rbegin(), it);
+		//insertRow -= std::distance(it, indexList.rend());
+
+		// TODO 拖拽到自身下一格会有问题，和拖到超出最大格，都会有问题
+		// 仿照下面的方式
 		for (auto it = dropItems.rbegin(); it < dropItems.rend(); it++) {
 			m_itemModel->insertRow(insertRow++, *it);
 		}
@@ -578,7 +587,6 @@ void HzDesktopIconView::handleInternalDrop(QDropEvent* e)
 			return index1.row() < index2.row(); });
 
 		QRect dragStartIndexRect = visualRect(indexAt(m_pressedPos));
-		//QMap<QPersistentModelIndex, QRect> indexRectMap;
 		QMap<QModelIndex, QRect> indexRectMap;
 		for (auto& index : indexList) {
 			indexRectMap[index] = visualRect(index);
@@ -614,6 +622,8 @@ void HzDesktopIconView::handleEnableAutoArrange()
 {
 	m_itemModel->removeAllDisableItem();
 
+	// TODO 显示排序菜单的标识
+	m_itemModel->setSortRole(m_param.sortRole);
 	m_itemModel->sort(0, m_param.sortOrder);
 }
 
@@ -641,7 +651,10 @@ int HzDesktopIconView::getInsertRow(const QPoint& pos)
 {
 	int row = pos.x() / m_param.gridSize.width() * m_maxViewRow
 		+ pos.y() / m_param.gridSize.height();
-	if (pos.y() % m_param.gridSize.height() > m_param.gridSize.height() / 2) {
+
+	// 在有图标显示的网格上时，才会按照如下计算偏移
+	if (!isIndexHidden(m_itemModel->index(row, 0))
+		&& pos.y() % m_param.gridSize.height() > m_param.gridSize.height() / 2) {
 		row += 1;
 	}
 
