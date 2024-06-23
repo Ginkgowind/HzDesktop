@@ -274,10 +274,10 @@ void HzDesktopIconView::mousePressEvent(QMouseEvent* e)
 	QAbstractItemView::mousePressEvent(e);
 
 	m_pressedPos = e->pos();
-	QPersistentModelIndex index = indexAt(m_pressedPos);
-	QItemSelectionModel::SelectionFlags command = selectionCommand(index, e);
 
+	QModelIndex index = indexAt(m_pressedPos);
 	if (index.isValid()) {
+		QItemSelectionModel::SelectionFlags command = selectionCommand(index, e);
 		if (command.testFlag(QItemSelectionModel::Toggle)) {
 			command &= ~QItemSelectionModel::Toggle;
 			m_ctrlDragSelectionFlag = selectionModel()->isSelected(index) ? QItemSelectionModel::Deselect : QItemSelectionModel::Select;
@@ -321,6 +321,12 @@ void HzDesktopIconView::mouseMoveEvent(QMouseEvent* e)
 
 void HzDesktopIconView::mouseReleaseEvent(QMouseEvent* e)
 {
+	// 这段逻辑要放在父类处理新的state之前
+	QModelIndex index = indexAt(m_pressedPos);
+	if (index.isValid() && isIndexHidden(index) && state() != DragSelectingState) {
+		clearSelection();
+	}
+
 	QAbstractItemView::mouseReleaseEvent(e);
 
 	if (state() != EditingState) {
@@ -351,6 +357,10 @@ void HzDesktopIconView::mouseDoubleClickEvent(QMouseEvent* event)
 void HzDesktopIconView::startDrag(Qt::DropActions supportedActions)
 {
 	HZQ_D(HzDesktopIconView);
+
+	if (isIndexHidden(indexAt(m_pressedPos))) {
+		return;
+	}
 
 	// 这里没有使用QDrag而是使用的自定义的HzDrag，是因为根据索引渲染出的pixmap在拖拽途中无法改变
 	// 但是在拖拽到任务栏上时，希望隐藏掉pixmap而显示系统的行为，使用QDrag不满足需求
@@ -392,13 +402,17 @@ void HzDesktopIconView::dragMoveEvent(QDragMoveEvent* e)
 
 	m_hoverIndex = indexAt(pos);
 	
-	if (!m_hoverIndex.isValid() || isIndexHidden(m_hoverIndex)) {
-		// 如果不在已显示的图标上，就根据鼠标位置计算出当前鼠标所处的网格
+	if (!m_hoverIndex.isValid() || isIndexHidden(m_hoverIndex) || selectedIndexes().contains(m_hoverIndex)) {
+		// 如果不在已显示的图标上、或显示了但同时也是拖拽图标的一员，就根据鼠标位置计算出当前鼠标所处的网格
 		m_insertRow = getInsertRow(pos);
+
+		// 如果是自动排序并且插入位置超出了最大row，就认为无效
+		if (m_param.bAutoArrange && m_insertRow >= m_itemModel->rowCount()) {
+			m_insertRow = -1;
+		}
 	}
 	else {
 		m_insertRow = -1;
-		// TODO 非自动排序时要处理
 	}
 
 	qDebug()
@@ -428,9 +442,17 @@ void HzDesktopIconView::dropEvent(QDropEvent* e)
 	}
 
 	m_insertRow = -1;
-	
 
 	setState(NoState);
+
+	// 删除末尾的占位格
+	for (int i = m_itemModel->rowCount() - 1; i >= 0; i--) {
+		if (!isIndexHidden(m_itemModel->index(i, 0))) {
+			break;
+		}
+
+		m_itemModel->removeRow(i);
+	}
 
 	// TODO 为什么下面的函数用内联会找不到定义，难道是因为两边都有inline？
 	// TODO 根据是否有变化来判断是否取消显示状态
@@ -547,8 +569,9 @@ void HzDesktopIconView::handleLayoutChanged()
 void HzDesktopIconView::handleInternalDrop(QDropEvent* e)
 {
 	QModelIndexList indexList = selectedIndexes();
+	QItemSelection selection;
 
-	if (m_insertRow < 0 || (indexList.count() == 1 && indexList[0].row() == m_insertRow)) {
+	if (m_insertRow < 0 || indexAt(m_pressedPos).row() == m_insertRow) {
 		return;
 	}
 
@@ -577,8 +600,9 @@ void HzDesktopIconView::handleInternalDrop(QDropEvent* e)
 
 		// TODO 拖拽到自身下一格会有问题，和拖到超出最大格，都会有问题
 		// 仿照下面的方式
-		for (auto it = dropItems.rbegin(); it < dropItems.rend(); it++) {
-			m_itemModel->insertRow(insertRow++, *it);
+		for (auto it = dropItems.rbegin(); it < dropItems.rend(); it++, insertRow++) {
+			m_itemModel->insertRow(insertRow, *it);
+			selection.append(QItemSelectionRange(m_itemModel->index(insertRow, 0)));
 		}
 	}
 	else {
@@ -599,10 +623,14 @@ void HzDesktopIconView::handleInternalDrop(QDropEvent* e)
 			m_itemModel->itemFromIndex(index)->setEnabled(false);
 
 			QPoint delta = rect.topLeft() - dragStartIndexRect.topLeft();
-			int nInsertRow = getInsertRow(e->pos() + delta);
-			m_itemModel->insertItems(nInsertRow, { item });
+			insertRow = getInsertRow(e->pos() + delta);
+			m_itemModel->insertItems(insertRow, { item });
+			selection.append(QItemSelectionRange(m_itemModel->index(insertRow, 0)));
 		}
 	}
+
+	// drop结束后重新将拖动的item设置为选中状态
+	selectionModel()->select(selection, QItemSelectionModel::Select);
 
 	viewport()->update(viewport()->rect());
 }

@@ -89,7 +89,6 @@ void HzDesktopItemModel::insertItems(int row, const QList<QStandardItem*>& items
 	for (int i = rowCount(); i < row; i++) {
 		QStandardItem* item = new QStandardItem();
 		item->setEnabled(false);
-		//item->setData(true, ItemIsPlaceholder);
 		appendRow(item);
 	}
 
