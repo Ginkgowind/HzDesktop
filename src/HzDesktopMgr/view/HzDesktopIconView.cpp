@@ -575,14 +575,13 @@ void HzDesktopIconView::handleInternalDrop(QDropEvent* e)
 		return;
 	}
 
-	int insertRow = m_insertRow;
-
 	// 自动排序时按照鼠标位置挨个插入进去，否则每一个都根据各自位置进行插入
 	if (m_param.bAutoArrange) {
 		// 按照row从大到小进行排序，从而先删除大的
 		qSort(indexList.begin(), indexList.end(), [](const QModelIndex& index1, const QModelIndex& index2) {
 			return index1.row() > index2.row(); });
 
+		int insertRow = m_insertRow;
 		QList<QStandardItem*> dropItems;
 		for (const QModelIndex& index : indexList) {
 			dropItems.push_back(m_itemModel->takeItem(index.row()));
@@ -610,23 +609,39 @@ void HzDesktopIconView::handleInternalDrop(QDropEvent* e)
 		qSort(indexList.begin(), indexList.end(), [](const QModelIndex& index1, const QModelIndex& index2) {
 			return index1.row() < index2.row(); });
 
+		// TODO 计算所有Item的插入位置，只将插入位置有效的保留下来，其余的从中剔除
 		QRect dragStartIndexRect = visualRect(indexAt(m_pressedPos));
-		QMap<QModelIndex, QRect> indexRectMap;
+		QMap<QModelIndex, int> insertRowMap;
 		for (auto& index : indexList) {
-			indexRectMap[index] = visualRect(index);
+			QPoint delta = visualRect(index).topLeft() - dragStartIndexRect.topLeft();
+			int insertRow = getInsertRow(e->pos() + delta);
+			if (insertRow >= 0) {
+				m_itemModel->itemFromIndex(index)->setEnabled(false);
+				insertRowMap[index] = insertRow;
+			}
 		}
 
 		// TODO 为什么QMap不支持如下迭代方式
-		for (auto& [index, rect] : indexRectMap.toStdMap()) {
+		for (auto& [index, insertRow] : insertRowMap.toStdMap()) {
 			QStandardItem* item = m_itemModel->takeItem(index.row());
-			// TODO 再细致了解itemFromIndex和item的区别，以及root和parent
-			m_itemModel->itemFromIndex(index)->setEnabled(false);
-
-			QPoint delta = rect.topLeft() - dragStartIndexRect.topLeft();
-			insertRow = getInsertRow(e->pos() + delta);
+			item->setEnabled(true);
+			//m_itemModel->itemFromIndex(index)->setEnabled(false);
 			m_itemModel->insertItems(insertRow, { item });
+			//m_itemModel->item(insertRow)->setEnabled(false);
 			selection.append(QItemSelectionRange(m_itemModel->index(insertRow, 0)));
 		}
+
+		//// TODO 为什么QMap不支持如下迭代方式
+		//for (auto& [index, rect] : indexRectMap.toStdMap()) {
+		//	QStandardItem* item = m_itemModel->takeItem(index.row());
+		//	// TODO 再细致了解itemFromIndex和item的区别，以及root和parent
+		//	m_itemModel->itemFromIndex(index)->setEnabled(false);
+
+		//	QPoint delta = rect.topLeft() - dragStartIndexRect.topLeft();
+		//	insertRow = getInsertRow(e->pos() + delta);
+		//	m_itemModel->insertItems(insertRow, { item });
+		//	selection.append(QItemSelectionRange(m_itemModel->index(insertRow, 0)));
+		//}
 	}
 
 	// drop结束后重新将拖动的item设置为选中状态
@@ -677,6 +692,12 @@ void HzDesktopIconView::handleSetItemSortOrder(Qt::SortOrder order)
 
 int HzDesktopIconView::getInsertRow(const QPoint& pos)
 {
+	// TODO 限制在有效网格内？
+	if (!geometry().contains(pos, true)) {
+		// 代表插入位置无效
+		return -1;
+	}
+
 	int row = pos.x() / m_param.gridSize.width() * m_maxViewRow
 		+ pos.y() / m_param.gridSize.height();
 
