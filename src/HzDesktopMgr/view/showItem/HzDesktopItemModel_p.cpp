@@ -737,8 +737,13 @@ void HzDesktopItemModelPrivate::handleFileRenamed(
 
 	for (int i = 0; i < q->rowCount(); i++) {
 		if (q->filePath(q->index(i, 0)) == oldPath) {
+			SHFILEINFOW shFileInfo = { 0 };
+			SHGetFileInfoW(newPath.toStdWString().c_str(), 0, &shFileInfo, sizeof(SHFILEINFO),
+				SHGFI_DISPLAYNAME | SHGFI_USEFILEATTRIBUTES);
+
+			QString displayName = QFileInfo(QString::fromStdWString(shFileInfo.szDisplayName)).fileName();
 			QStandardItem* item = q->itemFromIndex(q->index(i, 0));
-			item->setText(newFileName);
+			item->setText(displayName);
 			item->setData(newPath, CustomRoles::FilePathRole);
 			break;
 		}

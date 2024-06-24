@@ -39,5 +39,7 @@ public:
 
 	void handleRename();
 
+	void handleSelectAll();
+
 	QMap<Qt::DropAction, QPixmap> m_dragCursorMap;
 };

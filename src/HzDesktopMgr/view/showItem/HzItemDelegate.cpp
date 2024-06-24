@@ -3,6 +3,7 @@
 #include <QAbstractItemView>
 
 #include "HzItemDelegate.h"
+#include "HzItemTextEditor.h"
 #include "../HzDesktopIconView.h"
 #include "HzDesktopItemModel.h"
 #include "windows/UiOperation.h"
@@ -90,10 +91,10 @@ void HzItemDelegate::paint(
 	painter->restore();
 }
 
-//QWidget* HzItemDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const
-//{
-//	return nullptr;
-//}
+QWidget* HzItemDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const
+{
+	return new HzItemTextEditor(parent);
+}
 
 QStandardItem* HzItemDelegate::getItemFromOption(const QStyleOptionViewItem& option, const QModelIndex& index) const
 {

@@ -226,4 +226,28 @@ void HzDesktopIconViewPrivate::handleDelete()
 
 void HzDesktopIconViewPrivate::handleRename()
 {
+	HZQ_Q(HzDesktopIconView);
+
+	QModelIndexList indexes = q->selectedIndexes();
+	if (indexes.empty()) {
+		return;
+	}
+
+	q->edit(indexes[0]);
+}
+
+void HzDesktopIconViewPrivate::handleSelectAll()
+{
+	HZQ_Q(HzDesktopIconView);
+
+	QItemSelection selection;
+	for (int i = 0; i < q->model()->rowCount(); i++) {
+		const QModelIndex& index = q->model()->index(i, 0);
+		if (q->isIndexHidden(index)) {
+			continue;
+		}
+		selection.append(QItemSelectionRange(index));
+	}
+
+	q->selectionModel()->select(selection, QItemSelectionModel::Select);
 }

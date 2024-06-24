@@ -135,6 +135,13 @@ void HzDesktopBlankMenu::showMenu()
 		commandInfo.lpDirectory = StrDupA(QDir::toNativeSeparators(m_param->dirPath).toStdString().c_str());
 		commandInfo.nShow = SW_SHOWNORMAL;
 		m_contextMenu->InvokeCommand(&commandInfo);
+
+		char szCommandString[MAX_PATH];
+		if (SUCCEEDED(m_contextMenu->GetCommandString(cmd - MIN_SHELL_MENU_ID, GCS_VERBA, NULL, szCommandString, sizeof(szCommandString))))
+		{
+			qDebug() << szCommandString;
+		}
+
 	}
 	else {
 		handleCustomMenuItem(cmd);

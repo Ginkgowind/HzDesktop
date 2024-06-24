@@ -84,8 +84,8 @@ void HzDesktopIconView::initSignalAndSlot()
 		d, &HzDesktopIconViewPrivate::handlePaste);
 
 	// 全选， 默认为Ctrl + A
-	/*QShortcut* pSelectAllShorcut = new QShortcut(QKeySequence(QKeySequence::SelectAll),
-		this, SLOT(handleSelectAll()), nullptr, Qt::WidgetWithChildrenShortcut);*/
+	connect(new QShortcut(QKeySequence::SelectAll, this), &QShortcut::activated,
+		d, &HzDesktopIconViewPrivate::handleSelectAll);
 
 	// 删除， 默认为Delete
 	connect(new QShortcut(QKeySequence::Delete, this), &QShortcut::activated,
@@ -609,39 +609,42 @@ void HzDesktopIconView::handleInternalDrop(QDropEvent* e)
 		qSort(indexList.begin(), indexList.end(), [](const QModelIndex& index1, const QModelIndex& index2) {
 			return index1.row() < index2.row(); });
 
-		// TODO 计算所有Item的插入位置，只将插入位置有效的保留下来，其余的从中剔除
+		// 计算所有Item的插入位置，只将插入位置有效的保留下来，其余的从中剔除
 		QRect dragStartIndexRect = visualRect(indexAt(m_pressedPos));
-		QMap<QModelIndex, int> insertRowMap;
+		QMap<QStandardItem*, int> insertInfoMap;
+		QList<QPersistentModelIndex> invalidDropIndexes;
+
+		// 先将拖拽的所有item disable，防止影响位置判定，后续会恢复
+		for (auto& index : indexList) {
+			m_itemModel->itemFromIndex(index)->setEnabled(false);
+		}
+
 		for (auto& index : indexList) {
 			QPoint delta = visualRect(index).topLeft() - dragStartIndexRect.topLeft();
 			int insertRow = getInsertRow(e->pos() + delta);
 			if (insertRow >= 0) {
+				QStandardItem* item = m_itemModel->takeItem(index.row());
+				item->setEnabled(true);
+				// take之后原先位置创建一个disabled的item
 				m_itemModel->itemFromIndex(index)->setEnabled(false);
-				insertRowMap[index] = insertRow;
+				insertInfoMap[item] = insertRow;
+			}
+			else {
+				m_itemModel->itemFromIndex(index)->setEnabled(true);
+				invalidDropIndexes.push_back(index);
 			}
 		}
 
 		// TODO 为什么QMap不支持如下迭代方式
-		for (auto& [index, insertRow] : insertRowMap.toStdMap()) {
-			QStandardItem* item = m_itemModel->takeItem(index.row());
-			item->setEnabled(true);
-			//m_itemModel->itemFromIndex(index)->setEnabled(false);
+		for (auto& [item, insertRow] : insertInfoMap.toStdMap()) {
 			m_itemModel->insertItems(insertRow, { item });
-			//m_itemModel->item(insertRow)->setEnabled(false);
 			selection.append(QItemSelectionRange(m_itemModel->index(insertRow, 0)));
 		}
 
-		//// TODO 为什么QMap不支持如下迭代方式
-		//for (auto& [index, rect] : indexRectMap.toStdMap()) {
-		//	QStandardItem* item = m_itemModel->takeItem(index.row());
-		//	// TODO 再细致了解itemFromIndex和item的区别，以及root和parent
-		//	m_itemModel->itemFromIndex(index)->setEnabled(false);
 
-		//	QPoint delta = rect.topLeft() - dragStartIndexRect.topLeft();
-		//	insertRow = getInsertRow(e->pos() + delta);
-		//	m_itemModel->insertItems(insertRow, { item });
-		//	selection.append(QItemSelectionRange(m_itemModel->index(insertRow, 0)));
-		//}
+		for (auto& index : invalidDropIndexes) {
+			selection.append(QItemSelectionRange(index));
+		}
 	}
 
 	// drop结束后重新将拖动的item设置为选中状态
