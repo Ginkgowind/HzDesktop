@@ -15,9 +15,6 @@
 #include "windows/WindowSubclassWrapper.h"
 #include "resource.h"
 
-static const int MIN_SHELL_MENU_ID = 1;
-static const int MAX_SHELL_MENU_ID = 1000;
-
 HzItemMenu::HzItemMenu(QWidget* parent)
 	: QMenu(parent)
 {
@@ -136,12 +133,11 @@ void HzDesktopBlankMenu::showMenu()
 		commandInfo.nShow = SW_SHOWNORMAL;
 		m_contextMenu->InvokeCommand(&commandInfo);
 
-		char szCommandString[MAX_PATH];
-		if (SUCCEEDED(m_contextMenu->GetCommandString(cmd - MIN_SHELL_MENU_ID, GCS_VERBA, NULL, szCommandString, sizeof(szCommandString))))
-		{
-			qDebug() << szCommandString;
+		// 是否选择了新建文件或文件夹
+		QVector<UINT> newFileCmds = d->getNewFileCmdsVec(menu.get());
+		if (newFileCmds.contains(cmd)) {
+			emit onNewFile();
 		}
-
 	}
 	else {
 		handleCustomMenuItem(cmd);

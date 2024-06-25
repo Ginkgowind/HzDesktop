@@ -10,6 +10,9 @@
 #include "common/QtpqReimp.h"
 #include "config/HzDesktopParam.h"
 
+#define MIN_SHELL_MENU_ID 1
+#define MAX_SHELL_MENU_ID 1000
+
 class HzDesktopBlankMenuPrivate;
 
 class HzItemMenu : public QMenu
@@ -81,6 +84,8 @@ signals:
 	void onSetItemSortOrder(Qt::SortOrder order);
 
 	void refreshDesktop();
+
+	void onNewFile();
 
 private:
 

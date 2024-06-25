@@ -6,6 +6,7 @@
 #include <QDesktopServices>
 #include <QUrl>
 #include <QDir>
+#include <QTimer>
 #include <windows.h>
 #include <shellapi.h>
 #include <shlwapi.h>
@@ -15,6 +16,7 @@
 #include "windows/tools.h"
 
 HzDesktopIconViewPrivate::HzDesktopIconViewPrivate()
+	: m_bNewFileByMenu(false)
 {
 	initDragCursors();
 }
@@ -250,4 +252,32 @@ void HzDesktopIconViewPrivate::handleSelectAll()
 	}
 
 	q->selectionModel()->select(selection, QItemSelectionModel::Select);
+}
+
+void HzDesktopIconViewPrivate::handleMenuNewFile()
+{
+	m_bNewFileByMenu = true;
+
+	// 设置有效期
+	QEventLoop loop;
+	QTimer::singleShot(100, &loop, [this]() {
+		m_bNewFileByMenu = false;
+	});
+	loop.exec();
+}
+
+void HzDesktopIconViewPrivate::handleFileCreated(const QModelIndex& index)
+{
+	HZQ_Q(HzDesktopIconView);
+
+	bool bNewFileByMenu = m_bNewFileByMenu;
+	// 文件创建时可能还未绘制处理，故此处延时执行
+	QEventLoop loop;
+	QTimer::singleShot(20, &loop, [=]() {
+		q->setCurrentIndex(index);
+		if (bNewFileByMenu) {
+			q->edit(index);
+		}
+	});
+	loop.exec();
 }

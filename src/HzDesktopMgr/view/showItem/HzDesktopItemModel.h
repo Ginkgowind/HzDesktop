@@ -28,8 +28,6 @@ public:
 	// 会自动消除占位符的插入函数
 	void insertItems(int row, const QList<QStandardItem*>& items);
 
-public:
-
 	QString name(const QModelIndex& index) const;
 	qint64 size(const QModelIndex& index) const;
 	QString type(const QModelIndex& index) const;
@@ -45,6 +43,9 @@ protected:
 		int row, int column, const QModelIndex& parent) override;
 	
 	Qt::DropActions supportedDropActions() const override;
+
+signals:
+	void onFileCreated(const QModelIndex& index);
 
 private:
 	HzDesktopParam* m_param;

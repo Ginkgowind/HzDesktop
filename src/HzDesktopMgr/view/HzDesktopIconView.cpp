@@ -137,6 +137,12 @@ void HzDesktopIconView::initSignalAndSlot()
 			<< index.row()
 			<< m_itemModel->item(index.row())->data(FileLastModifiedRole).toDateTime();
 		});
+
+	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::onNewFile,
+		d, &HzDesktopIconViewPrivate::handleMenuNewFile);
+
+	connect(m_itemModel, &HzDesktopItemModel::onFileCreated,
+		d, &HzDesktopIconViewPrivate::handleFileCreated);
 }
 
 void HzDesktopIconView::initParam()

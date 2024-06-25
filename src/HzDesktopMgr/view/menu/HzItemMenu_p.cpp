@@ -202,3 +202,59 @@ wil::unique_hmenu HzDesktopBlankMenuPrivate::buildSortMenu()
 
 	return wil::unique_hmenu(sortMenu);
 }
+
+QVector<UINT> HzDesktopBlankMenuPrivate::getNewFileCmdsVec(HMENU hMenu)
+{
+	HZQ_Q(HzDesktopBlankMenu);
+
+	QVector<UINT> cmds;
+
+	HMENU hNewSubMenu = NULL;
+
+	int itemCount = GetMenuItemCount(hMenu);
+	for (int i = 0; i < itemCount; ++i) {
+		MENUITEMINFO mii;
+		mii.cbSize = sizeof(MENUITEMINFO);
+		mii.fMask = MIIM_ID | MIIM_SUBMENU; // 设置需要获取的信息
+		mii.dwTypeData = NULL; // 不需要获取菜单项文本
+
+		if (!GetMenuItemInfoW(hMenu, i, TRUE, &mii) || mii.wID < MIN_SHELL_MENU_ID || MAX_SHELL_MENU_ID < mii.wID) {
+			continue;
+		}
+
+		CHAR szCommandString[MAX_PATH];
+		if (SUCCEEDED(q->m_contextMenu->GetCommandString(mii.wID - MIN_SHELL_MENU_ID, GCS_VERBA, NULL, szCommandString, sizeof(szCommandString)))) {
+			if (strcmp(szCommandString, "New") == 0) {
+				hNewSubMenu = mii.hSubMenu;
+			}
+		}
+	}
+
+	if (!hNewSubMenu) {
+		return cmds;
+	}
+
+	// 再遍历New子菜单
+	itemCount = GetMenuItemCount(hNewSubMenu);
+	for (int i = 0; i < itemCount; ++i) {
+		MENUITEMINFO mii;
+		mii.cbSize = sizeof(MENUITEMINFO);
+		mii.fMask = MIIM_ID; // 设置需要获取的信息
+		mii.dwTypeData = NULL; // 不需要获取菜单项文本
+
+		if (!GetMenuItemInfoW(hNewSubMenu, i, TRUE, &mii) || mii.wID < MIN_SHELL_MENU_ID || MAX_SHELL_MENU_ID < mii.wID) {
+			continue;
+		}
+
+		CHAR szCommandString[MAX_PATH];
+		if (SUCCEEDED(q->m_contextMenu->GetCommandString(mii.wID - MIN_SHELL_MENU_ID, GCS_VERBA, NULL, szCommandString, sizeof(szCommandString)))) {
+			if (strcmp(szCommandString, "NewLink") == 0) {
+				continue;
+			}
+		}
+
+		cmds.push_back(mii.wID);
+	}
+
+	return cmds;
+}

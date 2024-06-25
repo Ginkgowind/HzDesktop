@@ -46,4 +46,6 @@ private:
 	wil::unique_hmenu buildViewMenu();
 
 	wil::unique_hmenu buildSortMenu();
+
+	QVector<UINT> getNewFileCmdsVec(HMENU hMenu);
 };

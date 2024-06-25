@@ -41,5 +41,11 @@ public:
 
 	void handleSelectAll();
 
+	// TODO 目前测试是menu先触发，如果后续发现时序不一定时需要做修改
+	void handleMenuNewFile();
+	void handleFileCreated(const QModelIndex& index);
+
 	QMap<Qt::DropAction, QPixmap> m_dragCursorMap;
+
+	bool m_bNewFileByMenu;
 };
