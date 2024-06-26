@@ -223,9 +223,19 @@ QVector<UINT> HzDesktopBlankMenuPrivate::getNewFileCmdsVec(HMENU hMenu)
 		}
 
 		CHAR szCommandString[MAX_PATH];
-		if (SUCCEEDED(q->m_contextMenu->GetCommandString(mii.wID - MIN_SHELL_MENU_ID, GCS_VERBA, NULL, szCommandString, sizeof(szCommandString)))) {
+		HRESULT hr = q->m_contextMenu->GetCommandString(mii.wID - MIN_SHELL_MENU_ID, GCS_VERBA, NULL, szCommandString, sizeof(szCommandString));
+		if (SUCCEEDED(hr)) {
 			if (strcmp(szCommandString, "New") == 0) {
 				hNewSubMenu = mii.hSubMenu;
+				break;
+			}
+		}
+		else {
+			CHAR szVerb[MAX_PATH];
+			int nResult = GetMenuStringA(hMenu, mii.wID, szVerb, MAX_PATH, MF_BYCOMMAND);
+			if (nResult > 0 && strcmp(szVerb, "Ne&w") == 0) {
+				hNewSubMenu = mii.hSubMenu;
+				break;
 			}
 		}
 	}

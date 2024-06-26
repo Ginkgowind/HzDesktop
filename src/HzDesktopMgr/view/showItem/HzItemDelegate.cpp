@@ -193,8 +193,9 @@ QPixmap HzItemDelegate::paintIconText(
 	 //切换绘制目标
 	m_painter->begin(&retPixmap);
 
-
+	// 取可能的最大图标
 	QPixmap iconPixmap = item->icon().pixmap(MAX_ICON_SIZE, MAX_ICON_SIZE);
+	//QPixmap iconPixmap = HZ::getPixmapFromPath("C:\\Users\\Ginkgo\\Desktop\\QQ.lnk");
 	QPoint iconPos(param.iconMargin.width(), param.iconMargin.height());
 	if (iconPixmap.size().width() < param.iconSize.width() &&
 		iconPixmap.size().height() < param.iconSize.height()) {

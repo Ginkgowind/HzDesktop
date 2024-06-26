@@ -259,11 +259,9 @@ void HzDesktopIconViewPrivate::handleMenuNewFile()
 	m_bNewFileByMenu = true;
 
 	// 设置有效期
-	QEventLoop loop;
-	QTimer::singleShot(100, &loop, [this]() {
+	QTimer::singleShot(100, this, [this]() {
 		m_bNewFileByMenu = false;
 	});
-	loop.exec();
 }
 
 void HzDesktopIconViewPrivate::handleFileCreated(const QModelIndex& index)
@@ -272,12 +270,10 @@ void HzDesktopIconViewPrivate::handleFileCreated(const QModelIndex& index)
 
 	bool bNewFileByMenu = m_bNewFileByMenu;
 	// 文件创建时可能还未绘制处理，故此处延时执行
-	QEventLoop loop;
-	QTimer::singleShot(20, &loop, [=]() {
+	QTimer::singleShot(60, this, [=]() {
 		q->setCurrentIndex(index);
 		if (bNewFileByMenu) {
 			q->edit(index);
 		}
 	});
-	loop.exec();
 }

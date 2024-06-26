@@ -132,6 +132,18 @@ void HzDesktopIconView::initSignalAndSlot()
 	connect(m_itemModel, &HzDesktopItemModel::itemChanged,
 		[this](QStandardItem* item) {m_desktopBlankMenu->hideSortStatus(); });
 
+	connect(m_itemModel, &QAbstractItemModel::rowsInserted,
+		[this](const QModelIndex& parent, int first, int last) {
+			m_desktopBlankMenu->hideSortStatus();
+			viewport()->update();
+		});
+
+	connect(m_itemModel, &QAbstractItemModel::rowsRemoved,
+		[this](const QModelIndex& parent, int first, int last) {
+			m_desktopBlankMenu->hideSortStatus();
+			viewport()->update();
+		});
+
 	connect(this, &QAbstractItemView::clicked, [this](const QModelIndex& index) {
 		qDebug()
 			<< index.row()

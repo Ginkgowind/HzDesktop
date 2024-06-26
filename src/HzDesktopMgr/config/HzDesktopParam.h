@@ -5,6 +5,10 @@
 
 #define MAX_ICON_SIZE 256
 
+#define LARGE_ICON_SIZE		128
+#define MEDIUM_ICON_SIZE	100
+#define SMALL_ICON_SIZE		64
+
 enum WorkMode
 {
 	DesktopMode,

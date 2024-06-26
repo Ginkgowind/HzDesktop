@@ -3,9 +3,11 @@
 #include <objbase.h>
 #include <shlwapi.h>
 
+#include <QDebug>
 #include <QUrl>
 #include <QMimeData>
 #include <QSettings>
+#include <QFileIconProvider>
 #include <QtWinExtras/QtWin>
 
 #include "UiOperation.h"
@@ -146,64 +148,28 @@ namespace HZ
 		return result;
 	}
 
-	QMimeData* multiDrag(const QStringList& pathList)
-	{
-		if (pathList.empty()) return nullptr;
-		std::vector<ITEMIDLIST*> idvec;
-		std::vector<LPCITEMIDLIST> idChildvec;
-		QList<QUrl> urls;
-		IShellFolder* ifolder = nullptr;
-		for (QString path : pathList) {
-			urls.append(QUrl::fromLocalFile(path));
-			std::wstring windowsPath = path.toStdWString();
-			std::replace(windowsPath.begin(), windowsPath.end(), '/', '\\');
-			ITEMIDLIST* id = nullptr;
-			HRESULT res = SHParseDisplayName(windowsPath.c_str(), nullptr, &id, 0, nullptr);   //路径转PIDL
-			if (!SUCCEEDED(res) || !id) continue;
-			idvec.push_back(id);
-			idChildvec.push_back(nullptr);
-			res = SHBindToParent(id, IID_IShellFolder, (void**)&ifolder, &idChildvec.back());   //获取ishellfolder
-			if (!SUCCEEDED(res) || !idChildvec.back())
-				idChildvec.pop_back();
-			else if (path.compare(pathList.back()) != 0 && ifolder) {
-				ifolder->Release();
-				ifolder = nullptr;
-			}
-		}
-		FItemIdListVectorReleaser vecReleaser(idvec);
-		FComInterfaceReleaser ifolderReleaser(ifolder);
-		if (ifolder == nullptr || idChildvec.empty()) return nullptr;
-		
-		QMimeData* mimeData = new QMimeData;
-		mimeData->setUrls(urls);
-		mimeData->setData("application/x-qt-windows-mime;value=\"Shell IDList Array\"", 
-			ConvertToQByteArray(idChildvec));
-
-		return mimeData;
-	}
-
 	void correctPixmapIfIsInvalid(QIcon& icon)
 	{
-#define MAX_PIXMAP_SIZE (256)
-#define MIN_PIXMAP_COUNT (2)
-#define ICON_SIZE (90)
+#define POSSIBLE_INVALID_PIXMAP_SIZE	(256)
+#define MIN_PIXMAP_COUNT				(2)
 
-
-		QPixmap pixmap = icon.pixmap(ICON_SIZE);
-		QSize currentPixmapSize = pixmap.size();
-
-		if (currentPixmapSize.width() != MAX_PIXMAP_SIZE) {
+		const QList<QSize> avaliableSizeList = icon.availableSizes();
+		if (avaliableSizeList.back().width() < POSSIBLE_INVALID_PIXMAP_SIZE) {
 			// 当前图片大小不是256的，不需要进行检测
 			return;
 		}
 
-		const QList<QSize>& avaliableSizeList = icon.availableSizes();
 		int avaliableSizeCount = avaliableSizeList.size();
 
 		if (avaliableSizeCount < MIN_PIXMAP_COUNT) {
 			// 可用大小小于2，非正常图标，直接使用原始大小
 			return;
 		}
+
+		// Qt bug 下面函数在子线程可能卡死不返回，且导致主线程UI卡死
+		QPixmap pixmap = icon.pixmap(POSSIBLE_INVALID_PIXMAP_SIZE);
+
+		QSize currentPixmapSize = pixmap.size();
 
 		QSize secondBigPixmapSize = avaliableSizeList[avaliableSizeCount - MIN_PIXMAP_COUNT];
 		if (currentPixmapSize.width() <= secondBigPixmapSize.width()) {
@@ -314,5 +280,79 @@ namespace HZ
 	QIcon getIconFromGUID(const QString& guid)
 	{
 		return QIcon();
+	}
+
+	QIcon getIconFromPath(const QString& filePath, bool horizontally, bool vertically)
+	{
+		QIcon retIcon;
+
+		do
+		{
+			QString correctFilePath = filePath;
+			correctFilePath.replace('/', '\\');
+
+			IShellItemImageFactory* itemImageFactory;
+			HRESULT hRet = SHCreateItemFromParsingName(
+				correctFilePath.toStdWString().c_str(), NULL, IID_PPV_ARGS(&itemImageFactory));
+			if (FAILED(hRet)) {
+				break;
+			}
+
+			SIZE s = { LARGE_ICON_SIZE , LARGE_ICON_SIZE };
+			HBITMAP hBitmap = NULL;
+			itemImageFactory->GetImage(s, SIIGBF_ICONONLY | SIIGBF_SCALEUP, &hBitmap);
+			itemImageFactory->Release();
+
+			// TODO 不转换为image时就不需要翻转了
+			//retIcon = QtWin::fromHBITMAP(hBitmap, QtWin::HBitmapNoAlpha);
+
+			QImage image = QtWin::imageFromHBITMAP(hBitmap, QtWin::HBitmapNoAlpha).mirrored(horizontally, vertically);
+
+			 //将黑色像素转换为透明
+			for (int y = 0; y < image.height(); ++y) {
+				for (int x = 0; x < image.width(); ++x) {
+					// 获取当前像素的颜色
+					QColor currentColor = image.pixelColor(x, y);
+					// 检查颜色是否为黑色
+					if (currentColor == Qt::black) {
+						// 将黑色像素设置为透明
+						image.setPixelColor(x, y, Qt::transparent);
+						//image.setPixelColor(x, y, Qt::white);
+					}
+				}
+			}
+
+			retIcon = QPixmap::fromImage(image);
+
+		} while (false);
+
+		if (retIcon.isNull()) {
+			retIcon = QFileIconProvider().icon(QFileInfo(filePath));
+		}
+
+		return retIcon;
+	}
+	QPixmap getPixmapFromPath(const QString& filePath, bool horizontally, bool vertically)
+	{
+		HBITMAP hBitmap = NULL;
+
+		do
+		{
+			QString correctFilePath = filePath;
+			correctFilePath.replace('/', '\\');
+
+			IShellItemImageFactory* itemImageFactory;
+			HRESULT hRet = SHCreateItemFromParsingName(
+				correctFilePath.toStdWString().c_str(), NULL, IID_PPV_ARGS(&itemImageFactory));
+			if (FAILED(hRet)) {
+				break;
+			}
+
+			SIZE s = { LARGE_ICON_SIZE , LARGE_ICON_SIZE };
+			itemImageFactory->GetImage(s, SIIGBF_ICONONLY | SIIGBF_SCALEUP, &hBitmap);
+			itemImageFactory->Release();
+		} while (false);
+
+		return QtWin::fromHBITMAP(hBitmap, QtWin::HBitmapNoAlpha);
 	}
 }

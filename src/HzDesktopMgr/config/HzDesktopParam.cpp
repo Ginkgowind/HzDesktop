@@ -23,14 +23,14 @@ void HzDesktopParam::setIconSizeMode(IconSizeMode mode)
 	switch (mode)
 	{
 	case SmallIcon:
-		iconSize = { 64, 64 };
+		iconSize = { SMALL_ICON_SIZE, SMALL_ICON_SIZE };
 		break;
 	case MediumIcon:
-		iconSize = { 90, 90 };
+		iconSize = { MEDIUM_ICON_SIZE, MEDIUM_ICON_SIZE };
 		break;
 	case LargeIcon:
 	default:
-		iconSize = { 108, 108 };
+		iconSize = { LARGE_ICON_SIZE, LARGE_ICON_SIZE };
 		break;
 	}
 

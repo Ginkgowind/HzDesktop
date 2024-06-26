@@ -85,9 +85,8 @@ bool DesktopSystemItemWatcher::initWatcher()
 QStandardItem* DesktopSystemItemWatcher::genQStandardItem(const QString& clsidPath)
 {
 	QStandardItem* newItem = new QStandardItem();
-	QIcon itemIcon = getSystemAppIcon(clsidPath);
+	QIcon itemIcon = HZ::getIconFromPath(clsidPath, false, true);
 	QString itemName = getSystemAppDisplayName(clsidPath);
-	//HZ::correctPixmapIfIsInvalid(itemIcon);
 	newItem->setIcon(itemIcon);
 	newItem->setText(itemName);
 	newItem->setData(clsidPath, CustomRoles::FilePathRole);
@@ -186,48 +185,6 @@ bool DesktopSystemItemWatcher::setSystemAppDisplayName(const QString& clsidPath,
 	return bRet;
 }
 
-QIcon DesktopSystemItemWatcher::getSystemAppIcon(const QString& clsidValue)
-{
-	QIcon retIcon;
-
-	do
-	{
-		IShellItemImageFactory* itemImageFactory;
-		HBITMAP bitmap;
-		SIZE s = { MAX_ICON_SIZE, MAX_ICON_SIZE };
-
-		HRESULT hRet = SHCreateItemFromParsingName(
-			clsidValue.toStdWString().c_str(), NULL, IID_PPV_ARGS(&itemImageFactory));
-		if (FAILED(hRet)) {
-			break;
-		}
-
-		itemImageFactory->GetImage(s, SIIGBF_ICONBACKGROUND, &bitmap);
-		itemImageFactory->Release();
-
-		QImage image = QtWin::imageFromHBITMAP(bitmap, QtWin::HBitmapAlpha).mirrored(false, true);
-
-		// 将黑色像素转换为透明
-		for (int y = 0; y < image.height(); ++y) {
-			for (int x = 0; x < image.width(); ++x) {
-				// 获取当前像素的颜色
-				QColor currentColor = image.pixelColor(x, y);
-				// 检查颜色是否为黑色
-				if (currentColor == Qt::white) {
-					// 将黑色像素设置为透明
-					image.setPixelColor(x, y, Qt::transparent);
-					//image.setPixelColor(x, y, Qt::white);
-				}
-			}
-		}
-
-		retIcon = QPixmap::fromImage(image);
-
-	} while (false);
-
-	return retIcon;
-}
-
 void DesktopSystemItemWatcher::run()
 {
 	if (!initWatcher()) {
@@ -308,8 +265,7 @@ void DesktopFileItemWatcher::run()
 	DWORD dwNotifyFilter =
 		FILE_NOTIFY_CHANGE_FILE_NAME |
 		FILE_NOTIFY_CHANGE_DIR_NAME |
-		FILE_NOTIFY_CHANGE_ATTRIBUTES |
-		FILE_NOTIFY_CHANGE_LAST_WRITE;
+		FILE_NOTIFY_CHANGE_ATTRIBUTES;
 
 	// 初始化，
 	// 现在有两个init，要整合一下
@@ -464,15 +420,16 @@ void DesktopFileItemWatcher::uninitWatcher()
 QStandardItem* DesktopFileItemWatcher::genQStandardItem(const QFileInfo& fileInfo)
 {
 	QStandardItem* newItem = new QStandardItem();
-	
+
 	SHFILEINFOW shFileInfo = { 0 };
 	SHGetFileInfoW(fileInfo.absoluteFilePath().toStdWString().c_str(), 0, &shFileInfo, sizeof(SHFILEINFO), 
 		SHGFI_ICON | SHGFI_LARGEICON | SHGFI_TYPENAME | SHGFI_DISPLAYNAME | SHGFI_USEFILEATTRIBUTES);
+	
 	QIcon itemIcon = getUltimateIcon(fileInfo);
+	//HZ::correctPixmapIfIsInvalid(itemIcon);
 
 	QString displayName = QFileInfo(QString::fromStdWString(shFileInfo.szDisplayName)).fileName();
 
-	HZ::correctPixmapIfIsInvalid(itemIcon);
 	newItem->setIcon(itemIcon);
 	newItem->setText(displayName);
 	newItem->setData(fileInfo.absoluteFilePath(), CustomRoles::FilePathRole);
@@ -529,13 +486,8 @@ QIcon getIconFromUrlFile(const QFileInfo& urlFileInfo) {
 			break;
 		}
 
-		//QString filePath = QUrl(QString::fromStdWString(path)).toLocalFile();
-		//HICON hIcon = (HICON)LoadImage(NULL, filePath.toStdWString().c_str(), IMAGE_ICON,
-		//	0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE);
-		//retIcon = QtWin::fromHICON(hIcon);
-
 		QString filePath = QUrl(QString::fromStdWString(path)).toLocalFile();
-		retIcon = QFileIconProvider().icon(QFileInfo(filePath));
+		retIcon = HZ::getIconFromPath(filePath);
 	} while (false);
 
 	return retIcon;
@@ -543,16 +495,14 @@ QIcon getIconFromUrlFile(const QFileInfo& urlFileInfo) {
 
 QIcon DesktopFileItemWatcher::getUltimateIcon(const QFileInfo& fileInfo)
 {
-	if (fileInfo.isShortcut()) {
-		QFileInfo targetFileInfo(fileInfo.symLinkTarget());
-		return QFileIconProvider().icon(targetFileInfo);
-	}
-	else if (fileInfo.suffix() == "url") {
+	//QFileInfo targetFileInfo(fileInfo.symLinkTarget());
+	//return QFileIconProvider().icon(targetFileInfo);
+
+	if (fileInfo.suffix() == "url") {
 		return getIconFromUrlFile(fileInfo);
 	}
 	else {
-		return QFileIconProvider().icon(fileInfo);
-		//return QFileIconProvider().icon(QFileInfo("shell:MyComputerFolder"));
+		return HZ::getIconFromPath(fileInfo.absoluteFilePath(), false, true);
 	}
 
 	return QIcon();
@@ -589,8 +539,10 @@ void DesktopFileItemWatcher::handleObserveResult(const QString& strWatchDirector
 		}
 		case FILE_ACTION_MODIFIED:
 		{
+			qDebug() << "zh thread send 1";
 			//LOG_DEBUG_W("FILE_ACTION_MODIFIED: %ws", strFileAbsPath.c_str());
 			QStandardItem* newItem = genQStandardItem(QFileInfo(strFileAbsPath));
+			qDebug() << "zh thread send 2";
 			emit onFileModified(strFileAbsPath, newItem);
 			break;
 		}
@@ -660,16 +612,16 @@ void HzDesktopItemModelPrivate::init()
 
 	// TODO 目前增添和删除，鼠标不移动到界面上就刷新不出来，看看为什么
 	connect(&m_fileItemWatcher, &DesktopFileItemWatcher::onFileCreated,
-		this, &HzDesktopItemModelPrivate::handleFileCreated);
+		this, &HzDesktopItemModelPrivate::handleFileCreated, Qt::BlockingQueuedConnection);
 
 	connect(&m_fileItemWatcher, &DesktopFileItemWatcher::onFileDeleted,
-		this, &HzDesktopItemModelPrivate::handleFileDeleted);
+		this, &HzDesktopItemModelPrivate::handleFileDeleted, Qt::BlockingQueuedConnection);
 
 	connect(&m_fileItemWatcher, &DesktopFileItemWatcher::onFileModified,
-		this, &HzDesktopItemModelPrivate::handleFileModified);
+		this, &HzDesktopItemModelPrivate::handleFileModified, Qt::BlockingQueuedConnection);
 
 	connect(&m_fileItemWatcher, &DesktopFileItemWatcher::onFileRenamed,
-		this, &HzDesktopItemModelPrivate::handleFileRenamed);
+		this, &HzDesktopItemModelPrivate::handleFileRenamed, Qt::BlockingQueuedConnection);
 
 	m_systemItemWatcher.init();
 	m_fileItemWatcher.init();
