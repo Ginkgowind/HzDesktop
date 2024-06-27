@@ -211,18 +211,22 @@ void HzDesktopIconViewPrivate::handleDelete()
 
 	// TODO 目前无法删除文件夹
 	for (const QModelIndex& index : indexList) {
-		FILEOP_FLAGS dwOpFlags = FOF_ALLOWUNDO | FOF_NO_UI;
+		FILEOP_FLAGS dwOpFlags = FOF_ALLOWUNDO;
 
-		SHFILEOPSTRUCTA fileOp = { 0 };
+		std::wstring filePath = q->m_itemModel->filePath(index).toStdWString();
+		std::replace(filePath.begin(), filePath.end(), L'/', L'\\');
+
+		SHFILEOPSTRUCT fileOp = { 0 };
 		fileOp.hwnd = NULL;
 		fileOp.wFunc = FO_DELETE; ///> 文件删除操作
-		fileOp.pFrom = StrDupA(q->m_itemModel->filePath(index).toStdString().c_str());
+		fileOp.pFrom = filePath.c_str();
 		fileOp.pTo = NULL;
 		fileOp.fFlags = dwOpFlags;
 		fileOp.hNameMappings = NULL;
-		fileOp.lpszProgressTitle = "hz delete file";
+		fileOp.lpszProgressTitle = L"hz delete file";
 
-		SHFileOperationA(&fileOp);
+		int ret = SHFileOperation(&fileOp);
+		int a = ret;
 	}
 }
 

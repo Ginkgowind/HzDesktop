@@ -100,7 +100,7 @@ private:
 
 	QStandardItem* genQStandardItem(const QFileInfo& fileInfo);
 
-	QIcon getUltimateIcon(const QFileInfo& fileInfo);
+	QIcon getUltimateIcon(const QString& filePath);
 
 	void handleObserveResult(
 		const QString& strWatchDirectory,

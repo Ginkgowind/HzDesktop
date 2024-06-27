@@ -2,6 +2,8 @@
 #include <shlobj.h>
 #include <objbase.h>
 #include <shlwapi.h>
+#include <commoncontrols.h>
+#include <wil/com.h>
 
 #include <QDebug>
 #include <QUrl>
@@ -148,51 +150,32 @@ namespace HZ
 		return result;
 	}
 
-	void correctPixmapIfIsInvalid(QIcon& icon)
+	bool isInvalidPixmap(const QPixmap& pixmap)
 	{
-#define POSSIBLE_INVALID_PIXMAP_SIZE	(256)
-#define MIN_PIXMAP_COUNT				(2)
+		bool bRet = false;
 
-		const QList<QSize> avaliableSizeList = icon.availableSizes();
-		if (avaliableSizeList.back().width() < POSSIBLE_INVALID_PIXMAP_SIZE) {
-			// 当前图片大小不是256的，不需要进行检测
-			return;
-		}
+		do
+		{
+			int a = pixmap.width();
+			if (pixmap.width() < MAX_ICON_SIZE) {
+				// 当前图片大小不是256的，不需要进行检测
+				break;
+			}
 
-		int avaliableSizeCount = avaliableSizeList.size();
+			// 获取当前图片裁剪第二大尺寸后的右下角区域图片
+			QPixmap tempPixmap = pixmap.copy(
+				SECOND_MAX_ICON_SIZE, SECOND_MAX_ICON_SIZE,
+				pixmap.width() - SECOND_MAX_ICON_SIZE,
+				pixmap.height() - SECOND_MAX_ICON_SIZE);
 
-		if (avaliableSizeCount < MIN_PIXMAP_COUNT) {
-			// 可用大小小于2，非正常图标，直接使用原始大小
-			return;
-		}
+			if (!tempPixmap.toImage().allGray()) {
+				break;
+			}
 
-		// Qt bug 下面函数在子线程可能卡死不返回，且导致主线程UI卡死
-		QPixmap pixmap = icon.pixmap(POSSIBLE_INVALID_PIXMAP_SIZE);
+			bRet = true;
+		} while (false);
 
-		QSize currentPixmapSize = pixmap.size();
-
-		QSize secondBigPixmapSize = avaliableSizeList[avaliableSizeCount - MIN_PIXMAP_COUNT];
-		if (currentPixmapSize.width() <= secondBigPixmapSize.width()) {
-			// 当前大小比第二大的图片还要小，说明包含了比256更大尺寸的图片，不是Qt合成的，不需要处理
-			return;
-		}
-
-		// 获取当前图片裁剪第二大尺寸后的右下角区域图片
-		QPixmap tempPixmap = pixmap.copy(
-			secondBigPixmapSize.width(), secondBigPixmapSize.height(),
-			currentPixmapSize.width() - secondBigPixmapSize.width(),
-			currentPixmapSize.height() - secondBigPixmapSize.width());
-
-		if (tempPixmap.toImage().allGray()) {
-			// 裁剪后的图片不包含有效像素，判定为无效图片，使用第二大尺寸的图片
-			icon = icon.pixmap(secondBigPixmapSize);
-		}
-
-		//return pixmap.scaled(
-		//	{ ICON_SIZE, ICON_SIZE },
-		//	Qt::KeepAspectRatio,
-		//	Qt::SmoothTransformation
-		//);;
+		return bRet;
 	}
 
 	QString getDirectString(const QString& resStr)
@@ -282,77 +265,120 @@ namespace HZ
 		return QIcon();
 	}
 
-	QIcon getIconFromPath(const QString& filePath, bool horizontally, bool vertically)
+	QPixmap getThumbnailFromPath(const QString& filePath)
 	{
-		QIcon retIcon;
+		QPixmap pixmap;
+		LPITEMIDLIST idl = nullptr;
 
 		do
 		{
 			QString correctFilePath = filePath;
+			//QString correctFilePath = "C:\\Users\\SXF-Admin\\Desktop";
 			correctFilePath.replace('/', '\\');
 
-			IShellItemImageFactory* itemImageFactory;
-			HRESULT hRet = SHCreateItemFromParsingName(
-				correctFilePath.toStdWString().c_str(), NULL, IID_PPV_ARGS(&itemImageFactory));
-			if (FAILED(hRet)) {
+			HRESULT hr = SHParseDisplayName(correctFilePath.toStdWString().c_str(), nullptr, &idl, 0, nullptr);
+			if (FAILED(hr)) {
 				break;
 			}
 
-			SIZE s = { LARGE_ICON_SIZE , LARGE_ICON_SIZE };
-			HBITMAP hBitmap = NULL;
-			itemImageFactory->GetImage(s, SIIGBF_ICONONLY | SIIGBF_SCALEUP, &hBitmap);
-			itemImageFactory->Release();
-
-			// TODO 不转换为image时就不需要翻转了
-			//retIcon = QtWin::fromHBITMAP(hBitmap, QtWin::HBitmapNoAlpha);
-
-			QImage image = QtWin::imageFromHBITMAP(hBitmap, QtWin::HBitmapNoAlpha).mirrored(horizontally, vertically);
-
-			 //将黑色像素转换为透明
-			for (int y = 0; y < image.height(); ++y) {
-				for (int x = 0; x < image.width(); ++x) {
-					// 获取当前像素的颜色
-					QColor currentColor = image.pixelColor(x, y);
-					// 检查颜色是否为黑色
-					if (currentColor == Qt::black) {
-						// 将黑色像素设置为透明
-						image.setPixelColor(x, y, Qt::transparent);
-						//image.setPixelColor(x, y, Qt::white);
-					}
-				}
+			wil::com_ptr<IShellFolder> pShellFolder;
+			// TODO 了解所有获取com接口的方式及其原理
+			hr = SHBindToParent(idl, IID_PPV_ARGS(&pShellFolder), nullptr);
+			if (FAILED(hr)) {
+				break;
 			}
 
-			retIcon = QPixmap::fromImage(image);
+			LPCITEMIDLIST pChildPIDL = ILFindLastID(idl);
 
+			wil::com_ptr<IExtractImage> pExtractImage;
+			hr = pShellFolder->GetUIObjectOf(nullptr, 1, const_cast<LPCITEMIDLIST*>(&pChildPIDL),
+				__uuidof(*pExtractImage), nullptr, IID_PPV_ARGS_Helper(&pExtractImage));
+			if (FAILED(hr)) {
+				break;
+			}
+
+			SIZE size = { MAX_ICON_SIZE, MAX_ICON_SIZE };
+			DWORD dwFlags = IEIFLAG_OFFLINE | IEIFLAG_QUALITY;
+
+			// As per the MSDN documentation, GetLocation must be called before Extract.
+			TCHAR szImage[MAX_PATH];
+			DWORD dwPriority;
+			hr = pExtractImage->GetLocation(szImage, MAX_PATH, &dwPriority, &size, 32, &dwFlags);
+			if (FAILED(hr) && hr != E_PENDING) {
+				break;
+			}
+
+			// TODO 看看有没有没释放的HBITMAP
+			wil::unique_hbitmap hThumbnailBitmap;
+			hr = pExtractImage->Extract(&hThumbnailBitmap);
+			if (FAILED(hr)) {
+				break;
+			}
+
+			// 直接用HBITMAP转QPixmap会有问题，故先转成HICON再转QPixmap
+			QPixmap tmpPixmap = QtWin::fromHBITMAP(hThumbnailBitmap.get(), QtWin::HBitmapAlpha);
+			HICON hIcon = QtWin::toHICON(tmpPixmap);
+			pixmap = QtWin::fromHICON(hIcon);
+			DestroyIcon(hIcon);
 		} while (false);
 
-		if (retIcon.isNull()) {
-			retIcon = QFileIconProvider().icon(QFileInfo(filePath));
+		if (idl) {
+			CoTaskMemFree(idl);
 		}
 
-		return retIcon;
+		return pixmap;
 	}
-	QPixmap getPixmapFromPath(const QString& filePath, bool horizontally, bool vertically)
-	{
-		HBITMAP hBitmap = NULL;
 
+	QPixmap getPixmapFromPath(const QString& filePath)
+	{
+		QPixmap pixmap;
+		LPITEMIDLIST idl;
 		do
 		{
 			QString correctFilePath = filePath;
 			correctFilePath.replace('/', '\\');
 
-			IShellItemImageFactory* itemImageFactory;
-			HRESULT hRet = SHCreateItemFromParsingName(
-				correctFilePath.toStdWString().c_str(), NULL, IID_PPV_ARGS(&itemImageFactory));
-			if (FAILED(hRet)) {
+			HRESULT hr = SHParseDisplayName(correctFilePath.toStdWString().c_str(), nullptr, &idl, 0, nullptr);
+			if (FAILED(hr)) {
 				break;
 			}
 
-			SIZE s = { LARGE_ICON_SIZE , LARGE_ICON_SIZE };
-			itemImageFactory->GetImage(s, SIIGBF_ICONONLY | SIIGBF_SCALEUP, &hBitmap);
-			itemImageFactory->Release();
+			SHFILEINFO sfi = { 0 };
+			// 获取文件的图标索引
+			DWORD_PTR dwResult = SHGetFileInfo((LPCWSTR)idl, 0, &sfi, sizeof(SHFILEINFO), SHGFI_SYSICONINDEX | SHGFI_PIDL);
+			if (dwResult == 0) {
+				break;
+			}
+
+			auto extractPixmapFunc = [&](int ilMode) {
+				// 获取系统图像列表的句柄
+				wil::com_ptr<IImageList> pImageList;
+				hr = SHGetImageList(ilMode, IID_PPV_ARGS(&pImageList));
+				if (FAILED(hr)) {
+					return;
+				}
+
+				HICON hIcon;
+				hr = pImageList->GetIcon(sfi.iIcon, ILD_TRANSPARENT, &hIcon);
+				if (FAILED(hr)) {
+					return;
+				}
+
+				pixmap = QtWin::fromHICON(hIcon);
+				DestroyIcon(hIcon);
+				// TODO 看看还有哪里没有destory
+				};
+
+			extractPixmapFunc(SHIL_LAST);
+			if (isInvalidPixmap(pixmap)) {
+				extractPixmapFunc(SHIL_EXTRALARGE);
+			}
 		} while (false);
 
-		return QtWin::fromHBITMAP(hBitmap, QtWin::HBitmapNoAlpha);
+		if (idl) {
+			CoTaskMemFree(idl);
+		}
+
+		return pixmap;
 	}
 }

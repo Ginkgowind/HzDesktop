@@ -85,7 +85,7 @@ bool DesktopSystemItemWatcher::initWatcher()
 QStandardItem* DesktopSystemItemWatcher::genQStandardItem(const QString& clsidPath)
 {
 	QStandardItem* newItem = new QStandardItem();
-	QIcon itemIcon = HZ::getIconFromPath(clsidPath, false, true);
+	QIcon itemIcon = HZ::getPixmapFromPath(clsidPath);
 	QString itemName = getSystemAppDisplayName(clsidPath);
 	newItem->setIcon(itemIcon);
 	newItem->setText(itemName);
@@ -425,9 +425,7 @@ QStandardItem* DesktopFileItemWatcher::genQStandardItem(const QFileInfo& fileInf
 	SHGetFileInfoW(fileInfo.absoluteFilePath().toStdWString().c_str(), 0, &shFileInfo, sizeof(SHFILEINFO), 
 		SHGFI_ICON | SHGFI_LARGEICON | SHGFI_TYPENAME | SHGFI_DISPLAYNAME | SHGFI_USEFILEATTRIBUTES);
 	
-	QIcon itemIcon = getUltimateIcon(fileInfo);
-	//HZ::correctPixmapIfIsInvalid(itemIcon);
-
+	QIcon itemIcon = getUltimateIcon(fileInfo.absoluteFilePath());
 	QString displayName = QFileInfo(QString::fromStdWString(shFileInfo.szDisplayName)).fileName();
 
 	newItem->setIcon(itemIcon);
@@ -452,60 +450,15 @@ QStandardItem* DesktopFileItemWatcher::genQStandardItem(const QFileInfo& fileInf
 	return newItem;
 }
 
-QIcon getIconFromUrlFile(const QFileInfo& urlFileInfo) {
-	QIcon retIcon;
-
-	do
-	{
-		// 获取 IShellLink 接口
-		IShellLink* psl;
-		HRESULT hRes = CoCreateInstance(CLSID_InternetShortcut, NULL, 
-			CLSCTX_INPROC_SERVER, IID_IShellLink, (LPVOID*)&psl);
-		if (FAILED(hRes)) {
-			break;
-		}
-
-		IPersistFile* ppf;
-		hRes = psl->QueryInterface(IID_IPersistFile, (void**)&ppf);
-		if (FAILED(hRes)) {
-			break;
-		}
-
-		// 加载 .url 文件
-		hRes = ppf->Load((LPCOLESTR)urlFileInfo.absoluteFilePath().utf16(), STGM_READ);
-		if (FAILED(hRes)) {
-			break;
-		}
-
-		// 获取图标位置
-		WIN32_FIND_DATA wfd;
-		TCHAR path[MAX_PATH];
-		int index = 0;
-		hRes = psl->GetIconLocation(path, MAX_PATH, &index);
-		if (FAILED(hRes)) {
-			break;
-		}
-
-		QString filePath = QUrl(QString::fromStdWString(path)).toLocalFile();
-		retIcon = HZ::getIconFromPath(filePath);
-	} while (false);
-
-	return retIcon;
-}
-
-QIcon DesktopFileItemWatcher::getUltimateIcon(const QFileInfo& fileInfo)
+QIcon DesktopFileItemWatcher::getUltimateIcon(const QString& filePath)
 {
-	//QFileInfo targetFileInfo(fileInfo.symLinkTarget());
-	//return QFileIconProvider().icon(targetFileInfo);
+	QPixmap pixmap = HZ::getThumbnailFromPath(filePath);
 
-	if (fileInfo.suffix() == "url") {
-		return getIconFromUrlFile(fileInfo);
-	}
-	else {
-		return HZ::getIconFromPath(fileInfo.absoluteFilePath(), false, true);
+	if (pixmap.isNull() || pixmap.toImage().allGray()) {
+		pixmap = HZ::getPixmapFromPath(filePath);
 	}
 
-	return QIcon();
+	return pixmap;
 }
 
 void DesktopFileItemWatcher::handleObserveResult(const QString& strWatchDirectory, const FILE_NOTIFY_INFORMATION* pNotification)

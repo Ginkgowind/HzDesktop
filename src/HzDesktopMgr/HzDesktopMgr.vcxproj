@@ -110,6 +110,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\include\common\ClipboardHelper.cpp" />
     <ClCompile Include="..\..\include\common\CommonTools.cpp" />
     <ClCompile Include="..\..\include\common\ResourceHelper.cpp" />
     <ClCompile Include="..\..\include\common\StringConv.cpp" />
@@ -133,6 +134,7 @@
     <ClCompile Include="view\showItem\HzFileItem.cpp" />
     <ClCompile Include="view\showItem\HzItemDelegate.cpp" />
     <ClCompile Include="view\showItem\HzItemTextEditor.cpp" />
+    <ClInclude Include="..\..\include\common\ClipboardHelper.h" />
     <ClInclude Include="..\..\include\common\CommonTools.h" />
     <ClInclude Include="..\..\include\common\QtpqReimp.h" />
     <ClInclude Include="..\..\include\common\ResourceHelper.h" />

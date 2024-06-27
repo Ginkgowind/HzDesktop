@@ -3,11 +3,13 @@
 #include <QSize>
 #include <QDateTime>
 
-#define MAX_ICON_SIZE 256
+// 这个值在win10上是48，在win11是60，故取最大
+#define SECOND_MAX_ICON_SIZE	64
+#define MAX_ICON_SIZE			256
 
-#define LARGE_ICON_SIZE		128
-#define MEDIUM_ICON_SIZE	100
-#define SMALL_ICON_SIZE		64
+#define LARGE_ICON_SIZE			128
+#define MEDIUM_ICON_SIZE		100
+#define SMALL_ICON_SIZE			64
 
 enum WorkMode
 {
