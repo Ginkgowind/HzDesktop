@@ -33,8 +33,6 @@ public:
 
 	void handleCut();
 
-	void handlePaste();
-
 	void handleDelete();
 
 	void handleRename();

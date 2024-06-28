@@ -162,47 +162,6 @@ void HzDesktopIconViewPrivate::handleCut()
 	QApplication::clipboard()->setMimeData(mimeData);
 }
 
-void HzDesktopIconViewPrivate::handlePaste()
-{
-	HZQ_Q(HzDesktopIconView);
-
-	QString desktopPath = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
-
-	const QMimeData* mimeData = QApplication::clipboard()->mimeData();
-	if (!mimeData->hasUrls() ||
-		!mimeData->hasFormat("Preferred DropEffect")) {
-		return;
-	}
-
-	int dropEffect = 0;
-	QByteArray data = mimeData->data("Preferred DropEffect");
-	QDataStream stream(&data, QIODevice::ReadOnly);
-	stream.setByteOrder(QDataStream::LittleEndian);
-	stream >> dropEffect;
-	QList<QUrl> urls = mimeData->urls();
-	if (dropEffect != 2 && dropEffect != 5) return;
-	QStringList srcs;
-	for (QUrl url : urls) {
-		if (!url.isLocalFile()) continue;
-		srcs << url.toLocalFile();
-	}
-	if (dropEffect == 2) QApplication::clipboard()->clear();
-
-	for (QString src : srcs) {
-		QFileInfo srcFileInfo(src);
-		QFileInfo dstFileInfo(QDir(desktopPath), srcFileInfo.fileName());
-		if (srcFileInfo.isFile()) {
-			// TODO 暂时先不处理这个，先处理拖拽的逻辑
-			// 考虑到格子的实现，这些可能要放到公用里
-			//CopySingleFile(src, dstFileInfo.absoluteFilePath(), move);
-		}
-		else {
-			//CopyDir(src, dstFileInfo.absoluteFilePath(), move);
-		}
-	}
-	//if (inNetwork()) onRefresh();    //由于性能的原因，网络文件的增删不会被Model感知，需要手动刷新
-}
-
 void HzDesktopIconViewPrivate::handleDelete()
 {
 	HZQ_Q(HzDesktopIconView);
@@ -226,7 +185,9 @@ void HzDesktopIconViewPrivate::handleDelete()
 		fileOp.lpszProgressTitle = L"hz delete file";
 
 		int ret = SHFileOperation(&fileOp);
-		int a = ret;
+		if (ret != 0) {
+			int a = 1;
+		}
 	}
 }
 

@@ -29,14 +29,6 @@ private:
 	ITEMIDLIST* m_idList;
 };
 
-class FComInterfaceReleaser {
-public:
-	explicit FComInterfaceReleaser(IUnknown* i) : m_ptr(i) {}
-	~FComInterfaceReleaser() { if (m_ptr) m_ptr->Release(); }
-private:
-	IUnknown* m_ptr;
-};
-
 class FItemIdListVectorReleaser {
 public:
 	explicit FItemIdListVectorReleaser(const std::vector<ITEMIDLIST*>& idArray) : m_array(idArray) {}
@@ -61,7 +53,6 @@ namespace HZ
 		HRESULT hRet = S_OK;
 
 		HWND hOwnerWnd = reinterpret_cast<HWND>(ownerWId);
-		IContextMenu* pContextMenu = nullptr;
 		HMENU hMenu = nullptr;
 
 		do
@@ -72,7 +63,7 @@ namespace HZ
 
 			std::vector<ITEMIDLIST*> idvec;
 			std::vector<LPCITEMIDLIST> idChildvec;
-			IShellFolder* ifolder = nullptr;
+			wil::com_ptr<IShellFolder> ifolder;
 			
 			for (QString path : pathList) {
 				std::wstring windowsPath = path.toStdWString();
@@ -93,20 +84,19 @@ namespace HZ
 				}
 			}
 			FItemIdListVectorReleaser vecReleaser(idvec);
-			FComInterfaceReleaser ifolderReleaser(ifolder);
 			if (ifolder == nullptr || idChildvec.empty()) {
 				break;
 			}
 
-			IContextMenu* pContextMenu = nullptr;
+			// TODO 这块有点问题，现在ifolder是属于谁的？而且也换个名字
+			wil::com_ptr<IContextMenu> pContextMenu;
 			HRESULT res = ifolder->GetUIObjectOf(hOwnerWnd, (UINT)idChildvec.size(),
-				(const ITEMIDLIST**)idChildvec.data(),     //获取右键UI按钮
-				IID_IContextMenu, nullptr, (void**)&pContextMenu);//放到pContextMenu中
+				(LPCITEMIDLIST*)idChildvec.data(),     //获取右键UI按钮
+				IID_IContextMenu, nullptr, (void**)&pContextMenu);
 			if (FAILED(res)) {
 				break;
 			}
 
-			FComInterfaceReleaser menuReleaser(pContextMenu);
 			hMenu = CreatePopupMenu();
 			if (!hMenu) {
 				break;
@@ -129,10 +119,6 @@ namespace HZ
 
 			bRet = true;
 		} while (false);
-
-		if (pContextMenu) {
-			pContextMenu->Release();
-		}
 
 		if (hMenu) {
 			DestroyMenu(hMenu);
@@ -273,7 +259,6 @@ namespace HZ
 		do
 		{
 			QString correctFilePath = filePath;
-			//QString correctFilePath = "C:\\Users\\SXF-Admin\\Desktop";
 			correctFilePath.replace('/', '\\');
 
 			HRESULT hr = SHParseDisplayName(correctFilePath.toStdWString().c_str(), nullptr, &idl, 0, nullptr);
@@ -283,6 +268,7 @@ namespace HZ
 
 			wil::com_ptr<IShellFolder> pShellFolder;
 			// TODO 了解所有获取com接口的方式及其原理
+			// TODO 了解SHBindToParent和IShellFolder::BindToObject的区别
 			hr = SHBindToParent(idl, IID_PPV_ARGS(&pShellFolder), nullptr);
 			if (FAILED(hr)) {
 				break;

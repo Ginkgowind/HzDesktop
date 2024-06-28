@@ -12,6 +12,7 @@
 #include "windows/UiOperation.h"
 #include "windows/tools.h"
 #include "common/ResourceHelper.h"
+//#include "common/ClipboardHelper.h"
 
 static HMODULE s_resInstance = GetModuleHandle(nullptr);
 
@@ -267,4 +268,53 @@ QVector<UINT> HzDesktopBlankMenuPrivate::getNewFileCmdsVec(HMENU hMenu)
 	}
 
 	return cmds;
+}
+
+void HzDesktopBlankMenuPrivate::executeActionFromContextMenu(const QString& path, const QString& action)
+{
+	LPITEMIDLIST idl = nullptr;
+
+	do
+	{
+		wil::com_ptr<IShellFolder> pDesktop;
+		HRESULT hr = SHGetDesktopFolder(&pDesktop);
+		if (FAILED(hr)) {
+			break;
+		}
+
+		hr = SHParseDisplayName(path.toStdWString().c_str(), nullptr, &idl, 0, nullptr);
+		if (FAILED(hr)) {
+			break;
+		}
+
+		wil::com_ptr<IShellFolder> pShellFolder;
+		hr = pDesktop->BindToObject(idl, nullptr, IID_PPV_ARGS(&pShellFolder));
+		if (FAILED(hr)) {
+			break;
+		}
+
+		wil::com_ptr<IContextMenu> pContextMenu;
+		hr = pShellFolder->CreateViewObject(nullptr, IID_PPV_ARGS(&pContextMenu));
+		if (FAILED(hr)) {
+			break;
+		}
+
+		CMINVOKECOMMANDINFO commandInfo;
+		commandInfo.cbSize = sizeof(CMINVOKECOMMANDINFO);
+		commandInfo.fMask = 0;
+		commandInfo.hwnd = NULL;
+		// TODO这里应该是要资源释放的，注意别的地方都是
+		commandInfo.lpVerb = StrDupA(action.toStdString().c_str());
+		commandInfo.lpParameters = nullptr;
+		commandInfo.lpDirectory = nullptr;
+		commandInfo.nShow = SW_SHOWNORMAL;
+		hr = pContextMenu->InvokeCommand(&commandInfo);
+		if (FAILED(hr)) {
+			break;
+		}
+	} while (false);
+
+	if (idl) {
+		CoTaskMemFree(idl);
+	}
 }

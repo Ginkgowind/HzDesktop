@@ -40,7 +40,7 @@ public:
 
 	void updateMenu(HMENU menu);
 
-private:
+
 	LRESULT ParentWindowSubclass(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	wil::unique_hmenu buildViewMenu();
@@ -48,4 +48,6 @@ private:
 	wil::unique_hmenu buildSortMenu();
 
 	QVector<UINT> getNewFileCmdsVec(HMENU hMenu);
+
+	void executeActionFromContextMenu(const QString& path, const QString& action);
 };

@@ -63,6 +63,10 @@ public:
 
 	void hideSortStatus();
 
+	inline void handlePaste();
+
+	inline void handlePasteShortcut();
+
 private:
 	void initViewSubMenu();
 

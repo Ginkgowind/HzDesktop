@@ -81,7 +81,7 @@ void HzDesktopIconView::initSignalAndSlot()
 
 	// 粘贴， 默认为Ctrl + V
 	connect(new QShortcut(QKeySequence::Paste, this), &QShortcut::activated,
-		d, &HzDesktopIconViewPrivate::handlePaste);
+		m_desktopBlankMenu, &HzDesktopBlankMenu::handlePaste);
 
 	// 全选， 默认为Ctrl + A
 	connect(new QShortcut(QKeySequence::SelectAll, this), &QShortcut::activated,
@@ -160,6 +160,7 @@ void HzDesktopIconView::initSignalAndSlot()
 void HzDesktopIconView::initParam()
 {
 	m_param.dirPath = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
+	m_param.dirPath.replace('/', '\\');
 }
 
 QRect HzDesktopIconView::visualRect(const QModelIndex& index) const

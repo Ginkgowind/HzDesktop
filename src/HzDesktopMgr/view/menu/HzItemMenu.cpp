@@ -146,6 +146,8 @@ void HzDesktopBlankMenu::showMenu()
 
 void HzDesktopBlankMenu::handleCustomMenuItem(UINT cmd)
 {
+	HZQ_D(HzDesktopBlankMenu);
+
 	switch (cmd)
 	{
 	case IDM_VIEW_LARGE_ICON:
@@ -197,10 +199,11 @@ void HzDesktopBlankMenu::handleCustomMenuItem(UINT cmd)
 		emit refreshDesktop();
 		break;
 	case IDM_PASTE:
-
+		// TODO 根据是否有合法复制内容处理下面这两个菜单项的是否启用
+		handlePaste();
 		break;
 	case IDM_PASTE_SHORTCUT:
-
+		handlePasteShortcut();
 		break;
 
 	default:
@@ -211,6 +214,20 @@ void HzDesktopBlankMenu::handleCustomMenuItem(UINT cmd)
 void HzDesktopBlankMenu::hideSortStatus()
 {
 	m_showSortStatus = false;
+}
+
+inline void HzDesktopBlankMenu::handlePaste()
+{
+	HZQ_D(HzDesktopBlankMenu);
+
+	d->executeActionFromContextMenu(m_param->dirPath, "paste");
+}
+
+inline void HzDesktopBlankMenu::handlePasteShortcut()
+{
+	HZQ_D(HzDesktopBlankMenu);
+
+	d->executeActionFromContextMenu(m_param->dirPath, "pastelink");
 }
 
 void HzDesktopBlankMenu::initViewSubMenu()
