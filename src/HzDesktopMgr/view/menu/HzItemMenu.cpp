@@ -21,10 +21,10 @@ HzItemMenu::HzItemMenu(QWidget* parent)
 {
 	addAction(tr("Open"), this, [this]() {emit onOpen(); });
 	addSeparator();
-	m_copyAct = addAction(tr("Copy"), this, [this]() {emit onCopy(); });
-	m_cutAct = addAction(tr("Cut"), this, [this]() {emit onCut(); });
+	m_copyAct = addAction(tr("Copy"), this, [this]() {handleCopy(m_selectedItemList); });
+	m_cutAct = addAction(tr("Cut"), this, [this]() {handleCut(m_selectedItemList); });
 	addSeparator();
-	m_deleteAct = addAction(tr("Delete"), this, [this]() {emit onDelete(); });
+	m_deleteAct = addAction(tr("Delete"), this, [this]() {handleDelete(m_selectedItemList); });
 	m_renameAct = addAction(tr("Rename"), this, [this]() {emit onRename(); }); 
 	addSeparator();
 	addAction(tr("Explorer menu"), this, &HzItemMenu::onExplorerMenu);
@@ -42,19 +42,41 @@ HzItemMenu& HzItemMenu::instance()
 void HzItemMenu::showMenu(const QStringList& itemList)
 {
 	if (itemList.empty()) {
+		return;
+	}
 
-	}
-	else if (parent()) {
-		// 部分数据存起来，因为打开文件管理器菜单时会用到
-		m_showPos = QCursor::pos();
-		m_selectedItemList = itemList;
-		exec(m_showPos);
-	}
+	// 部分数据存起来，因为打开文件管理器菜单时会用到
+	m_showPos = QCursor::pos();
+	m_selectedItemList = itemList;
+	exec(m_showPos);
+}
+
+void HzItemMenu::handleCopy(const QStringList& itemList)
+{
+	HZQ_D(HzItemMenu);
+
+	d->executeActionFromContextMenu(itemList, "copy");
+}
+
+void HzItemMenu::handleCut(const QStringList& itemList)
+{
+	HZQ_D(HzItemMenu);
+
+	d->executeActionFromContextMenu(itemList, "cut");
+}
+
+void HzItemMenu::handleDelete(const QStringList& itemList)
+{
+	HZQ_D(HzItemMenu);
+
+	d->executeActionFromContextMenu(itemList, "delete");
 }
 
 void HzItemMenu::onExplorerMenu()
 {
-	HZ::showContentMenuWin10(
+	HZQ_D(HzItemMenu);
+
+	d->showItemsMenuWin10(
 		qobject_cast<QWidget*>(parent())->winId(),
 		m_selectedItemList,
 		m_showPos.x(),
@@ -125,12 +147,13 @@ void HzDesktopBkgMenu::showMenu()
 	}
 	else if (cmd >= MIN_SHELL_MENU_ID && cmd <= MAX_SHELL_MENU_ID)
 	{
+		std::string workDir = QDir::toNativeSeparators(m_param->dirPath).toStdString();
 		CMINVOKECOMMANDINFO commandInfo = {};
 		commandInfo.cbSize = sizeof(commandInfo);
 		commandInfo.fMask = 0;
 		commandInfo.hwnd = hwnd;
 		commandInfo.lpVerb = reinterpret_cast<LPCSTR>(MAKEINTRESOURCE(cmd - MIN_SHELL_MENU_ID));
-		commandInfo.lpDirectory = StrDupA(QDir::toNativeSeparators(m_param->dirPath).toStdString().c_str());
+		commandInfo.lpDirectory = workDir.c_str();
 		commandInfo.nShow = SW_SHOWNORMAL;
 		m_contextMenu->InvokeCommand(&commandInfo);
 

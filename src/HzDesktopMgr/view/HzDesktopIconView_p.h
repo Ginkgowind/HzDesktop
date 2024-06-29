@@ -29,12 +29,6 @@ public:
 
 	void handleOpen();
 
-	void handleCopy();
-
-	void handleCut();
-
-	void handleDelete();
-
 	void handleRename();
 
 	void handleSelectAll();

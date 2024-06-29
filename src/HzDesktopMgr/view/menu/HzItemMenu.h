@@ -30,6 +30,13 @@ public:
 
 	void showMenu(const QStringList& itemList);
 
+	// TODO 这些函数为什么不能设置为内联被外部调用？
+	void handleCopy(const QStringList& itemList);
+
+	void handleCut(const QStringList& itemList);
+
+	void handleDelete(const QStringList& itemList);
+
 signals:
 	void onOpen();
 	void onCopy();

@@ -78,31 +78,133 @@ inline void MenuHelper::CheckItem(HMENU hMenu, UINT itemID, bool bCheck)
 	CheckMenuItem(hMenu, itemID, state);
 }
 
-void MenuHelper::executeActionFromContextMenu(const QString& path, const QStringList& childPaths, const QString& action)
+std::vector<PITEMID_CHILD> HzItemMenuPrivate::getPidcFromPaths(const QStringList paths)
 {
-	LPITEMIDLIST idl = nullptr;
+	std::vector<PITEMID_CHILD> pidlItems;
 
 	do
 	{
+		if (paths.empty()) {
+			break;
+		}
+
+		wil::com_ptr<IShellFolder> pShellFolder;
+		HRESULT hr = SHGetDesktopFolder(&pShellFolder);
+		if (FAILED(hr)) {
+			break;
+		}
+
+		wil::com_ptr<IEnumIDList> pEnumIDList;
+		hr = pShellFolder->EnumObjects(NULL, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS, &pEnumIDList);
+		if (FAILED(hr)) {
+			break;
+		}
+
+		ULONG uFetched = 1;
+		wil::unique_cotaskmem_ptr<ITEMID_CHILD> pidlItem;
+
+		while (pEnumIDList->Next(1, wil::out_param(pidlItem), &uFetched) == S_OK
+			&& (uFetched == 1))
+		{
+			STRRET str;
+			hr = pShellFolder->GetDisplayNameOf(pidlItem.get(), SHGDN_FORPARSING, &str);
+
+			TCHAR szFilePath[MAX_PATH];
+			StrRetToBufW(&str, pidlItem.get(), szFilePath, MAX_PATH);
+
+			if (paths.contains(QString::fromStdWString(szFilePath))) {
+				pidlItems.push_back(ILCloneChild(pidlItem.get()));
+			}
+		}
+	} while (false);
+
+	return pidlItems;
+}
+
+void HzItemMenuPrivate::showItemsMenuWin10(
+	WId ownerWId, 
+	const QStringList& pathList, 
+	int showX,
+	int showY
+) {
+	std::vector<LPITEMIDLIST> idChildvec;
+
+	do
+	{
+		if (pathList.empty()) {
+			break;
+		}
+
+		idChildvec = getPidcFromPaths(pathList);
+		if (idChildvec.empty()) {
+			break;
+		}
+
+		wil::com_ptr<IShellFolder> pShellFolder;
+		HRESULT hr = SHGetDesktopFolder(&pShellFolder);
+		if (FAILED(hr)) {
+			break;
+		}
+
+		HWND hOwnerWnd = reinterpret_cast<HWND>(ownerWId);
+		wil::com_ptr<IContextMenu> pContextMenu;
+		hr = pShellFolder->GetUIObjectOf(hOwnerWnd, (UINT)idChildvec.size(),
+			const_cast<LPCITEMIDLIST*>(idChildvec.data()),
+			IID_IContextMenu, nullptr, (void**)&pContextMenu);
+		if (FAILED(hr)) {
+			break;
+		}
+
+		wil::unique_hmenu hMenu(CreatePopupMenu());
+		hr = pContextMenu->QueryContextMenu(hMenu.get(), 0, 1, 0x7FFF, CMF_NORMAL);
+		if (FAILED(hr)) {
+			break;
+		}
+
+		int iCmd = TrackPopupMenuEx(hMenu.get(), TPM_RETURNCMD, showX,
+			showY, hOwnerWnd, nullptr);
+		if (iCmd > 0) {   //执行菜单命令
+			CMINVOKECOMMANDINFOEX info = { 0 };
+			info.cbSize = sizeof(info);
+			info.fMask = CMIC_MASK_UNICODE;
+			info.hwnd = hOwnerWnd;
+			info.lpVerb = MAKEINTRESOURCEA(iCmd - 1);
+			info.lpVerbW = MAKEINTRESOURCEW(iCmd - 1);
+			info.nShow = SW_SHOWNORMAL;
+			pContextMenu->InvokeCommand((LPCMINVOKECOMMANDINFO)&info);
+		}
+	} while (false);
+
+	for (auto& pidl : idChildvec) {
+		ILFree(pidl);
+	}
+}
+
+void HzItemMenuPrivate::executeActionFromContextMenu(const QStringList& pathList, const std::string& action)
+{
+	std::vector<LPITEMIDLIST> idChildvec;
+
+	do
+	{
+		if (pathList.empty()) {
+			break;
+		}
+
+		idChildvec = getPidcFromPaths(pathList);
+		if (idChildvec.empty()) {
+			break;
+		}
+
 		wil::com_ptr<IShellFolder> pDesktop;
 		HRESULT hr = SHGetDesktopFolder(&pDesktop);
 		if (FAILED(hr)) {
 			break;
 		}
 
-		hr = SHParseDisplayName(path.toStdWString().c_str(), nullptr, &idl, 0, nullptr);
-		if (FAILED(hr)) {
-			break;
-		}
-
-		wil::com_ptr<IShellFolder> pShellFolder;
-		hr = pDesktop->BindToObject(idl, nullptr, IID_PPV_ARGS(&pShellFolder));
-		if (FAILED(hr)) {
-			break;
-		}
-
 		wil::com_ptr<IContextMenu> pContextMenu;
-		hr = pShellFolder->CreateViewObject(nullptr, IID_PPV_ARGS(&pContextMenu));
+		hr = pDesktop->GetUIObjectOf(nullptr, (UINT)idChildvec.size(),
+			const_cast<LPCITEMIDLIST*>(idChildvec.data()),
+			IID_IContextMenu, nullptr, (void**)&pContextMenu);
 		if (FAILED(hr)) {
 			break;
 		}
@@ -112,7 +214,7 @@ void MenuHelper::executeActionFromContextMenu(const QString& path, const QString
 		commandInfo.fMask = 0;
 		commandInfo.hwnd = NULL;
 		// TODO这里应该是要资源释放的，注意别的地方都是
-		commandInfo.lpVerb = StrDupA(action.toStdString().c_str());
+		commandInfo.lpVerb = action.c_str();
 		commandInfo.lpParameters = nullptr;
 		commandInfo.lpDirectory = nullptr;
 		commandInfo.nShow = SW_SHOWNORMAL;
@@ -122,8 +224,8 @@ void MenuHelper::executeActionFromContextMenu(const QString& path, const QString
 		}
 	} while (false);
 
-	if (idl) {
-		CoTaskMemFree(idl);
+	for (auto& pidl : idChildvec) {
+		ILFree(pidl);
 	}
 }
 
@@ -222,7 +324,6 @@ wil::unique_hmenu HzDesktopBkgMenuPrivate::buildViewMenu()
 	MenuHelper::CheckItem(viewMenu, IDM_VIEW_SHOW_DESKTOP, true);
 	MenuHelper::CheckItem(viewMenu, IDM_VIEW_LNK_ARROW, q->m_param->bShowLnkArrow);
 
-
 	return wil::unique_hmenu(viewMenu);
 }
 
@@ -319,7 +420,7 @@ QVector<UINT> HzDesktopBkgMenuPrivate::getNewFileCmdsVec(HMENU hMenu)
 	return cmds;
 }
 
-void HzDesktopBkgMenuPrivate::executeActionFromContextMenu(const QString& path, const QString& action)
+void HzDesktopBkgMenuPrivate::executeActionFromContextMenu(const QString& path, const std::string& action)
 {
 	LPITEMIDLIST idl = nullptr;
 
@@ -353,7 +454,7 @@ void HzDesktopBkgMenuPrivate::executeActionFromContextMenu(const QString& path, 
 		commandInfo.fMask = 0;
 		commandInfo.hwnd = NULL;
 		// TODO这里应该是要资源释放的，注意别的地方都是
-		commandInfo.lpVerb = StrDupA(action.toStdString().c_str());
+		commandInfo.lpVerb = action.c_str();
 		commandInfo.lpParameters = nullptr;
 		commandInfo.lpDirectory = nullptr;
 		commandInfo.nShow = SW_SHOWNORMAL;

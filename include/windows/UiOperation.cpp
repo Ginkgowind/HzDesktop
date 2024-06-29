@@ -35,7 +35,7 @@ private:
 
 namespace HZ
 {
-	bool showContentMenuWin10(
+	bool showItemsMenuWin10(
 		WId ownerWId,
 		const QStringList& pathList,
 		int showX,

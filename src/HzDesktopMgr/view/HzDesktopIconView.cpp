@@ -72,12 +72,12 @@ void HzDesktopIconView::initSignalAndSlot()
 	HZQ_D(HzDesktopIconView);
 
 	// 复制，默认为Ctrl + C
-	connect(new QShortcut(QKeySequence::Copy, this), &QShortcut::activated, 
-		d, &HzDesktopIconViewPrivate::handleCopy);
+	connect(new QShortcut(QKeySequence::Copy, this), &QShortcut::activated,
+		[this]() {m_itemMenu->handleCopy(getSelectedPaths()); });
 
 	// 剪切， 默认为Ctrl + X
 	connect(new QShortcut(QKeySequence::Cut, this), &QShortcut::activated,
-		d, &HzDesktopIconViewPrivate::handleCut);
+		[this]() {m_itemMenu->handleCut(getSelectedPaths()); });
 
 	// 粘贴， 默认为Ctrl + V
 	connect(new QShortcut(QKeySequence::Paste, this), &QShortcut::activated,
@@ -89,9 +89,9 @@ void HzDesktopIconView::initSignalAndSlot()
 
 	// 删除， 默认为Delete
 	connect(new QShortcut(QKeySequence::Delete, this), &QShortcut::activated,
-		d, &HzDesktopIconViewPrivate::handleDelete);
+		[this]() {m_itemMenu->handleDelete(getSelectedPaths()); });
 	connect(new QShortcut(QKeySequence("Ctrl+D"), this), &QShortcut::activated,
-		d, &HzDesktopIconViewPrivate::handleDelete);
+		[this]() {m_itemMenu->handleDelete(getSelectedPaths()); });
 
 	// 刷新，默认为F5
 	//new QShortcut(QKeySequence(QKeySequence::Refresh),
@@ -109,9 +109,6 @@ void HzDesktopIconView::initSignalAndSlot()
 
 	// item右键菜单
 	connect(m_itemMenu, &HzItemMenu::onOpen, d, &HzDesktopIconViewPrivate::handleOpen);
-	connect(m_itemMenu, &HzItemMenu::onCopy, d, &HzDesktopIconViewPrivate::handleCopy);
-	connect(m_itemMenu, &HzItemMenu::onCut, d, &HzDesktopIconViewPrivate::handleCut);
-	connect(m_itemMenu, &HzItemMenu::onDelete, d, &HzDesktopIconViewPrivate::handleDelete);
 	connect(m_itemMenu, &HzItemMenu::onRename, d, &HzDesktopIconViewPrivate::handleRename);
 
 	// 空白处右键菜单
@@ -573,7 +570,7 @@ QStringList HzDesktopIconView::getSelectedPaths()
 	// TODO 了解此处直接调用函数与复制变量，有什么区别？
 	QModelIndexList indexList = selectedIndexes();
 	for (const QModelIndex& index : indexList) {
-		pathList.append(m_itemModel->filePath(index));
+		pathList.append(m_itemModel->filePath(index).replace('/', '\\'));
 	}
 		
 	return pathList;
