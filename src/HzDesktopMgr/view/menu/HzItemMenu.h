@@ -13,9 +13,12 @@
 #define MIN_SHELL_MENU_ID 1
 #define MAX_SHELL_MENU_ID 1000
 
-class HzDesktopBlankMenuPrivate;
+class HzItemMenuPrivate;
+class HzDesktopBkgMenuPrivate;
 
-class HzItemMenu : public QMenu
+class HzItemMenu
+	: public QMenu
+	, public HzDesktopPublic
 {
 	Q_OBJECT
 
@@ -45,17 +48,21 @@ private:
 
 	QStringList m_selectedItemList;
 	QPoint m_showPos;
+
+private:
+	HZQ_DECLARE_PRIVATE(HzItemMenu)
+	Q_DISABLE_COPY(HzItemMenu)
 };
 
-class HzDesktopBlankMenu 
+class HzDesktopBkgMenu 
 	: public QMenu
 	, public HzDesktopPublic
 {
 	Q_OBJECT
 
 public:
-	HzDesktopBlankMenu(QWidget* parent, HzDesktopParam* param);
-	~HzDesktopBlankMenu();
+	HzDesktopBkgMenu(QWidget* parent, HzDesktopParam* param);
+	~HzDesktopBkgMenu();
 
 	void showMenu();
 
@@ -100,6 +107,6 @@ private:
 	bool m_showSortStatus;
 
 private:
-	HZQ_DECLARE_PRIVATE(HzDesktopBlankMenu)
-	Q_DISABLE_COPY(HzDesktopBlankMenu)
+	HZQ_DECLARE_PRIVATE(HzDesktopBkgMenu)
+	Q_DISABLE_COPY(HzDesktopBkgMenu)
 };

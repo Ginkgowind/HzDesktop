@@ -113,7 +113,7 @@ private:
 	HzItemDelegate* m_itemDelegate;
 
 	HzItemMenu* m_itemMenu;
-	HzDesktopBlankMenu* m_desktopBlankMenu;
+	HzDesktopBkgMenu* m_desktopBlankMenu;
 
 	HzDesktopParam m_param;
 

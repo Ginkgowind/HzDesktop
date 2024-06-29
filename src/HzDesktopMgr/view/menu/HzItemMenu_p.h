@@ -26,17 +26,29 @@ public:
 	static inline void insertSubMenuItem(HMENU menu, UINT id, wil::unique_hmenu subMenu, UINT item);
 
 	static inline void CheckItem(HMENU hMenu, UINT itemID, bool bCheck);
+
+	void executeActionFromContextMenu(const QString& path, const QStringList& childPaths, const QString& action);
 };
 
-class HzDesktopBlankMenuPrivate : public HzDesktopPrivate
+class HzItemMenuPrivate : public HzDesktopPrivate
 {
 	Q_OBJECT
 
-	HZQ_DECLARE_PUBLIC(HzDesktopBlankMenu)
+		HZQ_DECLARE_PUBLIC(HzItemMenu)
 
 public:
-	HzDesktopBlankMenuPrivate();
-	~HzDesktopBlankMenuPrivate();
+
+};
+
+class HzDesktopBkgMenuPrivate : public HzDesktopPrivate
+{
+	Q_OBJECT
+
+	HZQ_DECLARE_PUBLIC(HzDesktopBkgMenu)
+
+public:
+	HzDesktopBkgMenuPrivate();
+	~HzDesktopBkgMenuPrivate();
 
 	void updateMenu(HMENU menu);
 

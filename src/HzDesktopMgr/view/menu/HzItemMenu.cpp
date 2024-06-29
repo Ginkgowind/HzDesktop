@@ -17,6 +17,7 @@
 
 HzItemMenu::HzItemMenu(QWidget* parent)
 	: QMenu(parent)
+	, HzDesktopPublic(new HzItemMenuPrivate())
 {
 	addAction(tr("Open"), this, [this]() {emit onOpen(); });
 	addSeparator();
@@ -80,21 +81,21 @@ void HzItemMenu::onExplorerMenu()
 //	break;
 //}
 
-HzDesktopBlankMenu::HzDesktopBlankMenu(QWidget* parent, HzDesktopParam* param)
+HzDesktopBkgMenu::HzDesktopBkgMenu(QWidget* parent, HzDesktopParam* param)
 	: QMenu(parent)
-	, HzDesktopPublic(new HzDesktopBlankMenuPrivate())
+	, HzDesktopPublic(new HzDesktopBkgMenuPrivate())
 	, m_param(param)
 	, m_showSortStatus(false)
 {
 }
 
-HzDesktopBlankMenu::~HzDesktopBlankMenu()
+HzDesktopBkgMenu::~HzDesktopBkgMenu()
 {
 }
 
-void HzDesktopBlankMenu::showMenu()
+void HzDesktopBkgMenu::showMenu()
 {
-	HZQ_D(HzDesktopBlankMenu);
+	HZQ_D(HzDesktopBkgMenu);
 
 	wil::unique_hmenu menu(CreatePopupMenu());
 	HWND hwnd = reinterpret_cast<HWND>(qobject_cast<QWidget*>(parent())->winId());
@@ -111,7 +112,7 @@ void HzDesktopBlankMenu::showMenu()
 	d->updateMenu(menu.get());
 
 	auto subclass = std::make_unique<WindowSubclassWrapper>(hwnd,
-		std::bind_front(&HzDesktopBlankMenuPrivate::ParentWindowSubclass, d));
+		std::bind_front(&HzDesktopBkgMenuPrivate::ParentWindowSubclass, d));
 
 	QPoint pos = QCursor::pos();
 	UINT cmd = TrackPopupMenu(menu.get(), TPM_LEFTALIGN | TPM_RETURNCMD,
@@ -144,9 +145,9 @@ void HzDesktopBlankMenu::showMenu()
 	}
 }
 
-void HzDesktopBlankMenu::handleCustomMenuItem(UINT cmd)
+void HzDesktopBkgMenu::handleCustomMenuItem(UINT cmd)
 {
-	HZQ_D(HzDesktopBlankMenu);
+	HZQ_D(HzDesktopBkgMenu);
 
 	switch (cmd)
 	{
@@ -211,43 +212,43 @@ void HzDesktopBlankMenu::handleCustomMenuItem(UINT cmd)
 	}
 }
 
-void HzDesktopBlankMenu::hideSortStatus()
+void HzDesktopBkgMenu::hideSortStatus()
 {
 	m_showSortStatus = false;
 }
 
-inline void HzDesktopBlankMenu::handlePaste()
+inline void HzDesktopBkgMenu::handlePaste()
 {
-	HZQ_D(HzDesktopBlankMenu);
+	HZQ_D(HzDesktopBkgMenu);
 
 	d->executeActionFromContextMenu(m_param->dirPath, "paste");
 }
 
-inline void HzDesktopBlankMenu::handlePasteShortcut()
+inline void HzDesktopBkgMenu::handlePasteShortcut()
 {
-	HZQ_D(HzDesktopBlankMenu);
+	HZQ_D(HzDesktopBkgMenu);
 
 	d->executeActionFromContextMenu(m_param->dirPath, "pastelink");
 }
 
-void HzDesktopBlankMenu::initViewSubMenu()
+void HzDesktopBkgMenu::initViewSubMenu()
 {
 	
 }
 
-void HzDesktopBlankMenu::initSortSubMenu()
+void HzDesktopBkgMenu::initSortSubMenu()
 {
 	
 }
 
-inline void HzDesktopBlankMenu::setItemSortRole(CustomRoles role)
+inline void HzDesktopBkgMenu::setItemSortRole(CustomRoles role)
 {
 	m_param->sortRole = role;
 	m_showSortStatus = true;
 	emit onSetItemSortRole(role);
 }
 
-inline void HzDesktopBlankMenu::setItemSortOrder(Qt::SortOrder order)
+inline void HzDesktopBkgMenu::setItemSortOrder(Qt::SortOrder order)
 {
 	m_param->sortOrder = order;
 	m_showSortStatus = true;

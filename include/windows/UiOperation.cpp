@@ -21,14 +21,6 @@
 
 //RAII机制
 
-class FItemIdListReleaser {
-public:
-	explicit FItemIdListReleaser(ITEMIDLIST* idList) : m_idList(idList) {}
-	~FItemIdListReleaser() { if (m_idList) CoTaskMemFree(m_idList); }
-private:
-	ITEMIDLIST* m_idList;
-};
-
 class FItemIdListVectorReleaser {
 public:
 	explicit FItemIdListVectorReleaser(const std::vector<ITEMIDLIST*>& idArray) : m_array(idArray) {}
@@ -54,6 +46,7 @@ namespace HZ
 
 		HWND hOwnerWnd = reinterpret_cast<HWND>(ownerWId);
 		HMENU hMenu = nullptr;
+		HRESULT hr = S_OK;
 
 		do
 		{
@@ -61,39 +54,50 @@ namespace HZ
 				break;
 			}
 
-			std::vector<ITEMIDLIST*> idvec;
 			std::vector<LPCITEMIDLIST> idChildvec;
-			wil::com_ptr<IShellFolder> ifolder;
+			wil::com_ptr<IShellFolder> pShellFolder;
+
+			hr = SHGetDesktopFolder(&pShellFolder);
 			
-			for (QString path : pathList) {
+			QStringList pathListCopy = {
+					"C:\\Users\\18138\\Desktop\\geek.exe",
+					"C:\\Users\\Public\\Desktop\\QQ.lnk"
+				};
+			for (QString path : pathListCopy) {
 				std::wstring windowsPath = path.toStdWString();
 				std::replace(windowsPath.begin(), windowsPath.end(), '/', '\\');
-				ITEMIDLIST* id = nullptr;
-				HRESULT res = SHParseDisplayName(windowsPath.c_str(), nullptr, &id, 0, nullptr);   //路径转PIDL
-				if (!SUCCEEDED(res) || !id) {
-					continue;
-				}
-				idvec.push_back(id);
-				idChildvec.push_back(nullptr);
-				res = SHBindToParent(id, IID_IShellFolder, (void**)&ifolder, &idChildvec.back());   //获取ishellfolder
-				if (!SUCCEEDED(res) || !idChildvec.back())
-					idChildvec.pop_back();
-				else if (path.compare(pathList.back()) != 0 && ifolder) {
-					ifolder->Release();
-					ifolder = nullptr;
-				}
+				//ITEMIDLIST* idl = nullptr;
+				//hr = SHParseDisplayName(windowsPath.c_str(), nullptr, &idl, 0, nullptr);   //路径转PIDL
+				//hr = pShellFolder->ParseDisplayName(hOwnerWnd, nullptr, (LPWSTR)windowsPath.c_str(),
+				//	nullptr, &idl, nullptr);
+				//if (!SUCCEEDED(hr) || !idl) {
+				//	continue;
+				//}
+				//idvec.push_back(idl);
+				
+				PIDLIST_ABSOLUTE idl = ILCreateFromPathW(windowsPath.c_str());
+				LPCITEMIDLIST pChildPIDL = ILFindLastID(idl);
+				idChildvec.push_back(pChildPIDL);
+				//idChildvec.push_back(idl);
+				//LPCITEMIDLIST test;
+				//hr = SHBindToParent(idl, IID_IShellFolder, (void**)&pShellFolder, &test);   //获取ishellfolder
+				//if (!SUCCEEDED(hr) || !idChildvec.back())
+				//	idChildvec.pop_back();
+				//else if (path.compare(pathList.back()) != 0 && pShellFolder) {
+				//	pShellFolder->Release();
+				//	pShellFolder = nullptr;
+				//}
 			}
-			FItemIdListVectorReleaser vecReleaser(idvec);
-			if (ifolder == nullptr || idChildvec.empty()) {
+
+			if (pShellFolder == nullptr || idChildvec.empty()) {
 				break;
 			}
 
-			// TODO 这块有点问题，现在ifolder是属于谁的？而且也换个名字
 			wil::com_ptr<IContextMenu> pContextMenu;
-			HRESULT res = ifolder->GetUIObjectOf(hOwnerWnd, (UINT)idChildvec.size(),
+			hr = pShellFolder->GetUIObjectOf(hOwnerWnd, (UINT)idChildvec.size(),
 				(LPCITEMIDLIST*)idChildvec.data(),     //获取右键UI按钮
 				IID_IContextMenu, nullptr, (void**)&pContextMenu);
-			if (FAILED(res)) {
+			if (FAILED(hr)) {
 				break;
 			}
 

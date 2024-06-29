@@ -31,7 +31,7 @@ HzDesktopIconView::HzDesktopIconView(QWidget* parent)
 {
 	initParam();
 
-	m_desktopBlankMenu = new HzDesktopBlankMenu(this, &m_param);
+	m_desktopBlankMenu = new HzDesktopBkgMenu(this, &m_param);
 
 	m_itemModel = new HzDesktopItemModel(this, &m_param);
 	setModel(m_itemModel);
@@ -81,7 +81,7 @@ void HzDesktopIconView::initSignalAndSlot()
 
 	// 粘贴， 默认为Ctrl + V
 	connect(new QShortcut(QKeySequence::Paste, this), &QShortcut::activated,
-		m_desktopBlankMenu, &HzDesktopBlankMenu::handlePaste);
+		m_desktopBlankMenu, &HzDesktopBkgMenu::handlePaste);
 
 	// 全选， 默认为Ctrl + A
 	connect(new QShortcut(QKeySequence::SelectAll, this), &QShortcut::activated,
@@ -115,17 +115,17 @@ void HzDesktopIconView::initSignalAndSlot()
 	connect(m_itemMenu, &HzItemMenu::onRename, d, &HzDesktopIconViewPrivate::handleRename);
 
 	// 空白处右键菜单
-	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::onSetIconSizeMode,
+	connect(m_desktopBlankMenu, &HzDesktopBkgMenu::onSetIconSizeMode,
 		this, &HzDesktopIconView::handleSetIconSizeMode);
-	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::onSetItemSortRole,
+	connect(m_desktopBlankMenu, &HzDesktopBkgMenu::onSetItemSortRole,
 		this, &HzDesktopIconView::handleSetItemSortRole);
-	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::onSetItemSortOrder,
+	connect(m_desktopBlankMenu, &HzDesktopBkgMenu::onSetItemSortOrder,
 		this, &HzDesktopIconView::handleSetItemSortOrder);
-	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::enableAutoArrange,
+	connect(m_desktopBlankMenu, &HzDesktopBkgMenu::enableAutoArrange,
 		this, &HzDesktopIconView::handleEnableAutoArrange);
-	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::onHide, [this]() {setVisible(false); });
+	connect(m_desktopBlankMenu, &HzDesktopBkgMenu::onHide, [this]() {setVisible(false); });
 
-	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::refreshDesktop,
+	connect(m_desktopBlankMenu, &HzDesktopBkgMenu::refreshDesktop,
 		m_itemModel, &HzDesktopItemModel::refreshItems);
 
 	// item一有变化时清理menu的排序状态
@@ -150,7 +150,7 @@ void HzDesktopIconView::initSignalAndSlot()
 			<< m_itemModel->item(index.row())->data(FileLastModifiedRole).toDateTime();
 		});
 
-	connect(m_desktopBlankMenu, &HzDesktopBlankMenu::onNewFile,
+	connect(m_desktopBlankMenu, &HzDesktopBkgMenu::onNewFile,
 		d, &HzDesktopIconViewPrivate::handleMenuNewFile);
 
 	connect(m_itemModel, &HzDesktopItemModel::onFileCreated,

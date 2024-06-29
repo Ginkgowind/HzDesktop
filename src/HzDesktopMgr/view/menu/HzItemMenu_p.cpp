@@ -78,16 +78,65 @@ inline void MenuHelper::CheckItem(HMENU hMenu, UINT itemID, bool bCheck)
 	CheckMenuItem(hMenu, itemID, state);
 }
 
+void MenuHelper::executeActionFromContextMenu(const QString& path, const QStringList& childPaths, const QString& action)
+{
+	LPITEMIDLIST idl = nullptr;
+
+	do
+	{
+		wil::com_ptr<IShellFolder> pDesktop;
+		HRESULT hr = SHGetDesktopFolder(&pDesktop);
+		if (FAILED(hr)) {
+			break;
+		}
+
+		hr = SHParseDisplayName(path.toStdWString().c_str(), nullptr, &idl, 0, nullptr);
+		if (FAILED(hr)) {
+			break;
+		}
+
+		wil::com_ptr<IShellFolder> pShellFolder;
+		hr = pDesktop->BindToObject(idl, nullptr, IID_PPV_ARGS(&pShellFolder));
+		if (FAILED(hr)) {
+			break;
+		}
+
+		wil::com_ptr<IContextMenu> pContextMenu;
+		hr = pShellFolder->CreateViewObject(nullptr, IID_PPV_ARGS(&pContextMenu));
+		if (FAILED(hr)) {
+			break;
+		}
+
+		CMINVOKECOMMANDINFO commandInfo;
+		commandInfo.cbSize = sizeof(CMINVOKECOMMANDINFO);
+		commandInfo.fMask = 0;
+		commandInfo.hwnd = NULL;
+		// TODO这里应该是要资源释放的，注意别的地方都是
+		commandInfo.lpVerb = StrDupA(action.toStdString().c_str());
+		commandInfo.lpParameters = nullptr;
+		commandInfo.lpDirectory = nullptr;
+		commandInfo.nShow = SW_SHOWNORMAL;
+		hr = pContextMenu->InvokeCommand(&commandInfo);
+		if (FAILED(hr)) {
+			break;
+		}
+	} while (false);
+
+	if (idl) {
+		CoTaskMemFree(idl);
+	}
+}
+
 // TODO 处理private部分的资源释放
-HzDesktopBlankMenuPrivate::HzDesktopBlankMenuPrivate()
+HzDesktopBkgMenuPrivate::HzDesktopBkgMenuPrivate()
 {
 
 }
 
-HzDesktopBlankMenuPrivate::~HzDesktopBlankMenuPrivate()
+HzDesktopBkgMenuPrivate::~HzDesktopBkgMenuPrivate()
 {}
 
-void HzDesktopBlankMenuPrivate::updateMenu(HMENU menu)
+void HzDesktopBkgMenuPrivate::updateMenu(HMENU menu)
 {
 	UINT position = 0;
 
@@ -106,9 +155,9 @@ void HzDesktopBlankMenuPrivate::updateMenu(HMENU menu)
 	MenuHelper::insertSeparator(menu, position++);
 }
 
-LRESULT HzDesktopBlankMenuPrivate::ParentWindowSubclass(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT HzDesktopBkgMenuPrivate::ParentWindowSubclass(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	HZQ_Q(HzDesktopBlankMenu);
+	HZQ_Q(HzDesktopBkgMenu);
 
 	switch (msg)
 	{
@@ -148,9 +197,9 @@ LRESULT HzDesktopBlankMenuPrivate::ParentWindowSubclass(HWND hwnd, UINT msg, WPA
 }
 
 
-wil::unique_hmenu HzDesktopBlankMenuPrivate::buildViewMenu()
+wil::unique_hmenu HzDesktopBkgMenuPrivate::buildViewMenu()
 {
-	HZQ_Q(HzDesktopBlankMenu);
+	HZQ_Q(HzDesktopBkgMenu);
 
 	HMENU viewMenu = CreatePopupMenu();
 
@@ -177,9 +226,9 @@ wil::unique_hmenu HzDesktopBlankMenuPrivate::buildViewMenu()
 	return wil::unique_hmenu(viewMenu);
 }
 
-wil::unique_hmenu HzDesktopBlankMenuPrivate::buildSortMenu()
+wil::unique_hmenu HzDesktopBkgMenuPrivate::buildSortMenu()
 {
-	HZQ_Q(HzDesktopBlankMenu);
+	HZQ_Q(HzDesktopBkgMenu);
 
 	HMENU sortMenu = CreatePopupMenu();
 
@@ -204,9 +253,9 @@ wil::unique_hmenu HzDesktopBlankMenuPrivate::buildSortMenu()
 	return wil::unique_hmenu(sortMenu);
 }
 
-QVector<UINT> HzDesktopBlankMenuPrivate::getNewFileCmdsVec(HMENU hMenu)
+QVector<UINT> HzDesktopBkgMenuPrivate::getNewFileCmdsVec(HMENU hMenu)
 {
-	HZQ_Q(HzDesktopBlankMenu);
+	HZQ_Q(HzDesktopBkgMenu);
 
 	QVector<UINT> cmds;
 
@@ -270,7 +319,7 @@ QVector<UINT> HzDesktopBlankMenuPrivate::getNewFileCmdsVec(HMENU hMenu)
 	return cmds;
 }
 
-void HzDesktopBlankMenuPrivate::executeActionFromContextMenu(const QString& path, const QString& action)
+void HzDesktopBkgMenuPrivate::executeActionFromContextMenu(const QString& path, const QString& action)
 {
 	LPITEMIDLIST idl = nullptr;
 
