@@ -40,14 +40,7 @@ public:
 	// 经测试只有通过顶层桌面接口枚举出来的id才有效，别的各种方法都会有奇奇怪怪的问题
 	// tips : 外部要处理返回值的资源释放
 	// TODO后续做格子的时候再优化代码结构，只有桌面的才枚举，别的不用这种方式
-	std::vector<PITEMID_CHILD> getPidcFromPaths(const QStringList paths);
-
-	void showItemsMenuWin10(
-		WId ownerWId,
-		const QStringList& pathList,
-		int showX,
-		int showY
-	);
+	std::vector<PITEMID_CHILD> getPidcFromPaths(const QStringList& paths);
 
 	void executeActionFromContextMenu(const QStringList& pathList, const std::string& action);
 };
@@ -63,9 +56,6 @@ public:
 	~HzDesktopBkgMenuPrivate();
 
 	void updateMenu(HMENU menu);
-
-
-	LRESULT ParentWindowSubclass(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	wil::unique_hmenu buildViewMenu();
 

@@ -16,7 +16,7 @@ DesktopViewMgr::DesktopViewMgr()
 	//m_desktopIconView->setFixedSize(availableRect.size());
 	m_desktopIconView->setFixedSize(1200, 800);
 
-	m_systemTray = new HzSystemTray(m_desktopIconView);
+	m_systemTray = new HzSystemTray(m_bkgView);
 
 	connect(m_bkgView, &DesktopBackgroundView::onShowDesktopView,
 		[this]() {m_desktopIconView->setVisible(true); });

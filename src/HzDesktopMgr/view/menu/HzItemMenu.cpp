@@ -15,8 +15,53 @@
 #include "windows/WindowSubclassWrapper.h"
 #include "resource.h"
 
-HzItemMenu::HzItemMenu(QWidget* parent)
+HzMenuBase::HzMenuBase(QWidget* parent)
 	: QMenu(parent)
+{
+}
+
+LRESULT HzMenuBase::ParentWindowSubclass(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	switch (msg)
+	{
+	case WM_MEASUREITEM:
+	case WM_DRAWITEM:
+	case WM_INITMENUPOPUP:
+	case WM_MENUCHAR:
+		// wParam is 0 if this item was sent by a menu.
+		if ((msg == WM_MEASUREITEM || msg == WM_DRAWITEM) && wParam != 0)
+		{
+			break;
+		}
+
+		if (!m_contextMenu)
+		{
+			break;
+		}
+
+		if (auto contextMenu3 = m_contextMenu.try_query<IContextMenu3>())
+		{
+			LRESULT result;
+			HRESULT hr = contextMenu3->HandleMenuMsg2(msg, wParam, lParam, &result);
+
+			if (SUCCEEDED(hr))
+			{
+				return result;
+			}
+		}
+		else if (auto contextMenu2 = m_contextMenu.try_query<IContextMenu2>())
+		{
+			contextMenu2->HandleMenuMsg(msg, wParam, lParam);
+		}
+		break;
+	}
+
+	return DefSubclassProc(hwnd, msg, wParam, lParam);
+}
+
+
+HzItemMenu::HzItemMenu(QWidget* parent)
+	: HzMenuBase(parent)
 	, HzDesktopPublic(new HzItemMenuPrivate())
 {
 	addAction(tr("Open"), this, [this]() {emit onOpen(); });
@@ -72,16 +117,67 @@ void HzItemMenu::handleDelete(const QStringList& itemList)
 	d->executeActionFromContextMenu(itemList, "delete");
 }
 
+// TODO 后续再考虑支持win11风格菜单
 void HzItemMenu::onExplorerMenu()
 {
 	HZQ_D(HzItemMenu);
 
-	d->showItemsMenuWin10(
-		qobject_cast<QWidget*>(parent())->winId(),
-		m_selectedItemList,
-		m_showPos.x(),
-		m_showPos.y()
-	);
+	std::vector<LPITEMIDLIST> idChildvec;
+
+	do
+	{
+		if (m_selectedItemList.empty()) {
+			break;
+		}
+
+		idChildvec = d->getPidcFromPaths(m_selectedItemList);
+		if (idChildvec.empty()) {
+			break;
+		}
+
+		wil::com_ptr<IShellFolder> pShellFolder;
+		HRESULT hr = SHGetDesktopFolder(&pShellFolder);
+		if (FAILED(hr)) {
+			break;
+		}
+
+		HWND hwnd = reinterpret_cast<HWND>(qobject_cast<QWidget*>(parent())->winId());
+		hr = pShellFolder->GetUIObjectOf(hwnd, (UINT)idChildvec.size(),
+			const_cast<LPCITEMIDLIST*>(idChildvec.data()),
+			IID_IContextMenu, nullptr, (void**)&m_contextMenu);
+		if (FAILED(hr)) {
+			break;
+		}
+
+		wil::unique_hmenu hMenu(CreatePopupMenu());
+		hr = m_contextMenu->QueryContextMenu(hMenu.get(), 0, 1, 0x7FFF, CMF_NORMAL);
+		if (FAILED(hr)) {
+			break;
+		}
+
+		auto subclass = std::make_unique<WindowSubclassWrapper>(hwnd,
+			std::bind_front(&HzMenuBase::ParentWindowSubclass, this));
+
+		int iCmd = TrackPopupMenuEx(hMenu.get(), TPM_RETURNCMD, 
+			m_showPos.x(), m_showPos.y(), hwnd, nullptr);
+
+		subclass.reset();
+
+		if (iCmd > 0) {   //执行菜单命令
+			CMINVOKECOMMANDINFOEX info = { 0 };
+			info.cbSize = sizeof(info);
+			info.fMask = CMIC_MASK_UNICODE;
+			info.hwnd = hwnd;
+			info.lpVerb = MAKEINTRESOURCEA(iCmd - 1);
+			info.lpVerbW = MAKEINTRESOURCEW(iCmd - 1);
+			info.nShow = SW_SHOWNORMAL;
+			m_contextMenu->InvokeCommand((LPCMINVOKECOMMANDINFO)&info);
+		}
+	} while (false);
+
+	for (auto& pidl : idChildvec) {
+		ILFree(pidl);
+	}
 }
 //
 //switch (m_menuShowStyle)
@@ -104,7 +200,7 @@ void HzItemMenu::onExplorerMenu()
 //}
 
 HzDesktopBkgMenu::HzDesktopBkgMenu(QWidget* parent, HzDesktopParam* param)
-	: QMenu(parent)
+	: HzMenuBase(parent)
 	, HzDesktopPublic(new HzDesktopBkgMenuPrivate())
 	, m_param(param)
 	, m_showSortStatus(false)
@@ -134,7 +230,7 @@ void HzDesktopBkgMenu::showMenu()
 	d->updateMenu(menu.get());
 
 	auto subclass = std::make_unique<WindowSubclassWrapper>(hwnd,
-		std::bind_front(&HzDesktopBkgMenuPrivate::ParentWindowSubclass, d));
+		std::bind_front(&HzMenuBase::ParentWindowSubclass, this));
 
 	QPoint pos = QCursor::pos();
 	UINT cmd = TrackPopupMenu(menu.get(), TPM_LEFTALIGN | TPM_RETURNCMD,

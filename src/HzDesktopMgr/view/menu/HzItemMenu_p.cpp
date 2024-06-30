@@ -78,7 +78,7 @@ inline void MenuHelper::CheckItem(HMENU hMenu, UINT itemID, bool bCheck)
 	CheckMenuItem(hMenu, itemID, state);
 }
 
-std::vector<PITEMID_CHILD> HzItemMenuPrivate::getPidcFromPaths(const QStringList paths)
+std::vector<PITEMID_CHILD> HzItemMenuPrivate::getPidcFromPaths(const QStringList& paths)
 {
 	std::vector<PITEMID_CHILD> pidlItems;
 
@@ -103,6 +103,7 @@ std::vector<PITEMID_CHILD> HzItemMenuPrivate::getPidcFromPaths(const QStringList
 		ULONG uFetched = 1;
 		wil::unique_cotaskmem_ptr<ITEMID_CHILD> pidlItem;
 
+		QStringList tmpPaths = paths;
 		while (pEnumIDList->Next(1, wil::out_param(pidlItem), &uFetched) == S_OK
 			&& (uFetched == 1))
 		{
@@ -112,72 +113,19 @@ std::vector<PITEMID_CHILD> HzItemMenuPrivate::getPidcFromPaths(const QStringList
 			TCHAR szFilePath[MAX_PATH];
 			StrRetToBufW(&str, pidlItem.get(), szFilePath, MAX_PATH);
 
-			if (paths.contains(QString::fromStdWString(szFilePath))) {
+			int index = tmpPaths.indexOf(QString::fromStdWString(szFilePath));
+			if (index >= 0) {
 				pidlItems.push_back(ILCloneChild(pidlItem.get()));
+				tmpPaths.removeAt(index);
+
+				if (tmpPaths.empty()) {
+					break;
+				}
 			}
 		}
 	} while (false);
 
 	return pidlItems;
-}
-
-void HzItemMenuPrivate::showItemsMenuWin10(
-	WId ownerWId, 
-	const QStringList& pathList, 
-	int showX,
-	int showY
-) {
-	std::vector<LPITEMIDLIST> idChildvec;
-
-	do
-	{
-		if (pathList.empty()) {
-			break;
-		}
-
-		idChildvec = getPidcFromPaths(pathList);
-		if (idChildvec.empty()) {
-			break;
-		}
-
-		wil::com_ptr<IShellFolder> pShellFolder;
-		HRESULT hr = SHGetDesktopFolder(&pShellFolder);
-		if (FAILED(hr)) {
-			break;
-		}
-
-		HWND hOwnerWnd = reinterpret_cast<HWND>(ownerWId);
-		wil::com_ptr<IContextMenu> pContextMenu;
-		hr = pShellFolder->GetUIObjectOf(hOwnerWnd, (UINT)idChildvec.size(),
-			const_cast<LPCITEMIDLIST*>(idChildvec.data()),
-			IID_IContextMenu, nullptr, (void**)&pContextMenu);
-		if (FAILED(hr)) {
-			break;
-		}
-
-		wil::unique_hmenu hMenu(CreatePopupMenu());
-		hr = pContextMenu->QueryContextMenu(hMenu.get(), 0, 1, 0x7FFF, CMF_NORMAL);
-		if (FAILED(hr)) {
-			break;
-		}
-
-		int iCmd = TrackPopupMenuEx(hMenu.get(), TPM_RETURNCMD, showX,
-			showY, hOwnerWnd, nullptr);
-		if (iCmd > 0) {   //执行菜单命令
-			CMINVOKECOMMANDINFOEX info = { 0 };
-			info.cbSize = sizeof(info);
-			info.fMask = CMIC_MASK_UNICODE;
-			info.hwnd = hOwnerWnd;
-			info.lpVerb = MAKEINTRESOURCEA(iCmd - 1);
-			info.lpVerbW = MAKEINTRESOURCEW(iCmd - 1);
-			info.nShow = SW_SHOWNORMAL;
-			pContextMenu->InvokeCommand((LPCMINVOKECOMMANDINFO)&info);
-		}
-	} while (false);
-
-	for (auto& pidl : idChildvec) {
-		ILFree(pidl);
-	}
 }
 
 void HzItemMenuPrivate::executeActionFromContextMenu(const QStringList& pathList, const std::string& action)
@@ -256,48 +204,6 @@ void HzDesktopBkgMenuPrivate::updateMenu(HMENU menu)
 	MenuHelper::insertMenuItem(menu, IDM_PASTE_SHORTCUT, position++);
 	MenuHelper::insertSeparator(menu, position++);
 }
-
-LRESULT HzDesktopBkgMenuPrivate::ParentWindowSubclass(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	HZQ_Q(HzDesktopBkgMenu);
-
-	switch (msg)
-	{
-	case WM_MEASUREITEM:
-	case WM_DRAWITEM:
-	case WM_INITMENUPOPUP:
-	case WM_MENUCHAR:
-		// wParam is 0 if this item was sent by a menu.
-		if ((msg == WM_MEASUREITEM || msg == WM_DRAWITEM) && wParam != 0)
-		{
-			break;
-		}
-
-		if (!q->m_contextMenu)
-		{
-			break;
-		}
-
-		if (auto contextMenu3 = q->m_contextMenu.try_query<IContextMenu3>())
-		{
-			LRESULT result;
-			HRESULT hr = contextMenu3->HandleMenuMsg2(msg, wParam, lParam, &result);
-
-			if (SUCCEEDED(hr))
-			{
-				return result;
-			}
-		}
-		else if (auto contextMenu2 = q->m_contextMenu.try_query<IContextMenu2>())
-		{
-			contextMenu2->HandleMenuMsg(msg, wParam, lParam);
-		}
-		break;
-	}
-
-	return DefSubclassProc(hwnd, msg, wParam, lParam);
-}
-
 
 wil::unique_hmenu HzDesktopBkgMenuPrivate::buildViewMenu()
 {

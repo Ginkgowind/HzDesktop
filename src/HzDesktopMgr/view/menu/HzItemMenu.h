@@ -16,8 +16,20 @@
 class HzItemMenuPrivate;
 class HzDesktopBkgMenuPrivate;
 
+class HzMenuBase : public QMenu
+{
+public:
+	HzMenuBase(QWidget* parent);
+
+public:
+	LRESULT ParentWindowSubclass(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+protected:
+	wil::com_ptr_nothrow<IContextMenu> m_contextMenu;
+};
+
 class HzItemMenu
-	: public QMenu
+	: public HzMenuBase
 	, public HzDesktopPublic
 {
 	Q_OBJECT
@@ -62,7 +74,7 @@ private:
 };
 
 class HzDesktopBkgMenu 
-	: public QMenu
+	: public HzMenuBase
 	, public HzDesktopPublic
 {
 	Q_OBJECT
@@ -106,8 +118,6 @@ signals:
 	void onNewFile();
 
 private:
-
-	wil::com_ptr_nothrow<IContextMenu> m_contextMenu;
 
 	HzDesktopParam* m_param;
 
