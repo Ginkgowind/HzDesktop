@@ -29,6 +29,8 @@ HzDesktopIconView::HzDesktopIconView(QWidget* parent)
 	, HzDesktopPublic(new HzDesktopIconViewPrivate())
 	, m_ctrlDragSelectionFlag(QItemSelectionModel::NoUpdate)
 {
+	// TODO 后续把m_param指针传给各个成员的方式应该不好，等做完了再尝试优化
+	// TODO 已有const HzDesktopParam& getParam() const 函数，后续结合weak_ptr给用起来
 	initParam();
 
 	m_desktopBlankMenu = new HzDesktopBkgMenu(this, &m_param);

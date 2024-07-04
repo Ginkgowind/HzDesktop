@@ -34,6 +34,12 @@ protected:
 		const QModelIndex& index
 	) const override;
 
+	void updateEditorGeometry(
+		QWidget* editor,
+		const QStyleOptionViewItem& option,
+		const QModelIndex& index
+	) const override;
+
 private:
 	QStandardItem* getItemFromOption(
 		const QStyleOptionViewItem& option,
@@ -60,8 +66,7 @@ private:
 
 private:
 
-	QPixmapCache* test1;
-	QPixmapCache* test2;
+	QFont m_font;
 
 	QPainter* m_painter;
 
