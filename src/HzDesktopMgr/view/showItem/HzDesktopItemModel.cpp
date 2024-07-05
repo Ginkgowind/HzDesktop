@@ -100,7 +100,7 @@ void HzDesktopItemModel::insertItems(int row, const QList<QStandardItem*>& items
 
 QString HzDesktopItemModel::name(const QModelIndex& index) const
 {
-	return data(index, CustomRoles::FileNameRole).toString();
+	return data(index, Qt::DisplayRole).toString();
 }
 
 qint64 HzDesktopItemModel::size(const QModelIndex& index) const
@@ -121,6 +121,16 @@ QDateTime HzDesktopItemModel::lastModified(const QModelIndex& index) const
 QString HzDesktopItemModel::filePath(const QModelIndex& index) const
 {
 	return data(index, CustomRoles::FilePathRole).toString();
+}
+
+QVariant HzDesktopItemModel::data(const QModelIndex& index, int role) const
+{
+	return QStandardItemModel::data(index, role);
+}
+
+bool HzDesktopItemModel::setData(const QModelIndex& index, const QVariant& value, int role)
+{
+	return false;
 }
 
 QStringList HzDesktopItemModel::mimeTypes() const

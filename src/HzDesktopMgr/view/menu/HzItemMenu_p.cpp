@@ -248,7 +248,7 @@ wil::unique_hmenu HzDesktopBkgMenuPrivate::buildSortMenu()
 	MenuHelper::appendMenuItem(sortMenu, IDM_SORT_DESCENDING);
 
 	if (q->m_showSortStatus) {
-		MenuHelper::CheckItem(sortMenu, IDM_SORT_BY_NAME, q->m_param->sortRole == FileNameRole);
+		MenuHelper::CheckItem(sortMenu, IDM_SORT_BY_NAME, q->m_param->sortRole == Qt::DisplayRole);
 		MenuHelper::CheckItem(sortMenu, IDM_SORT_BY_SIZE, q->m_param->sortRole == FileSizeRole);
 		MenuHelper::CheckItem(sortMenu, IDM_SORT_BY_TYPE, q->m_param->sortRole == FileTypeRole);
 		MenuHelper::CheckItem(sortMenu, IDM_SORT_BY_TIME, q->m_param->sortRole == FileLastModifiedRole);

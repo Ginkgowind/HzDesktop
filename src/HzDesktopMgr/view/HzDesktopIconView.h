@@ -95,7 +95,7 @@ private:
 
 	void handleEnableAutoArrange();
 
-	void handleSetItemSortRole(CustomRoles role);
+	void handleSetItemSortRole(int role);
 
 	void handleSetItemSortOrder(Qt::SortOrder order);
 

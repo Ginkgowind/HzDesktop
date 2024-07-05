@@ -691,7 +691,7 @@ void HzDesktopIconView::handleEnableAutoArrange()
 	m_itemModel->sort(0, m_param.sortOrder);
 }
 
-void HzDesktopIconView::handleSetItemSortRole(CustomRoles role)
+void HzDesktopIconView::handleSetItemSortRole(int role)
 {
 	// 这里没有使用QSortFilterProxyModel，因为桌面在排序之后还能进行拖动图标，
 	// 但是QSortFilterProxyModel仅仅是对原始model的映射，不能理想地添加数据

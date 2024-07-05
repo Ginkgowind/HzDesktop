@@ -431,7 +431,7 @@ QStandardItem* DesktopFileItemWatcher::genQStandardItem(const QFileInfo& fileInf
 	newItem->setIcon(itemIcon);
 	newItem->setText(displayName);
 	newItem->setData(fileInfo.absoluteFilePath(), CustomRoles::FilePathRole);
-	newItem->setData(fileInfo.fileName(), CustomRoles::FileNameRole);
+	newItem->setData(fileInfo.fileName(), Qt::DisplayRole);
 	newItem->setData(fileInfo.size(), CustomRoles::FileSizeRole);
 	newItem->setData(fileInfo.suffix(), CustomRoles::FileTypeRole);
 	newItem->setData(fileInfo.lastModified(), CustomRoles::FileLastModifiedRole);

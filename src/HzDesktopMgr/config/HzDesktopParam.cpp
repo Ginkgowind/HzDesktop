@@ -12,7 +12,7 @@ HzDesktopParam::HzDesktopParam()
 	, bAutoArrange(false)
 	//, bAutoArrange(true)
 	, iconMode(MediumIcon)
-	, sortRole(FileNameRole)
+	, sortRole(Qt::DisplayRole)
 	, sortOrder(Qt::AscendingOrder)
 {
 	setIconSizeMode(iconMode);

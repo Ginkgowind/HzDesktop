@@ -204,6 +204,7 @@ QPixmap HzItemDelegate::paintIconText(
 	QStandardItem* item
 ) const
 {
+	// 这里的size好像不用改
 	QPixmap retPixmap(option.rect.size());
 	retPixmap.fill(Qt::transparent);
 
@@ -244,14 +245,17 @@ QPixmap HzItemDelegate::paintIconText(
 	// 绘制显示名字
 	//m_painter->setPen(Qt::white);
 	m_painter->setFont(m_font);
-	QRect textShowRC(
+	
+	QTextOption textOption;
+	textOption.setWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
+	textOption.setAlignment(Qt::AlignHCenter | Qt::AlignTop);
+
+	QRectF textLimitRC(
 		QPoint(0, param.iconSize.height() + 2 * param.iconMargin.height()),
 		QPoint(option.rect.width(), option.rect.height())
 	);
 
-	QTextOption textOption;
-	textOption.setWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
-	textOption.setAlignment(Qt::AlignHCenter | Qt::AlignTop);
+	QRect textShowRC = m_painter->boundingRect(textLimitRC, item->text(), textOption).toRect();
 
 	m_painter->drawText(
 		textShowRC,

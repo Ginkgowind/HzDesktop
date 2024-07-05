@@ -34,7 +34,6 @@ enum IconSizeMode
 
 enum CustomRoles {
 	FilePathRole = Qt::UserRole + 1,
-	FileNameRole,
 	FileSizeRole,
 	FileTypeRole,
 	FileLastModifiedRole
@@ -65,7 +64,7 @@ public:
 
 	IconSizeMode iconMode;
 
-	CustomRoles sortRole;
+	int sortRole;
 
 	Qt::SortOrder sortOrder;
 

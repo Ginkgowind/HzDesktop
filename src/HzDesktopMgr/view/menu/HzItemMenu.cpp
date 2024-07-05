@@ -298,7 +298,7 @@ void HzDesktopBkgMenu::handleCustomMenuItem(UINT cmd)
 
 		break;
 	case IDM_SORT_BY_NAME:
-		setItemSortRole(FileNameRole);
+		setItemSortRole(Qt::DisplayRole);
 		break;
 	case IDM_SORT_BY_SIZE:
 		setItemSortRole(FileSizeRole);
@@ -360,7 +360,7 @@ void HzDesktopBkgMenu::initSortSubMenu()
 	
 }
 
-inline void HzDesktopBkgMenu::setItemSortRole(CustomRoles role)
+inline void HzDesktopBkgMenu::setItemSortRole(int role)
 {
 	m_param->sortRole = role;
 	m_showSortStatus = true;

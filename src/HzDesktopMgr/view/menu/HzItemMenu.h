@@ -98,7 +98,7 @@ private:
 
 	void initSortSubMenu();
 
-	inline void setItemSortRole(CustomRoles role);
+	inline void setItemSortRole(int role);
 
 	inline void setItemSortOrder(Qt::SortOrder order);
 
@@ -109,7 +109,7 @@ signals:
 
 	void onHide();
 
-	void onSetItemSortRole(CustomRoles role);
+	void onSetItemSortRole(int role);
 
 	void onSetItemSortOrder(Qt::SortOrder order);
 
