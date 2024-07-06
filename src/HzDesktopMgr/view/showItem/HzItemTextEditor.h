@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QPlainTextEdit>
+#include <QHBoxLayout>
 
 class HzItemTextEditor  : public QPlainTextEdit
 {
@@ -10,6 +11,8 @@ public:
 	HzItemTextEditor(QWidget *parent);
 	~HzItemTextEditor();
 
+	void setMiddleTop(const QPoint& pos);
+
 	static void setMeasureEditorWidth(int width);
 
 private:
@@ -17,7 +20,9 @@ private:
 
 	void handleTextChanged();
 
-	int m_linHeight;
+	QPoint m_middleTop;
+
+	int m_lineHeight;
 
 	static QPlainTextEdit* s_pMeasureEditor;
 };

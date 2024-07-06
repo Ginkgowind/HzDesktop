@@ -135,12 +135,12 @@ Qt::DropAction HzDrag::exec(Qt::DropActions supportedActions)
 
 	do 
 	{
-		HRESULT hRet = S_OK;
+		HRESULT hr = S_OK;
 		for (auto& path : m_pathList) {
 			LPITEMIDLIST pidl = NULL;
 			path.replace('/', '\\');
-			hRet = SHParseDisplayName(path.toStdWString().c_str(), nullptr, &pidl, 0, nullptr);
-			if (FAILED(hRet)) {
+			hr = SHParseDisplayName(path.toStdWString().c_str(), nullptr, &pidl, 0, nullptr);
+			if (FAILED(hr)) {
 				continue;
 			}
 			selectedItemPidls.push_back(pidl);
@@ -148,14 +148,14 @@ Qt::DropAction HzDrag::exec(Qt::DropActions supportedActions)
 
 		wil::com_ptr_nothrow<IDataObject> dataObject;
 		wil::com_ptr_nothrow<IShellItemArray> shellItemArray;
-		hRet = SHCreateShellItemArrayFromIDLists(static_cast<UINT>(selectedItemPidls.size()),
+		hr = SHCreateShellItemArrayFromIDLists(static_cast<UINT>(selectedItemPidls.size()),
 			selectedItemPidls.data(), &shellItemArray);
-		if (FAILED(hRet)) {
+		if (FAILED(hr)) {
 			break;
 		}
 
-		hRet = shellItemArray->BindToHandler(nullptr, BHID_DataObject, IID_PPV_ARGS(&dataObject));
-		if (FAILED(hRet)) {
+		hr = shellItemArray->BindToHandler(nullptr, BHID_DataObject, IID_PPV_ARGS(&dataObject));
+		if (FAILED(hr)) {
 			break;
 		}
 
@@ -168,14 +168,14 @@ Qt::DropAction HzDrag::exec(Qt::DropActions supportedActions)
 		image.hbmpDragImage = QtWin::toHBITMAP(m_pixmap);
 		image.crColorKey = 0x00FFFFFF;	// TODO ÐÞ¸Ä
 		image.ptOffset = { m_hotSpot.x(), m_hotSpot.y() };
-		hRet = pDragSourceHelper->InitializeFromBitmap(&image, dataObject.get());
+		hr = pDragSourceHelper->InitializeFromBitmap(&image, dataObject.get());
 
 		IDropSource* pDropSource = new DropSource();
 
-		hRet = DoDragDrop(
+		hr = DoDragDrop(
 			dataObject.get(), pDropSource,
 			supportedActions, &finalEffect);
-		if (FAILED(hRet)) {
+		if (FAILED(hr)) {
 			break;
 		}
 	} while (false);

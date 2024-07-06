@@ -20,6 +20,11 @@ HzItemTextEditor::HzItemTextEditor(QWidget* parent)
 HzItemTextEditor::~HzItemTextEditor()
 {}
 
+void HzItemTextEditor::setMiddleTop(const QPoint & pos)
+{
+	m_middleTop = pos;
+}
+
 void HzItemTextEditor::setMeasureEditorWidth(int width)
 {
 	s_pMeasureEditor->setFixedWidth(width);
@@ -50,11 +55,16 @@ void HzItemTextEditor::handleTextChanged()
 	QSize currentTextSize = s_pMeasureEditor->document()->size().toSize();
 	int lineNum = currentTextSize.rheight() + blockCount();
 	currentTextSize.rheight() = lineNum * fontMetrics().lineSpacing();
-	//currentTextSize.rwidth() += 2;
+	currentTextSize.rwidth() += 2;
 
 	// TODO 文字周边还是有空白边距，最下面还会多一行空行，想办法都去掉
 
-	resize(currentTextSize);
+	setGeometry(
+		m_middleTop.x() - currentTextSize.rwidth() / 2,
+		m_middleTop.y(),
+		currentTextSize.rwidth(),
+		currentTextSize.rheight()
+	);
 
 	qDebug()
 		<< currentTextSize

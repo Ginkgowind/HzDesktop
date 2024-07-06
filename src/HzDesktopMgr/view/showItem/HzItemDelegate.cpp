@@ -1,6 +1,7 @@
 #include <QPainter>
 #include <QDebug>
 #include <QAbstractItemView>
+#include <QHBoxLayout>
 
 #include "HzItemDelegate.h"
 #include "HzItemTextEditor.h"
@@ -17,14 +18,14 @@ HzItemDelegate::HzItemDelegate(QObject* parent, HzDesktopParam* param)
 	: QStyledItemDelegate(parent)
 	, m_font("Microsoft YaHei")
 	, m_painter(new QPainter)
-	, m_metrics(nullptr)
 	, m_param(param)
 {
 	m_font.setPixelSize(13);
 
-	//m_painter->setFont(m_font);
+	m_painter->setFont(m_font);
 
-	m_metrics = new QFontMetrics(m_font);
+	m_textOption.setWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
+	m_textOption.setAlignment(Qt::AlignHCenter | Qt::AlignTop);
 }
 
 HzItemDelegate::~HzItemDelegate()
@@ -32,31 +33,21 @@ HzItemDelegate::~HzItemDelegate()
 	delete m_painter;
 }
 
-// 这个函数目前用不到了，可以考虑删除
 QSize HzItemDelegate::sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-	HzDesktopIconView* itemView =
-		qobject_cast<HzDesktopIconView*>(option.styleObject);
+	static QPixmap pixmap(120, 120);
+	static int descent = QFontMetrics(m_font).descent();
 
-	QStandardItem* item = getItemFromOption(option, index);
-	if (!item || !itemView) {
-		return {0, 0};
-	}
+	QSize sizeRet = m_param->iconSize + 2 * m_param->iconMargin;
 
-	auto& param = itemView->getParam();
+	QRectF textLimitRC(QPoint(0, 0), sizeRet);
 
-	QSize sizeRet = param.iconSize + 2 * param.iconMargin;
+	m_painter->begin(&pixmap);
+	int textHeight = (int)m_painter->boundingRect(textLimitRC, 
+		index.data(Qt::DisplayRole).toString(), m_textOption).height() + descent;
+	m_painter->end();
 
-	constexpr int customDeltaHeight = 6;
-	//int textHeight = m_metrics->boundingRect(0, 0, sizeRet.width(), sizeRet.height(),
-	//	s_textFlags, item->text()).height() - customDeltaHeight;
-
-
-	//sizeRet += {0, textHeight};
-
-	// TODO 这里要结合计算文本行数，最多两行
-
-	return sizeRet;
+	return sizeRet + QSize(0, textHeight);
 }
 
 void HzItemDelegate::paint(
@@ -94,21 +85,18 @@ QWidget* HzItemDelegate::createEditor(QWidget* parent, const QStyleOptionViewIte
 {
 	HzItemTextEditor* editor = new HzItemTextEditor(parent);
 	editor->setFont(m_font);
+	
 	return editor;
 }
 
 // TODO 目前来看好像只有创建的时候和行列变化的时候调用，输入过程中的变化还是要在editor控件里完成？
 void HzItemDelegate::updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-	QPoint topLeft = option.rect.topLeft();
 	QSize iconActualSize = m_param->iconSize + 2 * m_param->iconMargin;
-	
-	editor->setGeometry(
-		topLeft.x(),
-		topLeft.y() + iconActualSize.height(),
-		iconActualSize.width(),
-		40	// TODO计算具体值
-	);
+	QPoint middleTop = option.rect.topLeft() + QPoint{ iconActualSize.width() / 2, iconActualSize.height() };
+
+	HzItemTextEditor* hzEditor = qobject_cast<HzItemTextEditor*>(editor);
+	hzEditor->setMiddleTop(middleTop);
 
 	HzItemTextEditor::setMeasureEditorWidth(iconActualSize.width());
 }
@@ -244,23 +232,18 @@ QPixmap HzItemDelegate::paintIconText(
 
 	// 绘制显示名字
 	//m_painter->setPen(Qt::white);
-	m_painter->setFont(m_font);
-	
-	QTextOption textOption;
-	textOption.setWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
-	textOption.setAlignment(Qt::AlignHCenter | Qt::AlignTop);
 
 	QRectF textLimitRC(
 		QPoint(0, param.iconSize.height() + 2 * param.iconMargin.height()),
 		QPoint(option.rect.width(), option.rect.height())
 	);
 
-	QRect textShowRC = m_painter->boundingRect(textLimitRC, item->text(), textOption).toRect();
+	QRect textShowRC = m_painter->boundingRect(textLimitRC, item->text(), m_textOption).toRect();
 
 	m_painter->drawText(
 		textShowRC,
 		item->text(),
-		textOption
+		m_textOption
 	);
 
 

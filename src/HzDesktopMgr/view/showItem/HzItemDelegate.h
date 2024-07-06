@@ -2,6 +2,7 @@
 
 #include <QStyledItemDelegate>
 #include <QPixmapCache>
+#include <QTextOption>
 
 #include "config/HzDesktopParam.h"
 
@@ -17,12 +18,12 @@ public:
 	HzItemDelegate(QObject *parent, HzDesktopParam* param);
 	~HzItemDelegate();
 
-protected:
 	QSize sizeHint(
 		const QStyleOptionViewItem& option,
 		const QModelIndex& index
 	) const override;
 
+protected:
 	void paint(
 		QPainter* painter, 
 		const QStyleOptionViewItem& option, 
@@ -66,11 +67,11 @@ private:
 
 private:
 
-	QFont m_font;
-
 	QPainter* m_painter;
 
-	QFontMetrics* m_metrics;
+	QTextOption m_textOption;
+
+	QFont m_font;
 
 	HzDesktopParam* m_param;
 };

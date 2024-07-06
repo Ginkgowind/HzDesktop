@@ -15,6 +15,11 @@
 #include "windows/EnsureCleanup.h"
 #include "common/QtpqReimp.h"
 
+class ItemHelper {
+public:
+	static void setDisplayName(const QString& filePath, const QString& name);
+};
+
 /**************************监控系统图标************************/
 
 class DesktopSystemItemWatcher : public QThread
@@ -32,10 +37,6 @@ public:
 	bool initWatcher();
 
 	QStandardItem* genQStandardItem(const QString& clsidPath);
-
-	QString getSystemAppDisplayName(const QString& clsidPath);
-
-	bool setSystemAppDisplayName(const QString& clsidPath, const QString& name);
 
 signals:
 	// 因为是传递到主线程去处理，所以此处不传引用

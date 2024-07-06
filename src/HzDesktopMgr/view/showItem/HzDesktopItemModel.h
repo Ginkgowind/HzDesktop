@@ -35,18 +35,15 @@ public:
 	QString filePath(const QModelIndex& index) const;
 
 protected:
-	QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
-
 	bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
 
-	QStringList mimeTypes() const override;
-
-	QMimeData* mimeData(const QModelIndexList& indexes) const override;
-	
-	bool dropMimeData(const QMimeData* data, Qt::DropAction action,
-		int row, int column, const QModelIndex& parent) override;
-	
-	Qt::DropActions supportedDropActions() const override;
+	// 因为没有使用QDrag，所以下面几个函数不用实现
+	//QStringList mimeTypes() const override;
+	//QMimeData* mimeData(const QModelIndexList& indexes) const override;
+	//bool dropMimeData(const QMimeData* data, Qt::DropAction action,
+	//	int row, int column, const QModelIndex& parent) override;
+	//Qt::DropActions supportedDropActions() const override;
+	//return Qt::CopyAction | Qt::MoveAction | Qt::LinkAction;
 
 signals:
 	void onFileCreated(const QModelIndex& index);

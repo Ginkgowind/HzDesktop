@@ -7,6 +7,7 @@
 #include <QDateTime>
 #include <shlwapi.h>
 #include <Shlobj.h>
+#include <wil/com.h>
 
 #include "HzDesktopItemModel_p.h"
 #include "config/HzDesktopParam.h"
@@ -14,11 +15,41 @@
 #include "common/CommonTools.h"
 #include "windows/UiOperation.h"
 
-// 控制系统图标的显示与隐藏，仿照腾讯桌面整理，此处从简，只监听显示与隐藏
+// 控制系统图标的显示与隐藏，此处从简，只监听显示与隐藏
 #define SYSTEM_ICON_REG_SUBPATH \
 	"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\HideDesktopIcons\\NewStartPanel"
 
 #define OBSERVE_DIR_BUFFER_SIZE (sizeof(FILE_NOTIFY_INFORMATION) + ((sizeof(WCHAR) * MAX_PATH) * 2 * 4))
+
+void ItemHelper::setDisplayName(const QString& filePath, const QString& name)
+{
+	HRESULT hr = S_OK;
+
+	do 
+	{
+		wil::unique_cotaskmem_ptr<ITEMIDLIST> idl;
+		hr = SHParseDisplayName(QString(filePath).replace('/', '\\').toStdWString().c_str(),
+			nullptr, wil::out_param(idl), 0, nullptr);
+		if (FAILED(hr)) {
+			break;
+		}
+
+		PCUITEMID_CHILD childIdl;
+		wil::com_ptr<IShellFolder> pShellFolder;
+		hr = SHBindToParent(idl.get(), IID_PPV_ARGS(&pShellFolder), &childIdl);
+		if (FAILED(hr)) {
+			break;
+		}
+
+		hr = pShellFolder->SetNameOf(NULL, childIdl,
+			name.toStdWString().c_str(), 0, NULL);
+		if (FAILED(hr)) {
+			break;
+		}
+	} while (false);
+	
+}
+
 
 DesktopSystemItemWatcher::DesktopSystemItemWatcher()
 {
@@ -84,9 +115,16 @@ bool DesktopSystemItemWatcher::initWatcher()
 
 QStandardItem* DesktopSystemItemWatcher::genQStandardItem(const QString& clsidPath)
 {
+	wil::unique_cotaskmem_ptr<ITEMIDLIST> pidl;
+	SHParseDisplayName(clsidPath.toStdWString().c_str(), nullptr, wil::out_param(pidl), 0, nullptr);
+
+	SHFILEINFOW shFileInfo = { 0 };
+	SHGetFileInfoW((LPCWSTR)pidl.get(), 0, &shFileInfo, sizeof(SHFILEINFO),
+		SHGFI_DISPLAYNAME | SHGFI_PIDL);
+
 	QStandardItem* newItem = new QStandardItem();
 	QIcon itemIcon = HZ::getPixmapFromPath(clsidPath);
-	QString itemName = getSystemAppDisplayName(clsidPath);
+	QString itemName = QString::fromStdWString(shFileInfo.szDisplayName);
 	newItem->setIcon(itemIcon);
 	newItem->setText(itemName);
 	newItem->setData(clsidPath, CustomRoles::FilePathRole);
@@ -94,95 +132,6 @@ QStandardItem* DesktopSystemItemWatcher::genQStandardItem(const QString& clsidPa
 	newItem->setToolTip(itemName);
 
 	return newItem;
-}
-
-QString DesktopSystemItemWatcher::getSystemAppDisplayName(const QString& clsidPath)
-{
-	TCHAR szDisplayName[MAX_PATH] = { 0 };
-
-	IShellFolder* desktopFolder = nullptr;
-	LPITEMIDLIST systemAppPidl = nullptr;
-
-	do
-	{
-		HRESULT hRet = SHGetDesktopFolder(&desktopFolder);
-		if (FAILED(hRet)) {
-			break;
-		}
-
-		hRet = desktopFolder->ParseDisplayName(
-			NULL, NULL,
-			(LPWSTR)clsidPath.toStdWString().c_str(),
-			NULL, &systemAppPidl, NULL
-		);
-		if (FAILED(hRet)) {
-			break;
-		}
-
-		STRRET strDisplayName;
-		hRet = desktopFolder->GetDisplayNameOf(systemAppPidl, SHGDN_NORMAL, &strDisplayName);
-		if (FAILED(hRet)) {
-			break;
-		}
-
-		hRet = StrRetToBufW(&strDisplayName, systemAppPidl, szDisplayName, MAX_PATH);
-		if (FAILED(hRet)) {
-			break;
-		}
-	} while (false);
-
-	if (systemAppPidl) {
-		CoTaskMemFree(systemAppPidl);
-	}
-
-	if (desktopFolder) {
-		desktopFolder->Release();
-	}
-
-	return QString::fromStdWString(szDisplayName);
-}
-
-bool DesktopSystemItemWatcher::setSystemAppDisplayName(const QString& clsidPath, const QString& name)
-{
-	bool bRet = false;
-
-	IShellFolder* desktopFolder = nullptr;
-	LPITEMIDLIST systemAppPidl = nullptr;
-
-	do
-	{
-		HRESULT hRet = SHGetDesktopFolder(&desktopFolder);
-		if (FAILED(hRet)) {
-			break;
-		}
-
-		hRet = desktopFolder->ParseDisplayName(
-			NULL, NULL,
-			(LPWSTR)clsidPath.toStdWString().c_str(),
-			NULL, &systemAppPidl, NULL
-		);
-		if (FAILED(hRet)) {
-			break;
-		}
-
-		hRet = desktopFolder->SetNameOf(NULL, systemAppPidl,
-			name.toStdWString().c_str(), 0, NULL);
-		if (FAILED(hRet)) {
-			break;
-		}
-
-		bRet = true;
-	} while (false);
-
-	if (systemAppPidl) {
-		CoTaskMemFree(systemAppPidl);
-	}
-
-	if (desktopFolder) {
-		desktopFolder->Release();
-	}
-
-	return bRet;
 }
 
 void DesktopSystemItemWatcher::run()
@@ -423,7 +372,7 @@ QStandardItem* DesktopFileItemWatcher::genQStandardItem(const QFileInfo& fileInf
 
 	SHFILEINFOW shFileInfo = { 0 };
 	SHGetFileInfoW(fileInfo.absoluteFilePath().toStdWString().c_str(), 0, &shFileInfo, sizeof(SHFILEINFO), 
-		SHGFI_ICON | SHGFI_LARGEICON | SHGFI_TYPENAME | SHGFI_DISPLAYNAME | SHGFI_USEFILEATTRIBUTES);
+		SHGFI_TYPENAME | SHGFI_DISPLAYNAME | SHGFI_USEFILEATTRIBUTES);
 	
 	QIcon itemIcon = getUltimateIcon(fileInfo.absoluteFilePath());
 	QString displayName = QFileInfo(QString::fromStdWString(shFileInfo.szDisplayName)).fileName();
@@ -431,7 +380,6 @@ QStandardItem* DesktopFileItemWatcher::genQStandardItem(const QFileInfo& fileInf
 	newItem->setIcon(itemIcon);
 	newItem->setText(displayName);
 	newItem->setData(fileInfo.absoluteFilePath(), CustomRoles::FilePathRole);
-	newItem->setData(fileInfo.fileName(), Qt::DisplayRole);
 	newItem->setData(fileInfo.size(), CustomRoles::FileSizeRole);
 	newItem->setData(fileInfo.suffix(), CustomRoles::FileTypeRole);
 	newItem->setData(fileInfo.lastModified(), CustomRoles::FileLastModifiedRole);
@@ -661,4 +609,3 @@ void HzDesktopItemModelPrivate::handleFileRenamed(
 		}
 	}
 }
-

@@ -123,52 +123,13 @@ QString HzDesktopItemModel::filePath(const QModelIndex& index) const
 	return data(index, CustomRoles::FilePathRole).toString();
 }
 
-QVariant HzDesktopItemModel::data(const QModelIndex& index, int role) const
-{
-	return QStandardItemModel::data(index, role);
-}
-
 bool HzDesktopItemModel::setData(const QModelIndex& index, const QVariant& value, int role)
 {
-	return false;
-}
-
-QStringList HzDesktopItemModel::mimeTypes() const
-{
-	return QStringList()
-		<< QLatin1String("text/uri-list")
-		<< QLatin1String("application/x-qt-windows-mime;value=\"Shell IDList Array\"");
-}
-
-QMimeData* HzDesktopItemModel::mimeData(const QModelIndexList& indexes) const
-{
-	typedef wil::unique_cotaskmem_ptr<LPITEMIDLIST> LPITEMIDLIST_PTR;
-
-	QList<QUrl> urls;
-	QByteArray idls;
-
-	std::vector<LPITEMIDLIST_PTR> idvec;
-	std::vector<LPCITEMIDLIST> idChildvec;
-
-	for (auto it = indexes.begin(); it != indexes.end(); ++it) {
-		urls << QUrl::fromLocalFile(filePath(*it));
+	if (role == Qt::DisplayRole || role == Qt::EditRole) {
+		QString oldPath = filePath(index);
+		ItemHelper::setDisplayName(oldPath, value.toString());
+		removePixmapCache(oldPath);
 	}
 
-	QMimeData* mimeData = new QMimeData();
-	mimeData->setUrls(urls);
-	mimeData->setData(
-		"application/x-qt-windows-mime;value=\"Shell IDList Array\"",
-		"not empty");
-
-	return mimeData;
-}
-
-bool HzDesktopItemModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent)
-{
-	return true;
-}
-
-Qt::DropActions HzDesktopItemModel::supportedDropActions() const
-{
-	return Qt::CopyAction | Qt::MoveAction | Qt::LinkAction;
+	return QStandardItemModel::setData(index, value, role);
 }

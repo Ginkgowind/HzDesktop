@@ -168,12 +168,12 @@ QRect HzDesktopIconView::visualRect(const QModelIndex& index) const
 	int posIndexX = index.row() / m_maxViewRow;
 	int posIndexY = index.row() % m_maxViewRow;
 
-	return QRect(
+	QPoint showPos(
 		posIndexX * m_param.gridSize.width(),
-		posIndexY * m_param.gridSize.height(),
-		2 * m_param.iconMargin.width() + m_param.iconSize.width(),
-		2 * m_param.iconMargin.height() + m_param.iconSize.height() + TEXT_MAX_HEIGHT
+		posIndexY * m_param.gridSize.height()
 	);
+
+	return QRect(showPos, m_itemDelegate->sizeHint(viewOptions(), index));
 }
 
 QModelIndex HzDesktopIconView::indexAt(const QPoint& point) const
@@ -565,6 +565,13 @@ void HzDesktopIconView::paintEvent(QPaintEvent* e)
 //{
 //}
 
+//bool HzDesktopIconView::edit(const QModelIndex& index, EditTrigger trigger, QEvent* event)
+//{
+//
+//
+//	return QAbstractItemView::edit(index, trigger, event);
+//}
+
 QStringList HzDesktopIconView::getSelectedPaths()
 {
 	QStringList pathList;
@@ -572,7 +579,7 @@ QStringList HzDesktopIconView::getSelectedPaths()
 	// TODO 了解此处直接调用函数与复制变量，有什么区别？
 	QModelIndexList indexList = selectedIndexes();
 	for (const QModelIndex& index : indexList) {
-		pathList.append(m_itemModel->filePath(index).replace('/', '\\'));
+		pathList.append(m_itemModel->filePath(index));
 	}
 		
 	return pathList;

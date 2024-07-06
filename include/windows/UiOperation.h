@@ -7,11 +7,6 @@
 
 namespace HZ
 {
-	//struct IconLocation {
-	//	QString iconPath;
-	//	int iconIndex;
-	//};
-
 	void removePixmapCache(const QString& filePath);
 
 	// 部分文件的图标最大只包含了48x48的，但是系统读取时会自动合成一个256x256的图片，并且将48x48绘制在256大小图片的左上角
