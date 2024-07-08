@@ -70,8 +70,4 @@ private:
 	QPainter* m_painter;
 
 	QTextOption m_textOption;
-
-	QFont m_font;
-
-	HzDesktopParam* m_param;
 };

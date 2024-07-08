@@ -47,7 +47,7 @@ public:
 
 	void setIconSizeMode(IconSizeMode mode);
 
-private:
+//private:
 	void updateGridSize();
 
 public:

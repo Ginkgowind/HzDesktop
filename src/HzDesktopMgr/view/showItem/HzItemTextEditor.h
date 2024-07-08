@@ -1,20 +1,18 @@
 #pragma once
 
 #include <QPlainTextEdit>
-#include <QHBoxLayout>
+#include <QStyleOptionViewItem>
+#include <QPainter>
 
 class HzItemTextEditor  : public QPlainTextEdit
 {
 	Q_OBJECT
 
 public:
-	HzItemTextEditor(QWidget *parent);
+	HzItemTextEditor(QWidget* parent, const QStyleOptionViewItem& option, const QTextOption& textOption);
 	~HzItemTextEditor();
 
-	void setMiddleTop(const QPoint& pos);
-
-	static void setMeasureEditorWidth(int width);
-
+	void updateGeometryParam(const QPoint& middleTop, int maxWidth);
 private:
 	void initEditor(QPlainTextEdit* editor);
 
@@ -22,7 +20,7 @@ private:
 
 	QPoint m_middleTop;
 
-	int m_lineHeight;
+	int m_maxWidth;
 
-	static QPlainTextEdit* s_pMeasureEditor;
+	static QPainter* s_pMeasurePainter;
 };

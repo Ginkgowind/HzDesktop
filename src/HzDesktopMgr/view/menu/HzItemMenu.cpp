@@ -271,15 +271,12 @@ void HzDesktopBkgMenu::handleCustomMenuItem(UINT cmd)
 	switch (cmd)
 	{
 	case IDM_VIEW_LARGE_ICON:
-		m_param->setIconSizeMode(LargeIcon);
 		emit onSetIconSizeMode(LargeIcon);
 		break;
 	case IDM_VIEW_MEDIUM_ICON:
-		m_param->setIconSizeMode(MediumIcon);
 		emit onSetIconSizeMode(MediumIcon);
 		break;
 	case IDM_VIEW_SMALL_ICON:
-		m_param->setIconSizeMode(SmallIcon);
 		emit onSetIconSizeMode(SmallIcon);
 		break;
 	case IDM_VIEW_AUTO_ARRANGE:

@@ -16,14 +16,8 @@
 
 HzItemDelegate::HzItemDelegate(QObject* parent, HzDesktopParam* param)
 	: QStyledItemDelegate(parent)
-	, m_font("Microsoft YaHei")
 	, m_painter(new QPainter)
-	, m_param(param)
 {
-	m_font.setPixelSize(13);
-
-	m_painter->setFont(m_font);
-
 	m_textOption.setWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
 	m_textOption.setAlignment(Qt::AlignHCenter | Qt::AlignTop);
 }
@@ -35,14 +29,16 @@ HzItemDelegate::~HzItemDelegate()
 
 QSize HzItemDelegate::sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-	static QPixmap pixmap(120, 120);
-	static int descent = QFontMetrics(m_font).descent();
+	static QPixmap textPixmap(option.rect.size());
+	static int descent = QFontMetrics(option.font).descent();
 
-	QSize sizeRet = m_param->iconSize + 2 * m_param->iconMargin;
+	QSize sizeRet = option.rect.size();
 
+	// TODO 这里要限高
 	QRectF textLimitRC(QPoint(0, 0), sizeRet);
 
-	m_painter->begin(&pixmap);
+	m_painter->begin(&textPixmap);
+	m_painter->setFont(option.font);
 	int textHeight = (int)m_painter->boundingRect(textLimitRC, 
 		index.data(Qt::DisplayRole).toString(), m_textOption).height() + descent;
 	m_painter->end();
@@ -68,8 +64,8 @@ void HzItemDelegate::paint(
 	paintBackground(painter, option);
 
 	QPixmap showPixmap;
-	// 索引设置为 图标大小枚举+路径
-	const QString& key = QString::number(m_param->iconMode) + item->data(CustomRoles::FilePathRole).toString();
+	// 索引设置为 图标大小+路径，以便能够区分不同大小的缓存
+	const QString& key = QString::number(option.rect.width()) + item->data(CustomRoles::FilePathRole).toString();
 
 	if (!QPixmapCache::find(key, &showPixmap)) {
 		showPixmap = paintIconText(option, itemView->getParam(), item);
@@ -83,22 +79,19 @@ void HzItemDelegate::paint(
 
 QWidget* HzItemDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-	HzItemTextEditor* editor = new HzItemTextEditor(parent);
-	editor->setFont(m_font);
-	
+	HzItemTextEditor* editor = new HzItemTextEditor(parent, option, m_textOption);
+
 	return editor;
 }
 
-// TODO 目前来看好像只有创建的时候和行列变化的时候调用，输入过程中的变化还是要在editor控件里完成？
 void HzItemDelegate::updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-	QSize iconActualSize = m_param->iconSize + 2 * m_param->iconMargin;
-	QPoint middleTop = option.rect.topLeft() + QPoint{ iconActualSize.width() / 2, iconActualSize.height() };
+	// 图标显示区域为正方形
+	int sideLength = option.rect.width();
+	QPoint middleTop = option.rect.topLeft() + QPoint{ sideLength / 2, sideLength };
 
 	HzItemTextEditor* hzEditor = qobject_cast<HzItemTextEditor*>(editor);
-	hzEditor->setMiddleTop(middleTop);
-
-	HzItemTextEditor::setMeasureEditorWidth(iconActualSize.width());
+	hzEditor->updateGeometryParam(middleTop, sideLength);
 }
 
 QStandardItem* HzItemDelegate::getItemFromOption(const QStyleOptionViewItem& option, const QModelIndex& index) const

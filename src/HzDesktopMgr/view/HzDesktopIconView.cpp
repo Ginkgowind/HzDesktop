@@ -62,6 +62,11 @@ HzDesktopIconView::HzDesktopIconView(QWidget* parent)
 	handleLayoutChanged();
 
 	new HzWindowsMimeIdl();
+
+	// 初始化显示样式相关
+	QFont font("Microsoft YaHei");
+	font.setPixelSize(13);
+	setFont(font);
 }
 
 HzDesktopIconView::~HzDesktopIconView()
@@ -173,7 +178,10 @@ QRect HzDesktopIconView::visualRect(const QModelIndex& index) const
 		posIndexY * m_param.gridSize.height()
 	);
 
-	return QRect(showPos, m_itemDelegate->sizeHint(viewOptions(), index));
+	QStyleOptionViewItem option = viewOptions();
+	option.rect = QRect(QPoint(0, 0), m_param.iconSize + 2 * m_param.iconMargin);
+
+	return QRect(showPos, m_itemDelegate->sizeHint(option, index));
 }
 
 QModelIndex HzDesktopIconView::indexAt(const QPoint& point) const
@@ -684,7 +692,11 @@ void HzDesktopIconView::handleExternalDrop(QDropEvent* e)
 
 void HzDesktopIconView::handleSetIconSizeMode(IconSizeMode mode)
 {
+	m_param.setIconSizeMode(mode);
+
 	handleLayoutChanged();
+
+	updateEditorGeometries();
 
 	viewport()->update();
 }
