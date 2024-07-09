@@ -13,8 +13,8 @@ public:
 	~HzItemTextEditor();
 
 	void updateGeometryParam(const QPoint& middleTop, int maxWidth);
+
 private:
-	void initEditor(QPlainTextEdit* editor);
 
 	void handleTextChanged();
 

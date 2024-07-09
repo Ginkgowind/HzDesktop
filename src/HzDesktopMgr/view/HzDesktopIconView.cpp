@@ -509,14 +509,25 @@ void HzDesktopIconView::paintEvent(QPaintEvent* e)
 	painter.drawRect(viewport()->rect());
 	painter.restore();
 
+	if (this->state() == EditingState) {
+		int a = 1;
+	}
+
 	QStyleOptionViewItem option = QAbstractItemView::viewOptions();
+	// TODO 这里e->rect()怎么每次都是最大大小
 	const QModelIndexList toBeRendered = intersectingSet(e->rect());
 	const QModelIndex current = currentIndex();
 	const QModelIndex hover = m_hoverIndex;
-	const bool focus = (hasFocus() || viewport()->hasFocus()) && current.isValid();
+	//const bool focus = (hasFocus() || viewport()->hasFocus()) && current.isValid();
+	// TODO 看看focus是不是在editor上
+	const bool focus = true;
 	const QStyle::State state = option.state;
 	const QAbstractItemView::State viewState = this->state();
 	const bool enabled = (state & QStyle::State_Enabled) != 0;
+
+	if (this->state() == EditingState) {
+		int a = 1;
+	}
 
 	QModelIndexList::const_iterator end = toBeRendered.constEnd();
 	for (QModelIndexList::const_iterator it = toBeRendered.constBegin(); it != end; ++it) {
@@ -573,12 +584,18 @@ void HzDesktopIconView::paintEvent(QPaintEvent* e)
 //{
 //}
 
-//bool HzDesktopIconView::edit(const QModelIndex& index, EditTrigger trigger, QEvent* event)
-//{
-//
-//
-//	return QAbstractItemView::edit(index, trigger, event);
-//}
+bool HzDesktopIconView::edit(const QModelIndex& index, EditTrigger trigger, QEvent* event)
+{
+	if (QAbstractItemView::edit(index, trigger, event)) {
+		// 重绘该index使文字消失
+		// TODO 这里面要修改索引了，这里用的是枚举，插入时又用的大小
+		removePixmapCache(m_itemModel->filePath(index));
+		update(index);
+		return true;
+	}
+
+	return false;
+}
 
 QStringList HzDesktopIconView::getSelectedPaths()
 {

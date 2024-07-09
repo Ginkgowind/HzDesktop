@@ -82,7 +82,7 @@ protected:
 
 	//void doItemsLayout() override;
 
-	//bool edit(const QModelIndex& index, EditTrigger trigger, QEvent* event) override;
+	bool edit(const QModelIndex& index, EditTrigger trigger, QEvent* event) override;
 
 private:
 	QStringList getSelectedPaths();

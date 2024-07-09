@@ -127,7 +127,7 @@ void HzDesktopIconViewPrivate::handleRename()
 		return;
 	}
 
-	q->edit(indexes[0]);
+	q->QAbstractItemView::edit(indexes[0]);
 }
 
 void HzDesktopIconViewPrivate::handleSelectAll()
@@ -165,7 +165,7 @@ void HzDesktopIconViewPrivate::handleFileCreated(const QModelIndex& index)
 	QTimer::singleShot(60, this, [=]() {
 		q->setCurrentIndex(index);
 		if (bNewFileByMenu) {
-			q->edit(index);
+			q->QAbstractItemView::edit(index);
 		}
 	});
 }

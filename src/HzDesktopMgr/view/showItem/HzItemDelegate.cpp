@@ -223,22 +223,28 @@ QPixmap HzItemDelegate::paintIconText(
 		m_painter->restore();
 	}
 
-	// 绘制显示名字
-	//m_painter->setPen(Qt::white);
+	if (option.state.testFlag(QStyle::State_Editing)) {
+		int a = 1;
+	}
 
-	QRectF textLimitRC(
-		QPoint(0, param.iconSize.height() + 2 * param.iconMargin.height()),
-		QPoint(option.rect.width(), option.rect.height())
-	);
+	if (!option.state.testFlag(QStyle::State_Editing)) {
+		// 绘制显示名字
+		//m_painter->setPen(Qt::white);
+		m_painter->setFont(option.font);
 
-	QRect textShowRC = m_painter->boundingRect(textLimitRC, item->text(), m_textOption).toRect();
+		QRectF textLimitRC(
+			QPoint(0, param.iconSize.height() + 2 * param.iconMargin.height()),
+			QPoint(option.rect.width(), option.rect.height())
+		);
 
-	m_painter->drawText(
-		textShowRC,
-		item->text(),
-		m_textOption
-	);
+		QRect textShowRC = m_painter->boundingRect(textLimitRC, item->text(), m_textOption).toRect();
 
+		m_painter->drawText(
+			textShowRC,
+			item->text(),
+			m_textOption
+		);
+	}
 
 	// 绘制结束
 	m_painter->end();
