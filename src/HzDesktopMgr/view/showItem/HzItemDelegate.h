@@ -35,11 +35,15 @@ protected:
 		const QModelIndex& index
 	) const override;
 
+	void setEditorData(QWidget* editor, const QModelIndex& index) const override;
+
 	void updateEditorGeometry(
 		QWidget* editor,
 		const QStyleOptionViewItem& option,
 		const QModelIndex& index
 	) const override;
+
+	bool eventFilter(QObject* object, QEvent* event) override;
 
 private:
 	QStandardItem* getItemFromOption(
@@ -64,6 +68,8 @@ private:
 		const HzDesktopParam& param,
 		QStandardItem* item
 	) const;
+
+	inline int getLimitedTextHeight(const QFont& font, int height) const;
 
 private:
 
