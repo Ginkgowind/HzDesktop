@@ -440,10 +440,8 @@ void DesktopFileItemWatcher::handleObserveResult(const QString& strWatchDirector
 		}
 		case FILE_ACTION_MODIFIED:
 		{
-			qDebug() << "zh thread send 1";
 			//LOG_DEBUG_W("FILE_ACTION_MODIFIED: %ws", strFileAbsPath.c_str());
 			QStandardItem* newItem = genQStandardItem(QFileInfo(strFileAbsPath));
-			qDebug() << "zh thread send 2";
 			emit onFileModified(strFileAbsPath, newItem);
 			break;
 		}

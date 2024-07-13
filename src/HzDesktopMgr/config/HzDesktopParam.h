@@ -3,8 +3,7 @@
 #include <QSize>
 #include <QDateTime>
 
-// 这个值在win10上是48，在win11是60，故取最大
-#define SECOND_MAX_ICON_SIZE	64
+#define SECOND_MAX_ICON_SIZE	128
 #define MAX_ICON_SIZE			256
 
 #define LARGE_ICON_SIZE			128

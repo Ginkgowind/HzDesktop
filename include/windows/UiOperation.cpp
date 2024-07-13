@@ -35,7 +35,6 @@ namespace HZ
 
 		do
 		{
-			int a = pixmap.width();
 			if (pixmap.width() < MAX_ICON_SIZE) {
 				// 当前图片大小不是256的，不需要进行检测
 				break;

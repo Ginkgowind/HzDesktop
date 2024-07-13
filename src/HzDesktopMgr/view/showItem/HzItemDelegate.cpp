@@ -277,11 +277,23 @@ QPixmap HzItemDelegate::paintIconText(
 			QPoint(option.rect.width(), option.rect.height())
 		);
 
-		QRect textShowRC = m_painter->boundingRect(textLimitRC, item->text(), m_textOption).toRect();
+		QString nameStr = item->text();
+		QRect textShowRC = m_painter->boundingRect(textLimitRC, nameStr, m_textOption).toRect();
+		int maxHeight = 2 * QFontMetrics(option.font).lineSpacing();
+		if (textShowRC.height() > maxHeight) {
+			while (nameStr.size() > 0) {
+				nameStr.chop(1);
+				textShowRC = m_painter->boundingRect(textLimitRC, nameStr + "...", m_textOption).toRect();
+				if (textShowRC.height() <= maxHeight) {
+					nameStr += "...";
+					break;
+				}
+			}
+		}
 
 		m_painter->drawText(
 			textShowRC,
-			item->text(),
+			nameStr,
 			m_textOption
 		);
 	}
