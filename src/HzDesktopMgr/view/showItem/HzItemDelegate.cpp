@@ -33,7 +33,10 @@ QSize HzItemDelegate::sizeHint(const QStyleOptionViewItem& option, const QModelI
 	m_painter->setFont(option.font);
 	int textHeight = (int)m_painter->boundingRect(textLimitRC,
 		index.data(Qt::DisplayRole).toString(), m_textOption).height();
-	textHeight = getLimitedTextHeight(option.font, textHeight);
+	if (!option.state.testFlag(QStyle::State_On)) {
+		textHeight = qMin(textHeight,
+			MAX_TEXT_SHOW_LINE * QFontMetrics(option.font).lineSpacing());
+	}
 	m_painter->end();
 
 	return sizeRet + QSize(0, textHeight);
@@ -277,23 +280,27 @@ QPixmap HzItemDelegate::paintIconText(
 			QPoint(option.rect.width(), option.rect.height())
 		);
 
-		QString nameStr = item->text();
-		QRect textShowRC = m_painter->boundingRect(textLimitRC, nameStr, m_textOption).toRect();
-		int maxHeight = 2 * QFontMetrics(option.font).lineSpacing();
-		if (textShowRC.height() > maxHeight) {
-			while (nameStr.size() > 0) {
-				nameStr.chop(1);
-				textShowRC = m_painter->boundingRect(textLimitRC, nameStr + "...", m_textOption).toRect();
-				if (textShowRC.height() <= maxHeight) {
-					nameStr += "...";
-					break;
+		QString displayText = item->text();
+		QRect textShowRC = m_painter->boundingRect(textLimitRC, displayText, m_textOption).toRect();
+		int maxHeight = MAX_TEXT_SHOW_LINE * QFontMetrics(option.font).lineSpacing();
+		// TODO 下面嵌套太多，优化
+		if (!option.state.testFlag(QStyle::State_On)) {
+			// 实现名称过长时的省略显示
+			if (textShowRC.height() > maxHeight) {
+				while (displayText.size() > 0) {
+					displayText.chop(1);
+					textShowRC = m_painter->boundingRect(textLimitRC, displayText + "...", m_textOption).toRect();
+					if (textShowRC.height() <= maxHeight) {
+						displayText += "...";
+						break;
+					}
 				}
 			}
 		}
 
 		m_painter->drawText(
 			textShowRC,
-			nameStr,
+			displayText,
 			m_textOption
 		);
 	}
@@ -302,14 +309,4 @@ QPixmap HzItemDelegate::paintIconText(
 	m_painter->end();
 
 	return retPixmap;
-}
-
-inline int HzItemDelegate::getLimitedTextHeight(const QFont& font, int height) const
-{
-	// 文本显示最多两行
-#define MAX_TEXT_SHOW_LINE 2
-
-	QFontMetrics fontMetrics(font);
-
-	return qMin(height, MAX_TEXT_SHOW_LINE * fontMetrics.lineSpacing());;
 }

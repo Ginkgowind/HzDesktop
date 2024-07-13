@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QFontMetrics>
 #include <QSize>
 #include <QDateTime>
 
@@ -9,6 +10,10 @@
 #define LARGE_ICON_SIZE			128
 #define MEDIUM_ICON_SIZE		100
 #define SMALL_ICON_SIZE			64
+
+// 文本显示最多两行
+// TODO 后续确定之后，就优化为输入font返回height的宏
+#define MAX_TEXT_SHOW_LINE 2
 
 enum WorkMode
 {
@@ -76,6 +81,8 @@ public:
 	QSize itemSpaceSize;
 
 	QSize gridSize;
+
+	QFont font;
 };
 
 void removePixmapCache(const QString& filePath);

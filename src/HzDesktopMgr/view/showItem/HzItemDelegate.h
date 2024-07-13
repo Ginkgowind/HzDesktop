@@ -69,8 +69,6 @@ private:
 		QStandardItem* item
 	) const;
 
-	inline int getLimitedTextHeight(const QFont& font, int height) const;
-
 private:
 
 	QPainter* m_painter;

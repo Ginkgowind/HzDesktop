@@ -22,8 +22,6 @@
 #include "windows/UiOperation.h"
 #include "windows/tools.h"
 
-#define TEXT_MAX_HEIGHT			40
-
 HzDesktopIconView::HzDesktopIconView(QWidget* parent)
 	: QAbstractItemView(parent)
 	, HzDesktopPublic(new HzDesktopIconViewPrivate())
@@ -63,10 +61,7 @@ HzDesktopIconView::HzDesktopIconView(QWidget* parent)
 
 	new HzWindowsMimeIdl();
 
-	// 初始化显示样式相关
-	QFont font("Microsoft YaHei");
-	font.setPixelSize(13);
-	setFont(font);
+	setFont(m_param.font);
 }
 
 HzDesktopIconView::~HzDesktopIconView()
@@ -363,6 +358,8 @@ void HzDesktopIconView::mouseReleaseEvent(QMouseEvent* e)
 		viewport()->update(m_elasticBand);
 		m_elasticBand = QRect();
 	}
+
+	qDebug() << "curr " << currentIndex().row();
 }
 
 void HzDesktopIconView::mouseDoubleClickEvent(QMouseEvent* event)
@@ -514,6 +511,7 @@ void HzDesktopIconView::paintEvent(QPaintEvent* e)
 	}
 
 	QStyleOptionViewItem option = QAbstractItemView::viewOptions();
+	QStyleOptionViewItem singleCheckedOption;
 	// TODO 这里e->rect()怎么每次都是最大大小
 	const QModelIndexList toBeRendered = intersectingSet(e->rect());
 	const QModelIndex current = currentIndex();
@@ -547,14 +545,30 @@ void HzDesktopIconView::paintEvent(QPaintEvent* e)
 			option.palette.setCurrentColorGroup(cg);
 		}
 
+		option.state.setFlag(QStyle::State_MouseOver, *it == hover);
+		option.state.setFlag(QStyle::State_On, false);
+
 		if (focus && current == *it) {
 			option.state |= QStyle::State_HasFocus;
-			if (viewState == EditingState)
+			if (viewState == EditingState) {
 				option.state |= QStyle::State_Editing;
+			}
+			if (selectedIndexes().size() == 1) {
+				qDebug() << "checked " << it->row();
+				option.state.setFlag(QStyle::State_On, true);
+				option.rect.setSize(m_itemDelegate->sizeHint(option, *it));
+				singleCheckedOption = option;
+				continue;
+			}
 		}
-		option.state.setFlag(QStyle::State_MouseOver, *it == hover);
 
 		itemDelegate()->paint(&painter, option, *it);
+	}
+
+	// 选中的item要最后绘制，以使其在Zorder是最上层
+	if (singleCheckedOption.state.testFlag(QStyle::State_On)) {
+		removePixmapCache(m_itemModel->filePath(current));
+		itemDelegate()->paint(&painter, singleCheckedOption, current);
 	}
 
 	// 仅在当前插入位置是有图标显示的网格时，才显示指示线

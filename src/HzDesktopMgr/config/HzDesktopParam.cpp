@@ -2,8 +2,6 @@
 
 #include "HzDesktopParam.h"
 
-#define TEXT_MAX_HEIGHT			40
-
 HzDesktopParam::HzDesktopParam()
 	: workMode(GridMode)
 	, iconMargin(5, 5)
@@ -14,6 +12,7 @@ HzDesktopParam::HzDesktopParam()
 	, iconMode(MediumIcon)
 	, sortRole(Qt::DisplayRole)
 	, sortOrder(Qt::AscendingOrder)
+	, font("Microsoft YaHei")
 {
 	setIconSizeMode(iconMode);
 }
@@ -41,9 +40,11 @@ void HzDesktopParam::setIconSizeMode(IconSizeMode mode)
 
 void HzDesktopParam::updateGridSize()
 {
+	int textAreaHeight = MAX_TEXT_SHOW_LINE * QFontMetrics(font).lineSpacing();
+
 	gridSize = iconSize
 		+ 2 * iconMargin
-		+ QSize(0, TEXT_MAX_HEIGHT)
+		+ QSize(0, textAreaHeight)
 		+ itemSpaceSize;
 }
 
