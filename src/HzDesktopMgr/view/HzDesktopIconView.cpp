@@ -144,10 +144,18 @@ void HzDesktopIconView::initSignalAndSlot()
 		});
 
 	connect(this, &QAbstractItemView::clicked, [this](const QModelIndex& index) {
+		m_singleCheckedIndex = index;
+		update(index);
 		qDebug()
-			<< index.row()
-			<< m_itemModel->item(index.row())->data(FileLastModifiedRole).toDateTime();
+			<< "click -> " << index.row();
 		});
+
+	//connect(this, &QAbstractItemView::activated, [this](const QModelIndex& index) {
+	//	m_singleCheckedIndex = index;
+	//	update(index);
+	//	qDebug()
+	//		<< index.row();
+	//	});
 
 	connect(m_desktopBlankMenu, &HzDesktopBkgMenu::onNewFile,
 		d, &HzDesktopIconViewPrivate::handleMenuNewFile);
@@ -175,6 +183,7 @@ QRect HzDesktopIconView::visualRect(const QModelIndex& index) const
 
 	QStyleOptionViewItem option = viewOptions();
 	option.rect = QRect(QPoint(0, 0), m_param.iconSize + 2 * m_param.iconMargin);
+	option.state.setFlag(QStyle::State_On, index == m_singleCheckedIndex);
 
 	return QRect(showPos, m_itemDelegate->sizeHint(option, index));
 }
@@ -295,6 +304,16 @@ void HzDesktopIconView::mousePressEvent(QMouseEvent* e)
 	QAbstractItemView::mousePressEvent(e);
 
 	m_pressedPos = e->pos();
+
+	// TODO 为什么单选item之后，再单击空白处，会残留绘制，而单击Item就没有问题？
+	// 是不是下面的update(preCheckedIndex)有问题没有清理到？
+	if (m_singleCheckedIndex.isValid()) {
+		QModelIndex preCheckedIndex = m_singleCheckedIndex;
+		removePixmapCache(m_itemModel->filePath(m_singleCheckedIndex));
+		m_singleCheckedIndex = QModelIndex();
+		update(preCheckedIndex);
+		//viewport()->update();
+	}
 
 	QModelIndex index = indexAt(m_pressedPos);
 	if (index.isValid()) {
@@ -529,6 +548,10 @@ void HzDesktopIconView::paintEvent(QPaintEvent* e)
 
 	QModelIndexList::const_iterator end = toBeRendered.constEnd();
 	for (QModelIndexList::const_iterator it = toBeRendered.constBegin(); it != end; ++it) {
+		if (isIndexHidden(*it)) {
+			continue;
+		}
+		
 		option.rect = visualRect(*it);
 		option.state = state;
 		if (selectionModel() && selectionModel()->isSelected(*it))
@@ -546,20 +569,19 @@ void HzDesktopIconView::paintEvent(QPaintEvent* e)
 		}
 
 		option.state.setFlag(QStyle::State_MouseOver, *it == hover);
-		option.state.setFlag(QStyle::State_On, false);
 
 		if (focus && current == *it) {
 			option.state |= QStyle::State_HasFocus;
 			if (viewState == EditingState) {
 				option.state |= QStyle::State_Editing;
 			}
-			if (selectedIndexes().size() == 1) {
-				qDebug() << "checked " << it->row();
-				option.state.setFlag(QStyle::State_On, true);
-				option.rect.setSize(m_itemDelegate->sizeHint(option, *it));
-				singleCheckedOption = option;
-				continue;
-			}
+		}
+
+		option.state.setFlag(QStyle::State_On, false);
+		if (*it == m_singleCheckedIndex) {
+			option.state.setFlag(QStyle::State_On, true);
+			singleCheckedOption = option;
+			continue;
 		}
 
 		itemDelegate()->paint(&painter, option, *it);
