@@ -9,6 +9,7 @@
 #include <QDrag>
 #include <QMenu>
 #include <QUrl>
+#include <QDir>
 #include <QDebug>
 
 #include <winrt/base.h>
@@ -305,16 +306,6 @@ void HzDesktopIconView::mousePressEvent(QMouseEvent* e)
 
 	m_pressedPos = e->pos();
 
-	// TODO 为什么单选item之后，再单击空白处，会残留绘制，而单击Item就没有问题？
-	// 是不是下面的update(preCheckedIndex)有问题没有清理到？
-	if (m_singleCheckedIndex.isValid()) {
-		QModelIndex preCheckedIndex = m_singleCheckedIndex;
-		removePixmapCache(m_itemModel->filePath(m_singleCheckedIndex));
-		m_singleCheckedIndex = QModelIndex();
-		update(preCheckedIndex);
-		//viewport()->update();
-	}
-
 	QModelIndex index = indexAt(m_pressedPos);
 	if (index.isValid()) {
 		QItemSelectionModel::SelectionFlags command = selectionCommand(index, e);
@@ -323,6 +314,15 @@ void HzDesktopIconView::mousePressEvent(QMouseEvent* e)
 			m_ctrlDragSelectionFlag = selectionModel()->isSelected(index) ? QItemSelectionModel::Deselect : QItemSelectionModel::Select;
 			command |= m_ctrlDragSelectionFlag;
 		}
+	}
+
+	if (m_singleCheckedIndex.isValid() && m_singleCheckedIndex != index) {
+		QRect preCheckedRect = visualRect(m_singleCheckedIndex);
+		removePixmapCache(m_itemModel->filePath(m_singleCheckedIndex));
+		m_singleCheckedIndex = QModelIndex();
+		// TODO QAbstractItemView::update(const QModelIndex &index) 里就是调用的viewPort的update，
+		// 需要确认下有没有考虑了viewPort的offset
+		viewport()->update(preCheckedRect);
 	}
 }
 
@@ -438,6 +438,7 @@ void HzDesktopIconView::dragMoveEvent(QDragMoveEvent* e)
 {
 	QAbstractItemView::dragMoveEvent(e);
 	
+	e->setDropAction(Qt::MoveAction);
 	e->accept();
 
 	const QPoint pos = e->pos();	// TODO 后续再统一处理offset
@@ -478,18 +479,17 @@ void HzDesktopIconView::dropEvent(QDropEvent* e)
 		handleInternalDrop(e);
 	}
 	else {
-		e->accept();
-		//QAbstractItemView::dropEvent(e);
-		//handleExternalDrop(e);
+		handleExternalDrop(e);
 	}
 
 	m_insertRow = -1;
 
 	setState(NoState);
 
-	// 删除末尾的占位格
+	// 删除末尾的占位格；有路径的也不能删，因为是从外部拖入的预备格
 	for (int i = m_itemModel->rowCount() - 1; i >= 0; i--) {
-		if (!isIndexHidden(m_itemModel->index(i, 0))) {
+		QModelIndex index = m_itemModel->index(i, 0);
+		if (!isIndexHidden(index) || !m_itemModel->filePath(index).isEmpty()) {
 			break;
 		}
 
@@ -741,6 +741,28 @@ void HzDesktopIconView::handleInternalDrop(QDropEvent* e)
 
 void HzDesktopIconView::handleExternalDrop(QDropEvent* e)
 {
+	QItemSelection selection;
+	QStringList pathList;
+	int insertRow = m_insertRow;
+
+	// TODO 测试e->mimeData()->urls()直接放在 : 之后是否相当于单次读取的临时变量
+	for (const QUrl& url : e->mimeData()->urls()) {
+		pathList.push_back(url.toLocalFile());
+
+		QString path = QDir(m_param.dirPath).absoluteFilePath(
+			QFileInfo(url.toLocalFile()).fileName());
+		QStandardItem* item = new QStandardItem();
+		item->setData(path, CustomRoles::FilePathRole);
+		item->setEnabled(false);
+		m_itemModel->insertItems(insertRow++, { item });
+		selection.append(QItemSelectionRange(m_itemModel->index(insertRow, 0)));
+	}
+
+	// drop结束后重新将拖动的item设置为选中状态
+	selectionModel()->select(selection, QItemSelectionModel::Select);
+
+	//m_itemMenu->handleCut(pathList);
+	//m_desktopBlankMenu->handlePaste();
 }
 
 void HzDesktopIconView::handleSetIconSizeMode(IconSizeMode mode)

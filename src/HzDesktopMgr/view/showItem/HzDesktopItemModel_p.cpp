@@ -538,9 +538,17 @@ void HzDesktopItemModelPrivate::handleFileCreated(QStandardItem* item)
 		return;
 	}
 
-	// 查找第一个空格设置到该位置，否则就添加到末尾
+	// 先查找是否有相同路径的，如果有就设置到该item
 	bool bFound = false;
-	for (int i = 0; i < q->rowCount(); i++) {
+	for (int i = 0; !bFound && i < q->rowCount(); i++) {
+		if (q->filePath(q->index(i, 0)) == item->data(CustomRoles::FilePathRole).toString()) {
+			q->setItem(i, item);
+			bFound = true;
+		}
+	}
+
+	// 查找第一个空格设置到该位置，否则就添加到末尾
+	for (int i = 0; !bFound && i < q->rowCount(); i++) {
 		QStandardItem* tmpItem = q->itemFromIndex(q->index(i, 0));
 		if (!tmpItem->isEnabled()) {
 			q->setItem(i, item);

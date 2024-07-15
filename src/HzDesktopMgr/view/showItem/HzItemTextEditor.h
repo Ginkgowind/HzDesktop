@@ -4,6 +4,9 @@
 #include <QStyleOptionViewItem>
 #include <QPainter>
 
+#define EDITOR_X_ADJUSTMENT 10
+#define EDITOR_Y_ADJUSTMENT 5
+
 class HzItemTextEditor  : public QPlainTextEdit
 {
 	Q_OBJECT

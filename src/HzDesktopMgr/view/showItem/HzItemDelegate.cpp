@@ -86,6 +86,8 @@ void HzItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) co
 	QStyledItemDelegate::setEditorData(editor, index);
 	QFileInfo fileInfo(index.data(CustomRoles::FilePathRole).toString());
 	HzItemTextEditor* textEditor = qobject_cast<HzItemTextEditor*>(editor);
+	// 设置最小高度为一行
+	textEditor->setMinimumHeight(QFontMetrics(editor->font()).lineSpacing() + EDITOR_Y_ADJUSTMENT);
 
 	if (fileInfo.isDir()) {
 		textEditor->selectAll();

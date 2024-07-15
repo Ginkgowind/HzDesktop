@@ -40,7 +40,7 @@ void HzItemTextEditor::updateGeometryParam(const QPoint& middleTop, int maxWidth
 
 void HzItemTextEditor::handleTextChanged()
 {
-	// textLimitRect的高度要足够大，measurePixmap的高度无所谓
+	// textLimitRect和measurePixmap的高度都无所谓
 	QRectF textLimitRect(0, 0, m_maxWidth, 200);
 	QPixmap measurePixmap(m_maxWidth, 10);
 
@@ -50,11 +50,11 @@ void HzItemTextEditor::handleTextChanged()
 
 	QSize currentTextSize = s_pMeasurePainter->boundingRect(
 		textLimitRect, toPlainText(), document()->defaultTextOption()).toRect().size();
+	// 限制最低高度为一行
+	currentTextSize.rheight() = qMax(currentTextSize.rheight(), QFontMetrics(font()).lineSpacing());
 	// TODO 不加下面这一行多出的空白行是什么
-	currentTextSize.rheight() += 5;
-	currentTextSize.rwidth() += 2;
-
-	// TODO 文字周边还是有空白边距，最下面还会多一行空行，想办法都去掉
+	currentTextSize.rwidth() += EDITOR_X_ADJUSTMENT;
+	currentTextSize.rheight() += EDITOR_Y_ADJUSTMENT;
 
 	setGeometry(
 		m_middleTop.x() - currentTextSize.rwidth() / 2,

@@ -33,7 +33,7 @@ class HzItemMenuPrivate : public HzDesktopPrivate
 {
 	Q_OBJECT
 
-		HZQ_DECLARE_PUBLIC(HzItemMenu)
+	HZQ_DECLARE_PUBLIC(HzItemMenu)
 
 public:
 	// 这里因为桌面上的文件同时含有公共桌面和用户桌面两个文件夹的内容，
