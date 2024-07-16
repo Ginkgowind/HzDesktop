@@ -33,6 +33,9 @@ public:
 private:
 	void initSignalAndSlot();
 
+signals:
+	void onExternalDrop(const QModelIndex& index);
+
 protected:
 	virtual void initParam();
 

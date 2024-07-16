@@ -151,6 +151,9 @@ void HzDesktopIconView::initSignalAndSlot()
 			<< "click -> " << index.row();
 		});
 
+	connect(this, &HzDesktopIconView::onExternalDrop,
+		m_itemModel, &HzDesktopItemModel::handleExternalDrop);
+
 	//connect(this, &QAbstractItemView::activated, [this](const QModelIndex& index) {
 	//	m_singleCheckedIndex = index;
 	//	update(index);
@@ -426,6 +429,7 @@ void HzDesktopIconView::dragEnterEvent(QDragEnterEvent* e)
 
 	//qDebug() << e->mimeData()->urls()[0];
 
+	// TODO 如果这里不接收但是dragmove里接受会怎么样？是不是应该只在这里接受？
 	if (HzDrag::source() == this) {
 
 	}
@@ -753,8 +757,8 @@ void HzDesktopIconView::handleExternalDrop(QDropEvent* e)
 			QFileInfo(url.toLocalFile()).fileName());
 		QStandardItem* item = new QStandardItem();
 		item->setData(path, CustomRoles::FilePathRole);
-		item->setEnabled(false);
 		m_itemModel->insertItems(insertRow++, { item });
+		emit onExternalDrop(item->index());
 		selection.append(QItemSelectionRange(m_itemModel->index(insertRow, 0)));
 	}
 

@@ -65,6 +65,13 @@ void HzDesktopItemModel::refreshItems()
 	//d->m_fileItemWatcher.refreshFileItem();
 }
 
+void HzDesktopItemModel::handleExternalDrop(const QModelIndex& index)
+{
+	QFileInfo fileInfo(filePath(index));
+
+	setItem(index.row(), )
+}
+
 void HzDesktopItemModel::insertItems(int row, const QList<QStandardItem*>& items)
 {
 	// 从插入位置开始向后遍历，插入几个元素就删除几个占位元素

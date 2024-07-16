@@ -25,6 +25,8 @@ public:
 
 	void refreshItems();
 
+	void handleExternalDrop(const QModelIndex& index);
+
 	// 会自动消除占位符的插入函数
 	void insertItems(int row, const QList<QStandardItem*>& items);
 
