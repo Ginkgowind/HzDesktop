@@ -29,6 +29,7 @@ public:
 	static inline void CheckItem(HMENU hMenu, UINT itemID, bool bCheck);
 };
 
+// 仅适用于桌面
 class HzItemMenuPrivate : public HzDesktopPrivate
 {
 	Q_OBJECT
@@ -40,11 +41,12 @@ public:
 	// 经测试只有通过顶层桌面接口枚举出来的id才有效，别的各种方法都会有奇奇怪怪的问题
 	// tips : 外部要处理返回值的资源释放
 	// TODO后续做格子的时候再优化代码结构，只有桌面的才枚举，别的不用这种方式
-	std::vector<PITEMID_CHILD> getPidcFromPaths(const QStringList& paths);
+	std::vector<PITEMID_CHILD> getDesktopPidcFromPaths(const QStringList& paths);
 
 	void executeActionFromContextMenu(const QStringList& pathList, const std::string& action);
 };
 
+// 这个类是通用的，桌面和普通文件夹都可用
 class HzDesktopBkgMenuPrivate : public HzDesktopPrivate
 {
 	Q_OBJECT

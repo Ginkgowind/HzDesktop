@@ -34,7 +34,7 @@ private:
 	void initSignalAndSlot();
 
 signals:
-	void onExternalDrop(const QModelIndex& index);
+	void onExternalDrop(const QString& oriFilePath, QStandardItem* item);;
 
 protected:
 	virtual void initParam();

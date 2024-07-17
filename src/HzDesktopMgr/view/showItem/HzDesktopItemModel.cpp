@@ -12,6 +12,7 @@
 #include "HzDesktopItemModel.h"
 #include "HzDesktopItemModel_p.h"
 #include "config/HzDesktopParam.h"
+#include "windows/UiOperation.h"
 
 HzDesktopItemModel::HzDesktopItemModel(QObject *parent, HzDesktopParam* param)
 	: QStandardItemModel(parent)
@@ -65,11 +66,17 @@ void HzDesktopItemModel::refreshItems()
 	//d->m_fileItemWatcher.refreshFileItem();
 }
 
-void HzDesktopItemModel::handleExternalDrop(const QModelIndex& index)
+void HzDesktopItemModel::handleExternalDrop(const QString& oriFilePath, QStandardItem* item)
 {
-	QFileInfo fileInfo(filePath(index));
+	SHFILEINFOW shFileInfo = { 0 };
+	SHGetFileInfoW(oriFilePath.toStdWString().c_str(), 0, &shFileInfo, sizeof(SHFILEINFO),
+		SHGFI_DISPLAYNAME | SHGFI_USEFILEATTRIBUTES);
 
-	setItem(index.row(), )
+	QIcon itemIcon = HZ::getUltimateIcon(oriFilePath);
+	QString displayName = QFileInfo(QString::fromStdWString(shFileInfo.szDisplayName)).fileName();
+
+	item->setIcon(itemIcon);
+	item->setText(displayName);
 }
 
 void HzDesktopItemModel::insertItems(int row, const QList<QStandardItem*>& items)

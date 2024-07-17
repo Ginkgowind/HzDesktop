@@ -374,7 +374,7 @@ QStandardItem* DesktopFileItemWatcher::genQStandardItem(const QFileInfo& fileInf
 	SHGetFileInfoW(fileInfo.absoluteFilePath().toStdWString().c_str(), 0, &shFileInfo, sizeof(SHFILEINFO), 
 		SHGFI_TYPENAME | SHGFI_DISPLAYNAME | SHGFI_USEFILEATTRIBUTES);
 	
-	QIcon itemIcon = getUltimateIcon(fileInfo.absoluteFilePath());
+	QIcon itemIcon = HZ::getUltimateIcon(fileInfo.absoluteFilePath());
 	QString displayName = QFileInfo(QString::fromStdWString(shFileInfo.szDisplayName)).fileName();
 
 	newItem->setIcon(itemIcon);
@@ -396,17 +396,6 @@ QStandardItem* DesktopFileItemWatcher::genQStandardItem(const QFileInfo& fileInf
 	//auto test3 = itemIcon.actualSize({ 90, 90 });
 
 	return newItem;
-}
-
-QIcon DesktopFileItemWatcher::getUltimateIcon(const QString& filePath)
-{
-	QPixmap pixmap = HZ::getThumbnailFromPath(filePath);
-
-	if (pixmap.isNull() || pixmap.toImage().allGray()) {
-		pixmap = HZ::getPixmapFromPath(filePath);
-	}
-
-	return pixmap;
 }
 
 void DesktopFileItemWatcher::handleObserveResult(const QString& strWatchDirectory, const FILE_NOTIFY_INFORMATION* pNotification)

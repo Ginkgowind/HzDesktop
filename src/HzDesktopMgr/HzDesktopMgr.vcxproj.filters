@@ -69,7 +69,7 @@
     <ClCompile Include="..\..\include\common\StringConv.cpp">
       <Filter>include\common</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\include\windows\FileInfoGather.cpp">
+    <ClCompile Include="..\..\include\windows\FileUtils.cpp">
       <Filter>include\windows</Filter>
     </ClCompile>
     <ClCompile Include="..\..\include\windows\tools.cpp">
@@ -135,7 +135,7 @@
     <ClInclude Include="..\..\include\common\StringConv.h">
       <Filter>include\common</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\windows\FileInfoGather.h">
+    <ClInclude Include="..\..\include\windows\FileUtils.h">
       <Filter>include\windows</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\windows\tools.h">

@@ -130,7 +130,7 @@ void HzItemMenu::onExplorerMenu()
 			break;
 		}
 
-		idChildvec = d->getPidcFromPaths(m_selectedItemList);
+		idChildvec = d->getDesktopPidcFromPaths(m_selectedItemList);
 		if (idChildvec.empty()) {
 			break;
 		}

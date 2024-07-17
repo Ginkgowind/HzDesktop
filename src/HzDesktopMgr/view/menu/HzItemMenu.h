@@ -49,6 +49,10 @@ public:
 
 	void handleDelete(const QStringList& itemList);
 
+	void handleCopyCommon(const QStringList& itemList);
+
+	void handleCutCommon(const QStringList& itemList);
+
 signals:
 	void onOpen();
 	void onCopy();

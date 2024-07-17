@@ -96,7 +96,7 @@ HRESULT _stdcall DropSource::GiveFeedback(DWORD dwEffect)
 {
 	UNREFERENCED_PARAMETER(dwEffect);
 
-	return S_OK;
+	//return S_OK;
 	return DRAGDROP_S_USEDEFAULTCURSORS;
 }
 

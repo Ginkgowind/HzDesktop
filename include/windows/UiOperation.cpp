@@ -29,6 +29,17 @@ namespace HZ
 		return result;
 	}
 
+	QIcon getUltimateIcon(const QString& filePath)
+	{
+		QPixmap pixmap = HZ::getThumbnailFromPath(filePath);
+
+		if (pixmap.isNull() || pixmap.toImage().allGray()) {
+			pixmap = HZ::getPixmapFromPath(filePath);
+		}
+
+		return pixmap;
+	}
+
 	bool isInvalidPixmap(const QPixmap& pixmap)
 	{
 		bool bRet = false;

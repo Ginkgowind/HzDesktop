@@ -11,7 +11,7 @@ DesktopBackgroundView::DesktopBackgroundView()
 
 	//setAttribute(Qt::WA_TranslucentBackground, true);
 
-	// TODO 单独设置下面这个为什么会变黑
+	//// TODO 单独设置下面这个为什么会变黑
 	//setStyleSheet("background: transparent;");
 }
 

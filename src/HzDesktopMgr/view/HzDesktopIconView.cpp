@@ -4,6 +4,7 @@
 #include <QMouseEvent>
 #include <QApplication>
 #include <QShortcut>
+#include <QClipboard>
 #include <QMimeData>
 #include <QPainter>
 #include <QDrag>
@@ -22,6 +23,7 @@
 #include "dragdrop/HzWindowsMimeIdl.h"
 #include "windows/UiOperation.h"
 #include "windows/tools.h"
+#include "windows/FileUtils.h"
 
 HzDesktopIconView::HzDesktopIconView(QWidget* parent)
 	: QAbstractItemView(parent)
@@ -44,9 +46,8 @@ HzDesktopIconView::HzDesktopIconView(QWidget* parent)
 
 	//setDropIndicatorShown(true); // 显示拖放位置指示器
 
-	setStyleSheet("QAbstractItemView {background-color: transparent;}");
-	setAttribute(Qt::WA_TranslucentBackground, true);
-	//setWindowFlags(Qt::Tool | Qt::FramelessWindowHint);
+	//setStyleSheet("QAbstractItemView {background-color: transparent;}");
+	//setAttribute(Qt::WA_TranslucentBackground, true);
 
 	setDragEnabled(true);
 	setAcceptDrops(true);
@@ -746,27 +747,30 @@ void HzDesktopIconView::handleInternalDrop(QDropEvent* e)
 void HzDesktopIconView::handleExternalDrop(QDropEvent* e)
 {
 	QItemSelection selection;
-	QStringList pathList;
 	int insertRow = m_insertRow;
 
 	// TODO 测试e->mimeData()->urls()直接放在 : 之后是否相当于单次读取的临时变量
 	for (const QUrl& url : e->mimeData()->urls()) {
-		pathList.push_back(url.toLocalFile());
+		QString oriFilePath = url.toLocalFile();
 
-		QString path = QDir(m_param.dirPath).absoluteFilePath(
-			QFileInfo(url.toLocalFile()).fileName());
+		QString targetFilePath = QDir(m_param.dirPath).absoluteFilePath(QFileInfo(oriFilePath).fileName());
 		QStandardItem* item = new QStandardItem();
-		item->setData(path, CustomRoles::FilePathRole);
+		item->setData(targetFilePath, CustomRoles::FilePathRole);
 		m_itemModel->insertItems(insertRow++, { item });
-		emit onExternalDrop(item->index());
+		emit onExternalDrop(oriFilePath, item);
 		selection.append(QItemSelectionRange(m_itemModel->index(insertRow, 0)));
+
+		HZ::moveFile(oriFilePath, targetFilePath, true);
+		//if (e->dropAction() == Qt::CopyAction) {
+		//	HZ::copyFile(oriFilePath, targetFilePath, true);
+		//}
+		//else if (e->dropAction() == Qt::MoveAction) {
+		//	HZ::moveFile(oriFilePath, targetFilePath, true);
+		//}
 	}
 
 	// drop结束后重新将拖动的item设置为选中状态
 	selectionModel()->select(selection, QItemSelectionModel::Select);
-
-	//m_itemMenu->handleCut(pathList);
-	//m_desktopBlankMenu->handlePaste();
 }
 
 void HzDesktopIconView::handleSetIconSizeMode(IconSizeMode mode)

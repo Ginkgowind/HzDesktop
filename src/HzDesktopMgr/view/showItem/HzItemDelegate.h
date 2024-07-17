@@ -56,12 +56,6 @@ private:
 		const QStyleOptionViewItem& option
 	) const;
 
-	void paintText(
-		QPainter* painter,
-		const QStyleOptionViewItem& option,
-		QStandardItem* item
-	) const;
-
 	// 不用paint传来的painter，会有很多问题
 	QPixmap paintIconText(
 		const QStyleOptionViewItem& option,

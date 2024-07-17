@@ -114,7 +114,7 @@
     <ClCompile Include="..\..\include\common\CommonTools.cpp" />
     <ClCompile Include="..\..\include\common\ResourceHelper.cpp" />
     <ClCompile Include="..\..\include\common\StringConv.cpp" />
-    <ClCompile Include="..\..\include\windows\FileInfoGather.cpp" />
+    <ClCompile Include="..\..\include\windows\FileUtils.cpp" />
     <ClCompile Include="..\..\include\windows\tools.cpp" />
     <ClCompile Include="..\..\include\windows\UiOperation.cpp" />
     <ClCompile Include="..\..\include\windows\WindowSubclassWrapper.cpp" />
@@ -140,7 +140,7 @@
     <ClInclude Include="..\..\include\common\ResourceHelper.h" />
     <ClInclude Include="..\..\include\common\StringConv.h" />
     <ClInclude Include="..\..\include\windows\EnsureCleanup.h" />
-    <ClInclude Include="..\..\include\windows\FileInfoGather.h" />
+    <ClInclude Include="..\..\include\windows\FileUtils.h" />
     <ClInclude Include="..\..\include\windows\QWindowsComBase.h" />
     <ClInclude Include="..\..\include\windows\tools.h" />
     <ClInclude Include="..\..\include\windows\UiOperation.h" />

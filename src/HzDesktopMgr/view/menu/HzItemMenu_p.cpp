@@ -78,7 +78,7 @@ inline void MenuHelper::CheckItem(HMENU hMenu, UINT itemID, bool bCheck)
 	CheckMenuItem(hMenu, itemID, state);
 }
 
-std::vector<PITEMID_CHILD> HzItemMenuPrivate::getPidcFromPaths(const QStringList& paths)
+std::vector<PITEMID_CHILD> HzItemMenuPrivate::getDesktopPidcFromPaths(const QStringList& paths)
 {
 	std::vector<PITEMID_CHILD> pidlItems;
 
@@ -141,7 +141,7 @@ void HzItemMenuPrivate::executeActionFromContextMenu(const QStringList& pathList
 			break;
 		}
 
-		idChildvec = getPidcFromPaths(pathList);
+		idChildvec = getDesktopPidcFromPaths(pathList);
 		if (idChildvec.empty()) {
 			break;
 		}

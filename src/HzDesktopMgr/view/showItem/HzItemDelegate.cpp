@@ -56,12 +56,12 @@ void HzItemDelegate::paint(
 	}
 	
 	painter->save();
-	//option.rect ¾ÍÊÇ sizeHint µÄÖµ
+	//option.rect å°±æ˜¯ sizeHint çš„å€¼
 	paintBackground(painter, option);
 
 	QPixmap showPixmap;
-	// Ë÷ÒıÉèÖÃÎª Í¼±ê´óĞ¡+Â·¾¶£¬ÒÔ±ãÄÜ¹»Çø·Ö²»Í¬´óĞ¡µÄ»º´æ
-	// TODOÏÈÕâÑù´«°É£¬ºóĞøÓÅ»¯param´«µİ·½Ê½
+	// ç´¢å¼•è®¾ç½®ä¸º å›¾æ ‡å¤§å°+è·¯å¾„ï¼Œä»¥ä¾¿èƒ½å¤ŸåŒºåˆ†ä¸åŒå¤§å°çš„ç¼“å­˜
+	// TODOå…ˆè¿™æ ·ä¼ å§ï¼Œåç»­ä¼˜åŒ–paramä¼ é€’æ–¹å¼
 	const QString key = QString::number(itemView->getParam().iconMode) + item->data(CustomRoles::FilePathRole).toString();
 
 	if (!QPixmapCache::find(key, &showPixmap)) {
@@ -86,7 +86,7 @@ void HzItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) co
 	QStyledItemDelegate::setEditorData(editor, index);
 	QFileInfo fileInfo(index.data(CustomRoles::FilePathRole).toString());
 	HzItemTextEditor* textEditor = qobject_cast<HzItemTextEditor*>(editor);
-	// ÉèÖÃ×îĞ¡¸ß¶ÈÎªÒ»ĞĞ
+	// è®¾ç½®æœ€å°é«˜åº¦ä¸ºä¸€è¡Œ
 	textEditor->setMinimumHeight(QFontMetrics(editor->font()).lineSpacing() + EDITOR_Y_ADJUSTMENT);
 
 	if (fileInfo.isDir()) {
@@ -96,12 +96,12 @@ void HzItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) co
 
 	int suffixPos = fileInfo.fileName().lastIndexOf('.');
 	if (suffixPos == -1) {
-		// Ã»ÓĞºó×ºÒ²È«Ñ¡
+		// æ²¡æœ‰åç¼€ä¹Ÿå…¨é€‰
 		textEditor->selectAll();
 		return;
 	}
 
-	// Ñ¡Ôñºó×ºÇ°µÄËùÓĞÎÄ±¾
+	// é€‰æ‹©åç¼€å‰çš„æ‰€æœ‰æ–‡æœ¬
 	QTextCursor cursor = textEditor->textCursor();
 	cursor.setPosition(0);
 	cursor.setPosition(suffixPos, QTextCursor::KeepAnchor);
@@ -110,7 +110,7 @@ void HzItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) co
 
 void HzItemDelegate::updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-	// Í¼±êÏÔÊ¾ÇøÓòÎªÕı·½ĞÎ
+	// å›¾æ ‡æ˜¾ç¤ºåŒºåŸŸä¸ºæ­£æ–¹å½¢
 	int sideLength = option.rect.width();
 	QPoint middleTop = option.rect.topLeft() + QPoint{ sideLength / 2, sideLength };
 
@@ -120,10 +120,10 @@ void HzItemDelegate::updateEditorGeometry(QWidget* editor, const QStyleOptionVie
 
 bool HzItemDelegate::eventFilter(QObject* object, QEvent* event)
 {
-	// ¿´Ô´Âë¿ÉÖª do not filter enter / return / tab / backtab for QTextEdit or QPlainTextEdit
-	// ËùÒÔ´Ë´¦×ÔĞĞÊµÏÖ
+	// çœ‹æºç å¯çŸ¥ do not filter enter / return / tab / backtab for QTextEdit or QPlainTextEdit
+	// æ‰€ä»¥æ­¤å¤„è‡ªè¡Œå®ç°
 
-	// TODO ÁË½âQt¶Ô¼üÊóÊÂ¼şµÄ·Ö·¢£¬ÀàËÆÓÚjsÖĞÃ°ÅİÖ®ÀàµÄ
+	// TODO äº†è§£Qtå¯¹é”®é¼ äº‹ä»¶çš„åˆ†å‘ï¼Œç±»ä¼¼äºjsä¸­å†’æ³¡ä¹‹ç±»çš„
 	QWidget* editor = qobject_cast<QWidget*>(object);
 	if (event->type() == QEvent::KeyPress) {
 		QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
@@ -190,54 +190,20 @@ void HzItemDelegate::paintBackground(
 	painter->drawRect(option.rect);
 }
 
-void HzItemDelegate::paintText(
-	QPainter* painter,
-	const QStyleOptionViewItem& option,
-	QStandardItem* item
-) const
-{
-	// ·ÇÑ¡ÖĞ×´Ì¬×î´óÏÔÊ¾Á½ĞĞ£¬Ñ¡ÖĞÊ±»áÕ¹¿ªÈ«²¿
-
-	//do
-//{
-//	if (0 >= elideWidth)
-//	{
-//		// ²»ĞèÒª½Ø¶ÏÏÔÊ¾
-//		break;
-//	}
-
-//	// ¼ÆËãÎÄ±¾³¤¶ÈÊÇ·ñ³¬³¤£¬Ìæ»»ÎªÊ¡ÂÔºÅ
-//	QFontMetrics fontMetric(m_textFont);
-//	int needWidth = fontMetric.horizontalAdvance(text);
-//	if (needWidth < elideWidth)
-//	{
-//		// ÄÜ¹»Õı³£ÏÔÊ¾
-//		break;
-//	}
-
-//	// TODO ÕâÀï¼ÆËãÓÉÓÚ»á×Ô¶¯»»ĞĞ£¬Òò´Ë¿ÉÄÜ»¹ÊÇ´æÔÚ¸ÕºÃÓĞÒ»¸ö×Ö·û²»ÏÔÊ¾µÄÇé¿ö
-//	QString ellipsis = "...";
-//	int ellipsis_width = fontMetric.boundingRect(ellipsis).width();
-//	showText = fontMetric.elidedText(
-//		text, Qt::ElideRight, elideWidth - ellipsis_width);
-
-//} while (0);
-}
-
 QPixmap HzItemDelegate::paintIconText(
 	const QStyleOptionViewItem& option,
 	const HzDesktopParam& param,
 	QStandardItem* item
 ) const
 {
-	// ÕâÀïµÄsizeºÃÏñ²»ÓÃ¸Ä
+	// è¿™é‡Œçš„sizeå¥½åƒä¸ç”¨æ”¹
 	QPixmap retPixmap(option.rect.size());
 	retPixmap.fill(Qt::transparent);
 
-	 //ÇĞ»»»æÖÆÄ¿±ê
+	 //åˆ‡æ¢ç»˜åˆ¶ç›®æ ‡
 	m_painter->begin(&retPixmap);
 
-	// È¡¿ÉÄÜµÄ×î´óÍ¼±ê
+	// å–å¯èƒ½çš„æœ€å¤§å›¾æ ‡
 	QPixmap iconPixmap = item->icon().pixmap(MAX_ICON_SIZE, MAX_ICON_SIZE);
 	QPoint iconPos(param.iconMargin.width(), param.iconMargin.height());
 	if (iconPixmap.size().width() < param.iconSize.width() &&
@@ -251,10 +217,10 @@ QPixmap HzItemDelegate::paintIconText(
 		iconPixmap = iconPixmap.scaled(param.iconSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 	}
 
-	// »æÖÆicon
+	// ç»˜åˆ¶icon
 	m_painter->drawPixmap(iconPos, iconPixmap);
 
-	// Í¼±ê¹ıĞ¡¾Í»æÖÆ±ß¿ò
+	// å›¾æ ‡è¿‡å°å°±ç»˜åˆ¶è¾¹æ¡†
 	if (!iconPixmap.size().isEmpty() &&
 		iconPixmap.size().width() < param.iconSize.width() * 2 / 3 &&
 		iconPixmap.size().height() < param.iconSize.height() * 2 / 3) {
@@ -268,12 +234,8 @@ QPixmap HzItemDelegate::paintIconText(
 		m_painter->restore();
 	}
 
-	if (option.state.testFlag(QStyle::State_Editing)) {
-		int a = 1;
-	}
-
 	if (!option.state.testFlag(QStyle::State_Editing)) {
-		// »æÖÆÏÔÊ¾Ãû×Ö
+		// ç»˜åˆ¶æ˜¾ç¤ºåå­—
 		//m_painter->setPen(Qt::white);
 		m_painter->setFont(option.font);
 
@@ -285,9 +247,9 @@ QPixmap HzItemDelegate::paintIconText(
 		QString displayText = item->text();
 		QRect textShowRC = m_painter->boundingRect(textLimitRC, displayText, m_textOption).toRect();
 		int maxHeight = MAX_TEXT_SHOW_LINE * QFontMetrics(option.font).lineSpacing();
-		// TODO ÏÂÃæÇ¶Ì×Ì«¶à£¬ÓÅ»¯
+		// TODO ä¸‹é¢åµŒå¥—å¤ªå¤šï¼Œä¼˜åŒ–
 		if (!option.state.testFlag(QStyle::State_On)) {
-			// ÊµÏÖÃû³Æ¹ı³¤Ê±µÄÊ¡ÂÔÏÔÊ¾
+			// å®ç°åç§°è¿‡é•¿æ—¶çš„çœç•¥æ˜¾ç¤º
 			if (textShowRC.height() > maxHeight) {
 				while (displayText.size() > 0) {
 					displayText.chop(1);
@@ -307,7 +269,7 @@ QPixmap HzItemDelegate::paintIconText(
 		);
 	}
 
-	// »æÖÆ½áÊø
+	// ç»˜åˆ¶ç»“æŸ
 	m_painter->end();
 
 	return retPixmap;
