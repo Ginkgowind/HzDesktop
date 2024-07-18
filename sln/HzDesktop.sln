@@ -7,20 +7,47 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HzDesktopMgr", "..\src\HzDe
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SettingCenter", "..\src\SettingCenter\SettingCenter.vcxproj", "{2B882B00-E96B-40A6-8A6F-DB1166479E9F}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HzDesktopShellExt", "..\src\HzDesktopShellExt\HzDesktopShellExt.vcxproj", "{6909F883-1B9F-4900-9DCB-8FBCB4FCF0DD}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HzDesktopShellExtPS", "..\src\HzDesktopShellExt\HzDesktopShellExtPS\HzDesktopShellExtPS.vcxproj", "{07E55E3A-34F5-46B0-9217-C11AC7B4CF37}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6909F883-1B9F-4900-9DCB-8FBCB4FCF0DD} = {6909F883-1B9F-4900-9DCB-8FBCB4FCF0DD}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
 		Release|x64 = Release|x64
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{674F17EA-75A9-46E2-A621-2990A38AE852}.Debug|x64.ActiveCfg = Debug|x64
 		{674F17EA-75A9-46E2-A621-2990A38AE852}.Debug|x64.Build.0 = Debug|x64
+		{674F17EA-75A9-46E2-A621-2990A38AE852}.Debug|x86.ActiveCfg = Debug|x64
+		{674F17EA-75A9-46E2-A621-2990A38AE852}.Debug|x86.Build.0 = Debug|x64
 		{674F17EA-75A9-46E2-A621-2990A38AE852}.Release|x64.ActiveCfg = Release|x64
 		{674F17EA-75A9-46E2-A621-2990A38AE852}.Release|x64.Build.0 = Release|x64
+		{674F17EA-75A9-46E2-A621-2990A38AE852}.Release|x86.ActiveCfg = Release|x64
+		{674F17EA-75A9-46E2-A621-2990A38AE852}.Release|x86.Build.0 = Release|x64
 		{2B882B00-E96B-40A6-8A6F-DB1166479E9F}.Debug|x64.ActiveCfg = Debug|x64
 		{2B882B00-E96B-40A6-8A6F-DB1166479E9F}.Debug|x64.Build.0 = Debug|x64
+		{2B882B00-E96B-40A6-8A6F-DB1166479E9F}.Debug|x86.ActiveCfg = Debug|x64
+		{2B882B00-E96B-40A6-8A6F-DB1166479E9F}.Debug|x86.Build.0 = Debug|x64
 		{2B882B00-E96B-40A6-8A6F-DB1166479E9F}.Release|x64.ActiveCfg = Release|x64
 		{2B882B00-E96B-40A6-8A6F-DB1166479E9F}.Release|x64.Build.0 = Release|x64
+		{2B882B00-E96B-40A6-8A6F-DB1166479E9F}.Release|x86.ActiveCfg = Release|x64
+		{2B882B00-E96B-40A6-8A6F-DB1166479E9F}.Release|x86.Build.0 = Release|x64
+		{6909F883-1B9F-4900-9DCB-8FBCB4FCF0DD}.Debug|x64.ActiveCfg = Debug|x64
+		{6909F883-1B9F-4900-9DCB-8FBCB4FCF0DD}.Debug|x64.Build.0 = Debug|x64
+		{6909F883-1B9F-4900-9DCB-8FBCB4FCF0DD}.Debug|x86.ActiveCfg = Debug|x64
+		{6909F883-1B9F-4900-9DCB-8FBCB4FCF0DD}.Release|x64.ActiveCfg = Release|x64
+		{6909F883-1B9F-4900-9DCB-8FBCB4FCF0DD}.Release|x64.Build.0 = Release|x64
+		{6909F883-1B9F-4900-9DCB-8FBCB4FCF0DD}.Release|x86.ActiveCfg = Release|x64
+		{07E55E3A-34F5-46B0-9217-C11AC7B4CF37}.Debug|x64.ActiveCfg = Debug|x64
+		{07E55E3A-34F5-46B0-9217-C11AC7B4CF37}.Debug|x86.ActiveCfg = Debug|x64
+		{07E55E3A-34F5-46B0-9217-C11AC7B4CF37}.Release|x64.ActiveCfg = Release|x64
+		{07E55E3A-34F5-46B0-9217-C11AC7B4CF37}.Release|x86.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

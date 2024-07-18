@@ -1,0 +1,26 @@
+HKCR
+{
+	HzDesktopMenuExt.1.1 = s 'HzDesktopMenuExt class'
+	{
+		CLSID = s '{eed23024-9b96-4a84-afb6-a7e0c2cde7f5}'
+	}
+	HzDesktopMenuExt.1 = s 'HzDesktopMenuExt class'
+	{		
+		CurVer = s 'HzDesktopMenuExt.1.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {eed23024-9b96-4a84-afb6-a7e0c2cde7f5} = s 'HzDesktopMenuExt class'
+		{
+			ProgID = s 'HzDesktopMenuExt.1.1'
+			VersionIndependentProgID = s 'HzDesktopMenuExt.1'
+			ForceRemove Programmable
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Apartment'
+			}
+			TypeLib = s '{c56958dd-a53f-4818-9307-bc345c50e9af}'
+			Version = s '1.0'
+		}
+	}
+}
