@@ -17,6 +17,12 @@
       <UniqueIdentifier>{1abe5c63-daad-43bc-8b4d-d4a779ee8d76}</UniqueIdentifier>
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{56e76bda-730d-4cf6-aa13-3394d18190d8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\common">
+      <UniqueIdentifier>{bd48422f-9c60-410d-8efa-fde0db0a308a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -43,6 +49,12 @@
     <ClInclude Include="HzDesktopMenuExt.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\common\MenuHelper.h">
+      <Filter>include\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\common\CommonTools.h">
+      <Filter>include\common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="HzDesktopShellExt.cpp">
@@ -62,6 +74,12 @@
     </ClCompile>
     <ClCompile Include="HzDesktopMenuExt.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\common\MenuHelper.cpp">
+      <Filter>include\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\include\common\CommonTools.cpp">
+      <Filter>include\common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

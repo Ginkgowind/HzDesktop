@@ -106,6 +106,8 @@ private:
 		const FILE_NOTIFY_INFORMATION* pNotification
 	);
 
+	QString formatFileSize(qint64 size);
+
 private:
 	// 各个目录监控所维护的数据结构，单线程中调用，不用处理同步问题
 	std::vector<DirObserver> m_observerInfos;

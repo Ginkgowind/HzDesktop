@@ -62,6 +62,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <SDLCheck>true</SDLCheck>
       <LanguageStandard>stdcpp14</LanguageStandard>
+      <AdditionalIncludeDirectories>$(COMMON_INCLUDE_DIR)\;$(COMMON_INCLUDE_DIR)\third-party;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -122,6 +123,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\include\common\CommonTools.h" />
+    <ClInclude Include="..\..\include\common\MenuHelper.h" />
     <ClInclude Include="compreg.h" />
     <ClInclude Include="dllmain.h" />
     <ClInclude Include="framework.h" />
@@ -132,6 +135,8 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\include\common\CommonTools.cpp" />
+    <ClCompile Include="..\..\include\common\MenuHelper.cpp" />
     <ClCompile Include="compreg.cpp" />
     <ClCompile Include="dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>

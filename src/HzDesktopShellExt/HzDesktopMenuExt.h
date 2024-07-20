@@ -39,6 +39,8 @@ DECLARE_REGISTRY_RESOURCEID(106)
 BEGIN_COM_MAP(CHzDesktopMenuExt)
 	COM_INTERFACE_ENTRY(IHzDesktopMenuExt)
 	COM_INTERFACE_ENTRY(IDispatch)
+	COM_INTERFACE_ENTRY(IShellExtInit)
+	COM_INTERFACE_ENTRY(IContextMenu)
 END_COM_MAP()
 
 
@@ -65,6 +67,8 @@ public:
 
 private:
 	void            TweakMenu(HMENU menu);
+
+
 
 	enum MyCmd
 	{

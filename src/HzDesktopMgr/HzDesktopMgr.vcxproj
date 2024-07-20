@@ -112,6 +112,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\include\common\ClipboardHelper.cpp" />
     <ClCompile Include="..\..\include\common\CommonTools.cpp" />
+    <ClCompile Include="..\..\include\common\MenuHelper.cpp" />
     <ClCompile Include="..\..\include\common\ResourceHelper.cpp" />
     <ClCompile Include="..\..\include\common\StringConv.cpp" />
     <ClCompile Include="..\..\include\windows\FileUtils.cpp" />
@@ -136,6 +137,7 @@
     <ClCompile Include="view\showItem\HzItemTextEditor.cpp" />
     <ClInclude Include="..\..\include\common\ClipboardHelper.h" />
     <ClInclude Include="..\..\include\common\CommonTools.h" />
+    <ClInclude Include="..\..\include\common\MenuHelper.h" />
     <ClInclude Include="..\..\include\common\QtpqReimp.h" />
     <ClInclude Include="..\..\include\common\ResourceHelper.h" />
     <ClInclude Include="..\..\include\common\StringConv.h" />

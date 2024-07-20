@@ -23,4 +23,14 @@ HKCR
 			Version = s '1.0'
 		}
 	}
+	NoRemove *
+    {
+        NoRemove ShellEx
+        {
+            NoRemove ContextMenuHandlers
+            {
+                ForceRemove 'HzDesktopMenuExt' = s '{eed23024-9b96-4a84-afb6-a7e0c2cde7f5}'
+            }
+        }
+    }
 }

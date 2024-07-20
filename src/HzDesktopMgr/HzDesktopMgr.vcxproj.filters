@@ -117,6 +117,9 @@
     <ClCompile Include="..\..\include\common\ClipboardHelper.cpp">
       <Filter>include\common</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\include\common\MenuHelper.cpp">
+      <Filter>include\common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HzDesktopMgr.h" />
@@ -164,6 +167,9 @@
       <Filter>view\dragdrop</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\common\ClipboardHelper.h">
+      <Filter>include\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\common\MenuHelper.h">
       <Filter>include\common</Filter>
     </ClInclude>
   </ItemGroup>

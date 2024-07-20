@@ -1,17 +1,20 @@
-#include "HzDesktopMgr.h"
-#include "spdlog/spdlog.h"
 #include <QApplication>
 
-bool checkIsRunning();
+#include "HzDesktopMgr.h"
+#include "common/CommonTools.h"
 
 int main(int argc, char *argv[])
 {
     SPDLOG_DEBUG("start");
 
-    if (checkIsRunning()) {
-        SPDLOG_INFO("hzdesktop is already running, exit");
-        return 0;
-    }
+	wil::unique_mutex hMutex;
+	hMutex.reset(::CreateMutexW(NULL, FALSE, HZDESKTOP_MUTEX_NAME));
+
+	if (::GetLastError() == ERROR_ALREADY_EXISTS ||
+		::GetLastError() == ERROR_ACCESS_DENIED) {
+		SPDLOG_INFO("hzdesktop is already running, exit");
+		return 0;
+	}
 
     QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
 
@@ -24,9 +27,4 @@ int main(int argc, char *argv[])
     HzDesktopMgr w;
 
     return a.exec();
-}
-
-bool checkIsRunning()
-{
-    return false;
 }

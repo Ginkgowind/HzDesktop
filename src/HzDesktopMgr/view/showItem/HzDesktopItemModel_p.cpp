@@ -386,7 +386,7 @@ QStandardItem* DesktopFileItemWatcher::genQStandardItem(const QFileInfo& fileInf
 	QString toolTip = displayName
 		+ QStringLiteral("\n类型：") + QString::fromStdWString(shFileInfo.szTypeName)
 		+ QStringLiteral("\n修改日期：") + fileInfo.lastModified().toString(Qt::LocalDate)
-		+ QStringLiteral("\n大小：") + HZ::formatFileSize(fileInfo.size());
+		+ QStringLiteral("\n大小：") + formatFileSize(fileInfo.size());
 	newItem->setToolTip(toolTip);
 
 	// TODO 了解utf8 unicode char wchar 的区别，以及此处用string就会乱码的问题
@@ -463,6 +463,22 @@ void DesktopFileItemWatcher::handleObserveResult(const QString& strWatchDirector
 		}
 
 	} while (cbOffset);
+}
+
+QString DesktopFileItemWatcher::formatFileSize(qint64 size)
+{
+	if (size >= 1024 * 1024 * 1024) { // 大于等于GB
+		return QString("%1 GB").arg((double)size / (1024.0 * 1024.0 * 1024.0), 0, 'f', 2);
+	}
+	else if (size >= 1024 * 1024) { // 大于等于MB
+		return QString("%1 MB").arg((double)size / (1024.0 * 1024.0), 0, 'f', 2);
+	}
+	else if (size >= 1024) { // 大于等于KB
+		return QString("%1 KB").arg((double)size / 1024.0, 0, 'f', 2);
+	}
+	else { // 小于KB
+		return QString("%1 B").arg(size);
+	}
 }
 
 HzDesktopItemModelPrivate::HzDesktopItemModelPrivate()

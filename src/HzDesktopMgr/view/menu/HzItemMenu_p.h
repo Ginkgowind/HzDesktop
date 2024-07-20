@@ -9,26 +9,6 @@
 #include "HzItemMenu.h"
 #include "common/QtpqReimp.h"
 
-
-class MenuHelper
-{
-public:
-
-	static inline void appendMenuItem(HMENU menu, UINT id);
-
-	static inline void insertMenuItem(HMENU menu, UINT id, UINT item);
-
-	static inline void appendSeparator(HMENU menu);
-
-	static inline void insertSeparator(HMENU menu, UINT item);
-
-	static inline void addSubMenuItem(HMENU menu, UINT id, wil::unique_hmenu subMenu);
-	
-	static inline void insertSubMenuItem(HMENU menu, UINT id, wil::unique_hmenu subMenu, UINT item);
-
-	static inline void CheckItem(HMENU hMenu, UINT itemID, bool bCheck);
-};
-
 // 仅适用于桌面
 class HzItemMenuPrivate : public HzDesktopPrivate
 {
