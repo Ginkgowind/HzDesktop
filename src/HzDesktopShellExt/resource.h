@@ -11,6 +11,7 @@
 #define IDM_FOLDER_MAPPING              106
 #define IDM_SETTING_CENTER              107
 #define IDM_EXIT_HZDESKTOP              108
+#define IDS_MAX_VALUE					109
 
 // Next default values for new objects
 // 

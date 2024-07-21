@@ -9,9 +9,11 @@
 
 CHzDesktopShellExtModule _AtlModule;
 
+HINSTANCE g_hInsDll = NULL;
+
 // DLL 入口点
 extern "C" BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 {
-	hInstance;
+	g_hInsDll = hInstance;
 	return _AtlModule.DllMain(dwReason, lpReserved);
 }

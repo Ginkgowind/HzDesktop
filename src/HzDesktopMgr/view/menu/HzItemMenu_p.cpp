@@ -12,7 +12,6 @@
 #include "windows/UiOperation.h"
 #include "windows/tools.h"
 #include "common/ResourceHelper.h"
-#include "common/MenuHelper.h"
 
 std::vector<PITEMID_CHILD> HzItemMenuPrivate::getDesktopPidcFromPaths(const QStringList& paths)
 {
@@ -118,85 +117,102 @@ void HzItemMenuPrivate::executeActionFromContextMenu(const QStringList& pathList
 
 // TODO 处理private部分的资源释放
 HzDesktopBkgMenuPrivate::HzDesktopBkgMenuPrivate()
+	: m_menuHelper(GetModuleHandle(nullptr))
 {
-
 }
 
 HzDesktopBkgMenuPrivate::~HzDesktopBkgMenuPrivate()
 {}
 
-void HzDesktopBkgMenuPrivate::updateMenu(HMENU menu)
+void HzDesktopBkgMenuPrivate::updateMenu(HMENU hMenu)
 {
 	UINT position = 0;
 
-	// TODO 这里是不是不需要传智能指针，直接返回句柄就可以了，反正也不报错还省得move
-	auto viewMenu = buildViewMenu();
-	HZ::insertSubMenuItem(menu, IDS_VIEW_BKG_MENU, std::move(viewMenu), position++);
+	HMENU hViewMenu = buildViewMenu();
+	m_menuHelper.insertSubMenuItem(hMenu, IDS_VIEW_BKG_MENU, hViewMenu, position++);
 
-	auto sortMenu = buildSortMenu();
-	HZ::insertSubMenuItem(menu, IDS_SORT_BKG_MENU, std::move(sortMenu), position++);
+	HMENU hSortMenu = buildSortMenu();
+	m_menuHelper.insertSubMenuItem(hMenu, IDS_SORT_BKG_MENU, hSortMenu, position++);
 
-	HZ::insertMenuItem(menu, IDM_REFRESH, position++);
-	HZ::insertSeparator(menu, position++);
+	m_menuHelper.insertMenuItem(hMenu, IDM_REFRESH, position++);
+	m_menuHelper.insertSeparator(hMenu, position++);
 
-	HZ::insertMenuItem(menu, IDM_PASTE, position++);
-	HZ::insertMenuItem(menu, IDM_PASTE_SHORTCUT, position++);
-	HZ::insertSeparator(menu, position++);
+	m_menuHelper.insertMenuItem(hMenu, IDM_PASTE, position++);
+	m_menuHelper.insertMenuItem(hMenu, IDM_PASTE_SHORTCUT, position++);
+	m_menuHelper.insertSeparator(hMenu, position++);
+
+	HMENU hFunctionMenu = buildFunctionMenu();
+	m_menuHelper.insertMenuItem(hMenu, IDM_ONECLICK_MANAGE, position++);
+	m_menuHelper.insertSubMenuItem(hMenu, IDS_MANAGE_FUNCTION, hFunctionMenu, position++);
+	m_menuHelper.insertMenuItem(hMenu, IDM_EXIT_HZDESKTOP, position++);
+	m_menuHelper.insertSeparator(hMenu, position++);
 }
 
-wil::unique_hmenu HzDesktopBkgMenuPrivate::buildViewMenu()
+HMENU HzDesktopBkgMenuPrivate::buildViewMenu()
 {
 	HZQ_Q(HzDesktopBkgMenu);
 
-	HMENU viewMenu = CreatePopupMenu();
+	HMENU hMenu = CreatePopupMenu();
 
-	HZ::appendMenuItem(viewMenu, IDM_VIEW_LARGE_ICON);
-	HZ::appendMenuItem(viewMenu, IDM_VIEW_MEDIUM_ICON);
-	HZ::appendMenuItem(viewMenu, IDM_VIEW_SMALL_ICON);
-	HZ::appendSeparator(viewMenu);
-	HZ::appendMenuItem(viewMenu, IDM_VIEW_AUTO_ARRANGE);
-	HZ::appendSeparator(viewMenu);
-	HZ::appendMenuItem(viewMenu, IDM_VIEW_DOUBLE_CLICK);
-	HZ::appendMenuItem(viewMenu, IDM_VIEW_SHOW_DESKTOP);
-	HZ::appendSeparator(viewMenu);
-	HZ::appendMenuItem(viewMenu, IDM_VIEW_LNK_ARROW);
+	m_menuHelper.appendMenuItem(hMenu, IDM_VIEW_LARGE_ICON);
+	m_menuHelper.appendMenuItem(hMenu, IDM_VIEW_MEDIUM_ICON);
+	m_menuHelper.appendMenuItem(hMenu, IDM_VIEW_SMALL_ICON);
+	m_menuHelper.appendSeparator(hMenu);
+	m_menuHelper.appendMenuItem(hMenu, IDM_VIEW_AUTO_ARRANGE);
+	m_menuHelper.appendSeparator(hMenu);
+	m_menuHelper.appendMenuItem(hMenu, IDM_VIEW_DOUBLE_CLICK);
+	m_menuHelper.appendMenuItem(hMenu, IDM_VIEW_SHOW_DESKTOP);
+	m_menuHelper.appendSeparator(hMenu);
+	m_menuHelper.appendMenuItem(hMenu, IDM_VIEW_LNK_ARROW);
 
-	HZ::CheckItem(viewMenu, IDM_VIEW_LARGE_ICON, q->m_param->iconMode == LargeIcon);
-	HZ::CheckItem(viewMenu, IDM_VIEW_MEDIUM_ICON, q->m_param->iconMode == MediumIcon);
-	HZ::CheckItem(viewMenu, IDM_VIEW_SMALL_ICON, q->m_param->iconMode == SmallIcon);
-	HZ::CheckItem(viewMenu, IDM_VIEW_AUTO_ARRANGE, q->m_param->bAutoArrange);
-	HZ::CheckItem(viewMenu, IDM_VIEW_DOUBLE_CLICK, q->m_param->bEnableDoubleClick);
-	HZ::CheckItem(viewMenu, IDM_VIEW_SHOW_DESKTOP, true);
-	HZ::CheckItem(viewMenu, IDM_VIEW_LNK_ARROW, q->m_param->bShowLnkArrow);
+	m_menuHelper.CheckItem(hMenu, IDM_VIEW_LARGE_ICON, q->m_param->iconMode == LargeIcon);
+	m_menuHelper.CheckItem(hMenu, IDM_VIEW_MEDIUM_ICON, q->m_param->iconMode == MediumIcon);
+	m_menuHelper.CheckItem(hMenu, IDM_VIEW_SMALL_ICON, q->m_param->iconMode == SmallIcon);
+	m_menuHelper.CheckItem(hMenu, IDM_VIEW_AUTO_ARRANGE, q->m_param->bAutoArrange);
+	m_menuHelper.CheckItem(hMenu, IDM_VIEW_DOUBLE_CLICK, q->m_param->bEnableDoubleClick);
+	m_menuHelper.CheckItem(hMenu, IDM_VIEW_SHOW_DESKTOP, true);
+	m_menuHelper.CheckItem(hMenu, IDM_VIEW_LNK_ARROW, q->m_param->bShowLnkArrow);
 
-	return wil::unique_hmenu(viewMenu);
+	return hMenu;
 }
 
-wil::unique_hmenu HzDesktopBkgMenuPrivate::buildSortMenu()
+HMENU HzDesktopBkgMenuPrivate::buildSortMenu()
 {
 	HZQ_Q(HzDesktopBkgMenu);
 
-	HMENU sortMenu = CreatePopupMenu();
+	HMENU hMenu = CreatePopupMenu();
 
-	HZ::appendMenuItem(sortMenu, IDM_SORT_BY_NAME);
-	HZ::appendMenuItem(sortMenu, IDM_SORT_BY_SIZE);
-	HZ::appendMenuItem(sortMenu, IDM_SORT_BY_TYPE);
-	HZ::appendMenuItem(sortMenu, IDM_SORT_BY_TIME);
-	HZ::appendSeparator(sortMenu);
-	HZ::appendMenuItem(sortMenu, IDM_SORT_ASCENDING);
-	HZ::appendMenuItem(sortMenu, IDM_SORT_DESCENDING);
+	m_menuHelper.appendMenuItem(hMenu, IDM_SORT_BY_NAME);
+	m_menuHelper.appendMenuItem(hMenu, IDM_SORT_BY_SIZE);
+	m_menuHelper.appendMenuItem(hMenu, IDM_SORT_BY_TYPE);
+	m_menuHelper.appendMenuItem(hMenu, IDM_SORT_BY_TIME);
+	m_menuHelper.appendSeparator(hMenu);
+	m_menuHelper.appendMenuItem(hMenu, IDM_SORT_ASCENDING);
+	m_menuHelper.appendMenuItem(hMenu, IDM_SORT_DESCENDING);
 
 	if (q->m_showSortStatus) {
-		HZ::CheckItem(sortMenu, IDM_SORT_BY_NAME, q->m_param->sortRole == Qt::DisplayRole);
-		HZ::CheckItem(sortMenu, IDM_SORT_BY_SIZE, q->m_param->sortRole == FileSizeRole);
-		HZ::CheckItem(sortMenu, IDM_SORT_BY_TYPE, q->m_param->sortRole == FileTypeRole);
-		HZ::CheckItem(sortMenu, IDM_SORT_BY_TIME, q->m_param->sortRole == FileLastModifiedRole);
+		m_menuHelper.CheckItem(hMenu, IDM_SORT_BY_NAME, q->m_param->sortRole == Qt::DisplayRole);
+		m_menuHelper.CheckItem(hMenu, IDM_SORT_BY_SIZE, q->m_param->sortRole == FileSizeRole);
+		m_menuHelper.CheckItem(hMenu, IDM_SORT_BY_TYPE, q->m_param->sortRole == FileTypeRole);
+		m_menuHelper.CheckItem(hMenu, IDM_SORT_BY_TIME, q->m_param->sortRole == FileLastModifiedRole);
 
-		HZ::CheckItem(sortMenu, IDM_SORT_ASCENDING, q->m_param->sortOrder == Qt::AscendingOrder);
-		HZ::CheckItem(sortMenu, IDM_SORT_DESCENDING, q->m_param->sortOrder == Qt::DescendingOrder);
+		m_menuHelper.CheckItem(hMenu, IDM_SORT_ASCENDING, q->m_param->sortOrder == Qt::AscendingOrder);
+		m_menuHelper.CheckItem(hMenu, IDM_SORT_DESCENDING, q->m_param->sortOrder == Qt::DescendingOrder);
 	}
 
-	return wil::unique_hmenu(sortMenu);
+	return hMenu;
+}
+
+HMENU HzDesktopBkgMenuPrivate::buildFunctionMenu()
+{
+	HMENU hMenu = CreatePopupMenu();
+
+	m_menuHelper.appendMenuItem(hMenu, IDM_CREATE_GRID);
+	m_menuHelper.appendMenuItem(hMenu, IDM_FOLDER_MAPPING);
+	m_menuHelper.appendSeparator(hMenu);
+	m_menuHelper.appendMenuItem(hMenu, IDM_SETTING_CENTER);
+
+	return hMenu;
 }
 
 QVector<UINT> HzDesktopBkgMenuPrivate::getNewFileCmdsVec(HMENU hMenu)

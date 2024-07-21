@@ -8,6 +8,7 @@
 
 #include "HzItemMenu.h"
 #include "common/QtpqReimp.h"
+#include "common/MenuHelper.h"
 
 // 仅适用于桌面
 class HzItemMenuPrivate : public HzDesktopPrivate
@@ -37,13 +38,17 @@ public:
 	HzDesktopBkgMenuPrivate();
 	~HzDesktopBkgMenuPrivate();
 
-	void updateMenu(HMENU menu);
+	void updateMenu(HMENU hMenu);
 
-	wil::unique_hmenu buildViewMenu();
+	HMENU buildViewMenu();
 
-	wil::unique_hmenu buildSortMenu();
+	HMENU buildSortMenu();
+
+	HMENU buildFunctionMenu();
 
 	QVector<UINT> getNewFileCmdsVec(HMENU hMenu);
 
 	void executeActionFromContextMenu(const QString& path, const std::string& action);
+
+	MenuHelper m_menuHelper;
 };

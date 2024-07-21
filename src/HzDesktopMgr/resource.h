@@ -20,6 +20,12 @@
 #define IDM_REFRESH                     60015
 #define IDM_PASTE                       60016
 #define IDM_PASTE_SHORTCUT              60017
+#define IDM_ONECLICK_MANAGE             60018
+#define IDS_MANAGE_FUNCTION             60019
+#define IDM_CREATE_GRID                 60020
+#define IDM_FOLDER_MAPPING              60021
+#define IDM_SETTING_CENTER              60022
+#define IDM_EXIT_HZDESKTOP              60023
 
 // Next default values for new objects
 // 

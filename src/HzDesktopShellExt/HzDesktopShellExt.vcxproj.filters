@@ -49,10 +49,13 @@
     <ClInclude Include="HzDesktopMenuExt.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\common\CommonTools.h">
+      <Filter>include\common</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\include\common\MenuHelper.h">
       <Filter>include\common</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\common\CommonTools.h">
+    <ClInclude Include="..\..\include\common\ResourceHelper.h">
       <Filter>include\common</Filter>
     </ClInclude>
   </ItemGroup>
@@ -75,10 +78,13 @@
     <ClCompile Include="HzDesktopMenuExt.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\include\common\CommonTools.cpp">
+      <Filter>include\common</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\include\common\MenuHelper.cpp">
       <Filter>include\common</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\include\common\CommonTools.cpp">
+    <ClCompile Include="..\..\include\common\ResourceHelper.cpp">
       <Filter>include\common</Filter>
     </ClCompile>
   </ItemGroup>
@@ -97,6 +103,7 @@
     <None Include="HzDesktopMenuExt.rgs">
       <Filter>资源文件</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="HzDesktopShellExt.idl">

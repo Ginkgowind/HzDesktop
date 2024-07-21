@@ -7,6 +7,9 @@
 #include "HzDesktopMenuExt.h"
 #include "common/CommonTools.h"
 #include "common/MenuHelper.h"
+#include "common/ResourceHelper.h"
+
+extern HINSTANCE g_hInsDll;
 
 // CHzDesktopMenuExt
 
@@ -25,28 +28,45 @@ STDMETHODIMP CHzDesktopMenuExt::QueryContextMenu(HMENU hmenu, UINT indexMenu, UI
 		return MAKE_HRESULT(SEVERITY_SUCCESS, FACILITY_NULL, 0);
 	}
 
-	bool bAlreadyRunning = HZ::isHzDesktopRunning();
 	UINT idCmd = idCmdFirst;
 	UINT uIndexMenu = indexMenu;
+	bool bAlreadyRunning = HZ::isHzDesktopRunning();
+	MenuHelper helper(g_hInsDll);
 
-	HZ::insertSeparator(hmenu, uIndexMenu++);
+	// TODO 下面这些宏值调整到7w+
+	helper.insertSeparator(hmenu, uIndexMenu++);
 	if (!bAlreadyRunning) {
 		// 启动HZ桌面整理
-		HZ::insertMenuItem(hmenu, IDM_LAUNCH_HZDESKTOP, uIndexMenu++);
+		std::wstring text = ResourceHelper::LoadStringFromRC(g_hInsDll, IDM_LAUNCH_HZDESKTOP);
+		helper.insertMenuItem(hmenu, IDM_LAUNCH_HZDESKTOP, uIndexMenu++);
 	}
 	else {
 		// 一键桌面整理
 		// 整理功能 - 新建桌面格子 | 新建文件夹映射 | 设置中心
 		// 退出桌面整理
-		HZ::insertMenuItem(hmenu, IDM_ONECLICK_MANAGE, uIndexMenu++);
+		helper.insertMenuItem(hmenu, IDM_ONECLICK_MANAGE, uIndexMenu++);
 
-		HZ::insertMenuItem(hmenu, IDM_EXIT_HZDESKTOP, uIndexMenu++);
+		helper.insertMenuItem(hmenu, IDM_EXIT_HZDESKTOP, uIndexMenu++);
 	}
-	HZ::insertSeparator(hmenu, uIndexMenu++);
+	helper.insertSeparator(hmenu, uIndexMenu++);
 
-	TweakMenu(hmenu);
+	// root menuitem
+	//MENUITEMINFO rootmif{};
+	//rootmif.cbSize = sizeof(rootmif);
+	//rootmif.fType = MFT_STRING;
+	//rootmif.wID = idCmd + CMD_ROOT;
+	//rootmif.dwTypeData = L"HZ菜单扩展111";
+	//rootmif.hbmpItem = NULL;
+	//rootmif.fMask = MIIM_STRING | MIIM_ID | MIIM_FTYPE | MIIM_DATA;
+	//InsertMenuItem(hmenu, uIndexMenu++, TRUE, &rootmif);
 
-	return MAKE_HRESULT(SEVERITY_SUCCESS, 0, static_cast <USHORT>(CMD_SHOW_DEMO_ABOUT + 1));
+	//TweakMenu(hmenu);
+
+	//return MAKE_HRESULT(SEVERITY_SUCCESS, 0, static_cast <USHORT>(CMD_ROOT + 1));
+
+	//TweakMenu(hmenu);
+
+	return MAKE_HRESULT(SEVERITY_SUCCESS, 0, static_cast <USHORT>(IDS_MAX_VALUE + 1));
 }
 
 
@@ -120,11 +140,11 @@ STDMETHODIMP CHzDesktopMenuExt::GetCommandString(UINT_PTR  idCommand,
 	{
 		// Only useful for pre-Vista versions of Windows that 
 		// have a Status bar.
-		hr = StringCchCopyW(reinterpret_cast<PWSTR>(pszName), cchName, L"A Demo Context Menu");
+		//hr = StringCchCopyW(reinterpret_cast<PWSTR>(pszName), cchName, L"A Demo Context Menu");
 	}
 	else if (uFlags & GCS_HELPTEXT)
 	{
-		hr = StringCchCopyA(pszName, cchName, "A Demo Context Menu");
+		//hr = StringCchCopyA(pszName, cchName, "A Demo Context Menu");
 	}
 	return hr;
 }

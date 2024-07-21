@@ -3,8 +3,11 @@
 #include <wil/resource.h>
 #include <shobjidl_core.h>
 
-namespace HZ
+class MenuHelper
 {
+public:
+	MenuHelper(HINSTANCE resInstance);
+
 	void appendMenuItem(HMENU menu, UINT id);
 
 	void insertMenuItem(HMENU menu, UINT id, UINT item);
@@ -13,9 +16,13 @@ namespace HZ
 
 	void insertSeparator(HMENU menu, UINT item);
 
-	void addSubMenuItem(HMENU menu, UINT id, wil::unique_hmenu subMenu);
-	
-	void insertSubMenuItem(HMENU menu, UINT id, wil::unique_hmenu subMenu, UINT item);
+	void addSubMenuItem(HMENU menu, UINT id, HMENU subMenu);
+
+	void insertSubMenuItem(HMENU menu, UINT id, HMENU subMenu, UINT item);
 
 	void CheckItem(HMENU hMenu, UINT itemID, bool bCheck);
+
+private:
+
+	HINSTANCE m_resInstance;
 };

@@ -322,6 +322,17 @@ void HzDesktopBkgMenu::handleCustomMenuItem(UINT cmd)
 	case IDM_PASTE_SHORTCUT:
 		handlePasteShortcut();
 		break;
+	case IDM_ONECLICK_MANAGE:
+		break;
+	case IDM_CREATE_GRID:
+		break;
+	case IDM_FOLDER_MAPPING:
+		break;
+	case IDM_SETTING_CENTER:
+		break;
+	case IDM_EXIT_HZDESKTOP:
+		qApp->quit();
+		break;
 
 	default:
 		break;
