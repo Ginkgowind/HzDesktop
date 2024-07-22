@@ -1,5 +1,5 @@
 <RCC>
     <qresource prefix="/HzDesktopMgr">
-        <file>view/qrc/test/heart.png</file>
+        <file>view/res/qrc/heart.png</file>
     </qresource>
 </RCC>

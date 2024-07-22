@@ -117,8 +117,8 @@
     <ClCompile Include="..\..\include\common\ClipboardHelper.cpp">
       <Filter>include\common</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\include\common\MenuHelper.cpp">
-      <Filter>include\common</Filter>
+    <ClCompile Include="..\..\include\windows\IconBitmapUtils.cpp">
+      <Filter>include\windows</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -169,8 +169,8 @@
     <ClInclude Include="..\..\include\common\ClipboardHelper.h">
       <Filter>include\common</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\common\MenuHelper.h">
-      <Filter>include\common</Filter>
+    <ClInclude Include="..\..\include\windows\IconBitmapUtils.h">
+      <Filter>include\windows</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -221,5 +221,25 @@
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="$(MSBuildThisFileDirectory)..\..\natvis\wil.natvis" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="view\res\vsrc\exit.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="view\res\vsrc\folder.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="view\res\vsrc\function.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="view\res\vsrc\grid.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="view\res\vsrc\manage.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="view\res\vsrc\setting.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

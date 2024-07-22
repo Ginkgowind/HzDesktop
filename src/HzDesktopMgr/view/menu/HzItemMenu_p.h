@@ -7,8 +7,35 @@
 //#include <string>
 
 #include "HzItemMenu.h"
+#include "windows/IconBitmapUtils.h"
 #include "common/QtpqReimp.h"
-#include "common/MenuHelper.h"
+//#include "common/MenuHelper.h"
+
+class MenuHelper
+{
+public:
+	MenuHelper(HINSTANCE resInstance);
+
+	void appendMenuItem(HMENU menu, UINT id, UINT uIcon = 0);
+
+	void insertMenuItem(HMENU menu, UINT id, UINT item, UINT uIcon = 0);
+
+	void appendSeparator(HMENU menu);
+
+	void insertSeparator(HMENU menu, UINT item);
+
+	void addSubMenuItem(HMENU menu, UINT id, HMENU subMenu, UINT uIcon = 0);
+
+	void insertSubMenuItem(HMENU menu, UINT id, HMENU subMenu, UINT item, UINT uIcon = 0);
+
+	void CheckItem(HMENU hMenu, UINT itemID, bool bCheck);
+
+private:
+
+	HINSTANCE m_resInstance;
+
+	IconBitmapUtils m_bitmapUtils;
+};
 
 // 仅适用于桌面
 class HzItemMenuPrivate : public HzDesktopPrivate

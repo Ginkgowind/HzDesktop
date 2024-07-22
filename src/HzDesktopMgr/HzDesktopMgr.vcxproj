@@ -112,10 +112,10 @@
   <ItemGroup>
     <ClCompile Include="..\..\include\common\ClipboardHelper.cpp" />
     <ClCompile Include="..\..\include\common\CommonTools.cpp" />
-    <ClCompile Include="..\..\include\common\MenuHelper.cpp" />
     <ClCompile Include="..\..\include\common\ResourceHelper.cpp" />
     <ClCompile Include="..\..\include\common\StringConv.cpp" />
     <ClCompile Include="..\..\include\windows\FileUtils.cpp" />
+    <ClCompile Include="..\..\include\windows\IconBitmapUtils.cpp" />
     <ClCompile Include="..\..\include\windows\tools.cpp" />
     <ClCompile Include="..\..\include\windows\UiOperation.cpp" />
     <ClCompile Include="..\..\include\windows\WindowSubclassWrapper.cpp" />
@@ -137,12 +137,12 @@
     <ClCompile Include="view\showItem\HzItemTextEditor.cpp" />
     <ClInclude Include="..\..\include\common\ClipboardHelper.h" />
     <ClInclude Include="..\..\include\common\CommonTools.h" />
-    <ClInclude Include="..\..\include\common\MenuHelper.h" />
     <ClInclude Include="..\..\include\common\QtpqReimp.h" />
     <ClInclude Include="..\..\include\common\ResourceHelper.h" />
     <ClInclude Include="..\..\include\common\StringConv.h" />
     <ClInclude Include="..\..\include\windows\EnsureCleanup.h" />
     <ClInclude Include="..\..\include\windows\FileUtils.h" />
+    <ClInclude Include="..\..\include\windows\IconBitmapUtils.h" />
     <ClInclude Include="..\..\include\windows\QWindowsComBase.h" />
     <ClInclude Include="..\..\include\windows\tools.h" />
     <ClInclude Include="..\..\include\windows\UiOperation.h" />
@@ -179,6 +179,14 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="HzDesktopMgr.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="view\res\vsrc\exit.ico" />
+    <Image Include="view\res\vsrc\folder.ico" />
+    <Image Include="view\res\vsrc\function.ico" />
+    <Image Include="view\res\vsrc\grid.ico" />
+    <Image Include="view\res\vsrc\manage.ico" />
+    <Image Include="view\res\vsrc\setting.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

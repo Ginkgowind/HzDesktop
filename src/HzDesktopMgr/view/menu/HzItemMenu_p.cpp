@@ -13,6 +13,81 @@
 #include "windows/tools.h"
 #include "common/ResourceHelper.h"
 
+MenuHelper::MenuHelper(HINSTANCE resInstance)
+	: m_resInstance(resInstance)
+{
+}
+
+void MenuHelper::appendMenuItem(HMENU menu, UINT id, UINT uIcon)
+{
+	insertMenuItem(menu, id, GetMenuItemCount(menu), uIcon);
+}
+
+void MenuHelper::insertMenuItem(HMENU menu, UINT id, UINT item, UINT uIcon)
+{
+	MENUITEMINFO menuItemInfo = {};
+	menuItemInfo.cbSize = sizeof(menuItemInfo);
+	menuItemInfo.fMask = MIIM_ID | MIIM_STRING;
+	menuItemInfo.wID = id;
+
+	// 查看是否含有ico资源
+	if (uIcon > 0) {
+		menuItemInfo.fMask |= MIIM_BITMAP;
+		menuItemInfo.hbmpItem = m_bitmapUtils.IconToBitmapPARGB32(m_resInstance, uIcon);
+	}
+
+	std::wstring text = ResourceHelper::LoadStringFromRC(m_resInstance, id);
+	menuItemInfo.dwTypeData = const_cast<LPWSTR>(text.c_str());
+
+	InsertMenuItem(menu, item, TRUE, &menuItemInfo);
+}
+
+void MenuHelper::appendSeparator(HMENU menu)
+{
+	insertSeparator(menu, GetMenuItemCount(menu));
+}
+
+void MenuHelper::insertSeparator(HMENU menu, UINT item)
+{
+	MENUITEMINFO menuItemInfo = {};
+	menuItemInfo.cbSize = sizeof(menuItemInfo);
+	menuItemInfo.fMask = MIIM_FTYPE;
+	menuItemInfo.fType = MFT_SEPARATOR;
+	InsertMenuItem(menu, item, TRUE, &menuItemInfo);
+}
+
+
+void MenuHelper::addSubMenuItem(HMENU menu, UINT id, HMENU subMenu, UINT uIcon)
+{
+	insertSubMenuItem(menu, id, subMenu, GetMenuItemCount(menu), uIcon);
+}
+
+void MenuHelper::insertSubMenuItem(HMENU menu, UINT id, HMENU subMenu, UINT item, UINT uIcon)
+{
+	std::wstring text = ResourceHelper::LoadStringFromRC(m_resInstance, id);
+
+	MENUITEMINFO menuItemInfo = {};
+	menuItemInfo.cbSize = sizeof(menuItemInfo);
+	menuItemInfo.fMask = MIIM_ID | MIIM_STRING | MIIM_SUBMENU;
+	menuItemInfo.wID = id;
+	menuItemInfo.dwTypeData = const_cast<LPWSTR>(text.c_str());
+	menuItemInfo.hSubMenu = subMenu;
+
+	// 查看是否含有ico资源
+	if (uIcon > 0) {
+		menuItemInfo.fMask |= MIIM_BITMAP;
+		menuItemInfo.hbmpItem = m_bitmapUtils.IconToBitmapPARGB32(m_resInstance, uIcon);
+	}
+
+	InsertMenuItem(menu, item, TRUE, &menuItemInfo);
+}
+
+void MenuHelper::CheckItem(HMENU hMenu, UINT itemID, bool bCheck)
+{
+	UINT state = bCheck ? MF_CHECKED : MF_UNCHECKED;
+	CheckMenuItem(hMenu, itemID, state);
+}
+
 std::vector<PITEMID_CHILD> HzItemMenuPrivate::getDesktopPidcFromPaths(const QStringList& paths)
 {
 	std::vector<PITEMID_CHILD> pidlItems;
@@ -128,6 +203,7 @@ void HzDesktopBkgMenuPrivate::updateMenu(HMENU hMenu)
 {
 	UINT position = 0;
 
+	// TODO 将以下所有函数的cmdid转移到uicon之前，也就是倒数第二个
 	HMENU hViewMenu = buildViewMenu();
 	m_menuHelper.insertSubMenuItem(hMenu, IDS_VIEW_BKG_MENU, hViewMenu, position++);
 
@@ -142,9 +218,9 @@ void HzDesktopBkgMenuPrivate::updateMenu(HMENU hMenu)
 	m_menuHelper.insertSeparator(hMenu, position++);
 
 	HMENU hFunctionMenu = buildFunctionMenu();
-	m_menuHelper.insertMenuItem(hMenu, IDM_ONECLICK_MANAGE, position++);
-	m_menuHelper.insertSubMenuItem(hMenu, IDS_MANAGE_FUNCTION, hFunctionMenu, position++);
-	m_menuHelper.insertMenuItem(hMenu, IDM_EXIT_HZDESKTOP, position++);
+	m_menuHelper.insertMenuItem(hMenu, IDM_ONECLICK_MANAGE, position++, IDI_ICON_MANAGE);
+	m_menuHelper.insertSubMenuItem(hMenu, IDS_MANAGE_FUNCTION, hFunctionMenu, position++, IDI_ICON_FUNCTION);
+	m_menuHelper.insertMenuItem(hMenu, IDM_EXIT_HZDESKTOP, position++, IDI_ICON_EXIT);
 	m_menuHelper.insertSeparator(hMenu, position++);
 }
 
@@ -207,10 +283,10 @@ HMENU HzDesktopBkgMenuPrivate::buildFunctionMenu()
 {
 	HMENU hMenu = CreatePopupMenu();
 
-	m_menuHelper.appendMenuItem(hMenu, IDM_CREATE_GRID);
-	m_menuHelper.appendMenuItem(hMenu, IDM_FOLDER_MAPPING);
+	m_menuHelper.appendMenuItem(hMenu, IDM_CREATE_GRID, IDI_ICON_GRID);
+	m_menuHelper.appendMenuItem(hMenu, IDM_FOLDER_MAPPING, IDI_ICON_FOLDER);
 	m_menuHelper.appendSeparator(hMenu);
-	m_menuHelper.appendMenuItem(hMenu, IDM_SETTING_CENTER);
+	m_menuHelper.appendMenuItem(hMenu, IDM_SETTING_CENTER, IDI_ICON_SETTING);
 
 	return hMenu;
 }

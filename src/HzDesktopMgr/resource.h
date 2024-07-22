@@ -1,7 +1,13 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Visual C++ Éú³ÉµÄ°üº¬ÎÄ¼þ¡£
-// ¹© HzDesktopMgr.rc Ê¹ÓÃ
+// Microsoft Visual C++ ï¿½ï¿½ï¿½ÉµÄ°ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½
+// ï¿½ï¿½ HzDesktopMgr.rc Ê¹ï¿½ï¿½
 //
+#define IDI_ICON_EXIT                   103
+#define IDI_ICON_FOLDER                 104
+#define IDI_ICON_FUNCTION               105
+#define IDI_ICON_GRID                   106
+#define IDI_ICON_MANAGE                 107
+#define IDI_ICON_SETTING                108
 #define IDS_VIEW_BKG_MENU               60000
 #define IDM_VIEW_LARGE_ICON             60001
 #define IDM_VIEW_MEDIUM_ICON            60002
@@ -31,7 +37,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        103
+#define _APS_NEXT_RESOURCE_VALUE        109
 #define _APS_NEXT_COMMAND_VALUE         40001
 #define _APS_NEXT_CONTROL_VALUE         1001
 #define _APS_NEXT_SYMED_VALUE           101

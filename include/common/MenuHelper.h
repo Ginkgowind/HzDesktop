@@ -1,6 +1,5 @@
 #pragma once
 
-#include <wil/resource.h>
 #include <shobjidl_core.h>
 
 class MenuHelper

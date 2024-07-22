@@ -1,9 +1,8 @@
 ﻿#include <Windows.h>
 #include <shellapi.h>
 
-#include "resource.h"
 #include "MenuHelper.h"
-#include "common/ResourceHelper.h"
+#include "ResourceHelper.h"
 
 MenuHelper::MenuHelper(HINSTANCE resInstance)
 	: m_resInstance(resInstance)
@@ -22,6 +21,9 @@ void MenuHelper::insertMenuItem(HMENU menu, UINT id, UINT item)
 	//if (hBitmap) { 获取成功就加此标志位
 	//	fMask |= MIIM_BITMAP;
 	//}
+
+	// 查看是否含有ico资源
+
 
 	MENUITEMINFO menuItemInfo = {};
 	menuItemInfo.cbSize = sizeof(menuItemInfo);
