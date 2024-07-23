@@ -13,8 +13,6 @@ DesktopViewMgr::DesktopViewMgr()
 	m_bkgView->setGeometry(200, 200, 1200, 800);
 
 	m_desktopIconView = new HzDesktopIconView(m_bkgView);
-	//m_desktopIconView->setFixedSize(availableRect.size());
-	m_desktopIconView->setFixedSize(1200, 800);
 
 	m_systemTray = new HzSystemTray(m_bkgView);
 

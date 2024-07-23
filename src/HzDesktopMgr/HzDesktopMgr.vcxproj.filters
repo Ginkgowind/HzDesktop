@@ -241,5 +241,8 @@
     <Image Include="view\res\vsrc\setting.ico">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="view\res\common\HzDesktop.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

@@ -181,6 +181,7 @@
     <ResourceCompile Include="HzDesktopMgr.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="view\res\common\HzDesktop.ico" />
     <Image Include="view\res\vsrc\exit.ico" />
     <Image Include="view\res\vsrc\folder.ico" />
     <Image Include="view\res\vsrc\function.ico" />

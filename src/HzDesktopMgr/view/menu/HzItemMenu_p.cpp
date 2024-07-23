@@ -20,10 +20,10 @@ MenuHelper::MenuHelper(HINSTANCE resInstance)
 
 void MenuHelper::appendMenuItem(HMENU menu, UINT id, UINT uIcon)
 {
-	insertMenuItem(menu, id, GetMenuItemCount(menu), uIcon);
+	insertMenuItem(menu, GetMenuItemCount(menu), id, uIcon);
 }
 
-void MenuHelper::insertMenuItem(HMENU menu, UINT id, UINT item, UINT uIcon)
+void MenuHelper::insertMenuItem(HMENU menu, UINT item, UINT id, UINT uIcon)
 {
 	MENUITEMINFO menuItemInfo = {};
 	menuItemInfo.cbSize = sizeof(menuItemInfo);
@@ -33,7 +33,8 @@ void MenuHelper::insertMenuItem(HMENU menu, UINT id, UINT item, UINT uIcon)
 	// 查看是否含有ico资源
 	if (uIcon > 0) {
 		menuItemInfo.fMask |= MIIM_BITMAP;
-		menuItemInfo.hbmpItem = m_bitmapUtils.IconToBitmapPARGB32(m_resInstance, uIcon);
+		menuItemInfo.hbmpItem = m_bitmapUtils.LoadAndResizeFirstIcon(
+			m_resInstance, uIcon, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON));
 	}
 
 	std::wstring text = ResourceHelper::LoadStringFromRC(m_resInstance, id);
@@ -56,13 +57,12 @@ void MenuHelper::insertSeparator(HMENU menu, UINT item)
 	InsertMenuItem(menu, item, TRUE, &menuItemInfo);
 }
 
-
-void MenuHelper::addSubMenuItem(HMENU menu, UINT id, HMENU subMenu, UINT uIcon)
+void MenuHelper::addSubMenuItem(HMENU menu, HMENU subMenu, UINT id, UINT uIcon)
 {
-	insertSubMenuItem(menu, id, subMenu, GetMenuItemCount(menu), uIcon);
+	insertSubMenuItem(menu, id, GetMenuItemCount(menu), subMenu, uIcon);
 }
 
-void MenuHelper::insertSubMenuItem(HMENU menu, UINT id, HMENU subMenu, UINT item, UINT uIcon)
+void MenuHelper::insertSubMenuItem(HMENU menu, UINT id, UINT item, HMENU subMenu, UINT uIcon)
 {
 	std::wstring text = ResourceHelper::LoadStringFromRC(m_resInstance, id);
 
@@ -76,7 +76,8 @@ void MenuHelper::insertSubMenuItem(HMENU menu, UINT id, HMENU subMenu, UINT item
 	// 查看是否含有ico资源
 	if (uIcon > 0) {
 		menuItemInfo.fMask |= MIIM_BITMAP;
-		menuItemInfo.hbmpItem = m_bitmapUtils.IconToBitmapPARGB32(m_resInstance, uIcon);
+		menuItemInfo.hbmpItem = m_bitmapUtils.LoadAndResizeFirstIcon(
+			m_resInstance, uIcon, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON));
 	}
 
 	InsertMenuItem(menu, item, TRUE, &menuItemInfo);
@@ -205,22 +206,22 @@ void HzDesktopBkgMenuPrivate::updateMenu(HMENU hMenu)
 
 	// TODO 将以下所有函数的cmdid转移到uicon之前，也就是倒数第二个
 	HMENU hViewMenu = buildViewMenu();
-	m_menuHelper.insertSubMenuItem(hMenu, IDS_VIEW_BKG_MENU, hViewMenu, position++);
+	m_menuHelper.insertSubMenuItem(hMenu, IDS_VIEW_BKG_MENU, position++, hViewMenu);
 
 	HMENU hSortMenu = buildSortMenu();
-	m_menuHelper.insertSubMenuItem(hMenu, IDS_SORT_BKG_MENU, hSortMenu, position++);
+	m_menuHelper.insertSubMenuItem(hMenu, IDS_SORT_BKG_MENU, position++, hSortMenu);
 
-	m_menuHelper.insertMenuItem(hMenu, IDM_REFRESH, position++);
+	m_menuHelper.insertMenuItem(hMenu, position++, IDM_REFRESH);
 	m_menuHelper.insertSeparator(hMenu, position++);
 
-	m_menuHelper.insertMenuItem(hMenu, IDM_PASTE, position++);
-	m_menuHelper.insertMenuItem(hMenu, IDM_PASTE_SHORTCUT, position++);
+	m_menuHelper.insertMenuItem(hMenu, position++, IDM_PASTE);
+	m_menuHelper.insertMenuItem(hMenu, position++, IDM_PASTE_SHORTCUT);
 	m_menuHelper.insertSeparator(hMenu, position++);
 
 	HMENU hFunctionMenu = buildFunctionMenu();
-	m_menuHelper.insertMenuItem(hMenu, IDM_ONECLICK_MANAGE, position++, IDI_ICON_MANAGE);
-	m_menuHelper.insertSubMenuItem(hMenu, IDS_MANAGE_FUNCTION, hFunctionMenu, position++, IDI_ICON_FUNCTION);
-	m_menuHelper.insertMenuItem(hMenu, IDM_EXIT_HZDESKTOP, position++, IDI_ICON_EXIT);
+	m_menuHelper.insertMenuItem(hMenu, position++, IDM_ONECLICK_MANAGE, IDI_ICON_MANAGE);
+	m_menuHelper.insertSubMenuItem(hMenu, IDS_MANAGE_FUNCTION, position++, hFunctionMenu, IDI_ICON_FUNCTION);
+	m_menuHelper.insertMenuItem(hMenu, position++, IDM_EXIT_HZDESKTOP, IDI_ICON_EXIT);
 	m_menuHelper.insertSeparator(hMenu, position++);
 }
 

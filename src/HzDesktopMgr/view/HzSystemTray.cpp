@@ -26,7 +26,14 @@ HzSystemTray::HzSystemTray(QWidget* parent)
 	trayIconMenu->addAction(quitAction);
 
 	setContextMenu(trayIconMenu);
-	setIcon(QIcon(":/HzDesktopMgr/view/res/qrc/heart.png"));
+	setIcon(QIcon(":/main/view/res/common/HzDesktop.ico"));
+	//setIcon(QIcon(":/main/view/res/qrc/happy.png"));
+
+	auto icon = QIcon(":/main/view/res/qrc/happy.png");
+	auto s = icon.availableSizes();
+
+	auto icon1 = QIcon(":/main/view/res/common/HzDesktop.ico");
+	auto s1 = icon.availableSizes();
 
 	// TODO 设置了父控件却还要主动调用，为什么？
 	show();

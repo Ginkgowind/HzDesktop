@@ -1,5 +1,6 @@
 <RCC>
-    <qresource prefix="/HzDesktopMgr">
-        <file>view/res/qrc/heart.png</file>
+    <qresource prefix="/main">
+        <file>view/res/qrc/happy.png</file>
+        <file>view/res/common/HzDesktop.ico</file>
     </qresource>
 </RCC>

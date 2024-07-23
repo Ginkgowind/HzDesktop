@@ -20,6 +20,9 @@
 
 #include "IconBitmapUtils.h"
 
+#include <gdiplus.h>
+
+#pragma comment(lib, "gdiplus.lib")
 #pragma comment(lib, "Comctl32.lib")
 #pragma comment(lib, "UxTheme.lib")
 
@@ -68,32 +71,57 @@ IconBitmapUtils::IconBitmapUtils()
 
 IconBitmapUtils::~IconBitmapUtils()
 {
-	for (const auto& bitmap : bitmaps)
+	for (const auto& bitmap : bitmaps) {
 		::DeleteObject(bitmap.second);
+	}
+
 	bitmaps.clear();
 }
 
-HBITMAP IconBitmapUtils::IconToBitmapPARGB32(HINSTANCE hInst, UINT uIcon)
+HBITMAP IconBitmapUtils::LoadAndResizeFirstIcon(HINSTANCE hInst, UINT uIcon, int width, int height) {
+	HICON hIcon = static_cast<HICON>(
+		LoadImage(hInst, MAKEINTRESOURCE(uIcon), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR | LR_DEFAULTSIZE));
+
+	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+	ULONG_PTR gdiplusToken;
+	Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+
+	Gdiplus::Bitmap* originalBitmap = new Gdiplus::Bitmap(hIcon);
+	Gdiplus::Bitmap* resizedBitmap = new Gdiplus::Bitmap(width, height, originalBitmap->GetPixelFormat());
+
+	Gdiplus::Graphics graphics(resizedBitmap);
+	graphics.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
+	graphics.DrawImage(originalBitmap, 0, 0, width, height);
+
+	HBITMAP hBitmap;
+	resizedBitmap->GetHBITMAP(Gdiplus::Color(0, 0, 0, 0), &hBitmap);
+
+	delete originalBitmap;
+	delete resizedBitmap;
+	Gdiplus::GdiplusShutdown(gdiplusToken);
+
+	return hBitmap;
+}
+
+HBITMAP IconBitmapUtils::IconToBitmapPARGB32(HINSTANCE hInst, UINT uIcon, int width, int height)
 {
 	std::map<UINT, HBITMAP>::iterator bitmap_it = bitmaps.lower_bound(uIcon);
-	if (bitmap_it != bitmaps.end() && bitmap_it->first == uIcon)
+	if (bitmap_it != bitmaps.end() && bitmap_it->first == uIcon) {
 		return bitmap_it->second;
-	int iconWidth = GetSystemMetrics(SM_CXSMICON);
-	int iconHeight = GetSystemMetrics(SM_CYSMICON);
+	}
 
 	HICON hIcon = nullptr;
 	FN_LoadIconWithScaleDown pfnLoadIconWithScaleDown = _GetLoadIconWithScaleDownPtr();
 	if (NULL == pfnLoadIconWithScaleDown ||
-		pfnLoadIconWithScaleDown(hInst, MAKEINTRESOURCE(uIcon), iconWidth, iconHeight, &hIcon) < 0)
-	{
+		pfnLoadIconWithScaleDown(hInst, MAKEINTRESOURCE(uIcon), width, height, &hIcon) < 0) {
 		// fallback, just in case
-		hIcon = static_cast<HICON>(LoadImage(hInst, MAKEINTRESOURCE(uIcon), IMAGE_ICON, iconWidth, iconHeight, LR_DEFAULTCOLOR));
+		hIcon = static_cast<HICON>(LoadImage(hInst, MAKEINTRESOURCE(uIcon), IMAGE_ICON, width, height, LR_DEFAULTCOLOR));
 	}
-	HBITMAP hBmp = IconToBitmapPARGB32(hIcon, iconWidth, iconHeight);
 
-
-	if(hBmp)
+	HBITMAP hBmp = IconToBitmapPARGB32(hIcon, width, height);
+	if (hBmp) {
 		bitmaps.insert(bitmap_it, std::make_pair(uIcon, hBmp));
+	}
 
 	return hBmp;
 }
@@ -131,10 +159,8 @@ HBITMAP IconBitmapUtils::IconToBitmapPARGB32(HICON hIcon, int width, int height)
 
 	HDC hdcBuffer;
 	HPAINTBUFFER hPaintBuffer = BeginBufferedPaint(hdcDest, &rcIcon, BPBF_DIB, &paintParams, &hdcBuffer);
-	if (hPaintBuffer)
-	{
-		if (DrawIconEx(hdcBuffer, 0, 0, hIcon, sizIcon.cx, sizIcon.cy, 0, nullptr, DI_NORMAL))
-		{
+	if (hPaintBuffer) {
+		if (DrawIconEx(hdcBuffer, 0, 0, hIcon, sizIcon.cx, sizIcon.cy, 0, nullptr, DI_NORMAL)) {
 			// If icon did not have an alpha channel we need to convert buffer to PARGB
 			ConvertBufferToPARGB32(hPaintBuffer, hdcDest, hIcon, sizIcon);
 		}
@@ -167,11 +193,9 @@ HRESULT IconBitmapUtils::Create32BitHBITMAP(HDC hdc, const SIZE *psize, __deref_
 	bmi.bmiHeader.biBitCount = 32;
 
 	HDC hdcUsed = hdc ? hdc : GetDC(nullptr);
-	if (hdcUsed)
-	{
+	if (hdcUsed) {
 		*phBmp = CreateDIBSection(hdcUsed, &bmi, DIB_RGB_COLORS, ppvBits, nullptr, 0);
-		if (hdc != hdcUsed)
-		{
+		if (hdc != hdcUsed) {
 			ReleaseDC(nullptr, hdcUsed);
 		}
 	}
@@ -193,8 +217,7 @@ HRESULT IconBitmapUtils::ConvertBufferToPARGB32(HPAINTBUFFER hPaintBuffer, HDC h
 	ICONINFO info;
 	if (!GetIconInfo(hicon, &info))
 		return S_OK;
-	SCOPE_EXIT
-	{
+	SCOPE_EXIT {
 		DeleteObject(info.hbmColor);
 		DeleteObject(info.hbmMask);
 	};
@@ -207,10 +230,8 @@ HRESULT IconBitmapUtils::ConvertBufferToPARGB32(HPAINTBUFFER hPaintBuffer, HDC h
 bool IconBitmapUtils::HasAlpha(__in Gdiplus::ARGB* pargb, const SIZE& sizImage, int cxRow) const
 {
 	ULONG cxDelta = cxRow - sizImage.cx;
-	for (ULONG y = sizImage.cy; y; --y)
-	{
-		for (ULONG x = sizImage.cx; x; --x)
-		{
+	for (ULONG y = sizImage.cy; y; --y) {
+		for (ULONG x = sizImage.cx; x; --x) {
 			if (*pargb++ & 0xFF000000)
 				return true;
 		}
@@ -244,17 +265,13 @@ HRESULT IconBitmapUtils::ConvertToPARGB32(HDC hdc, __inout Gdiplus::ARGB* pargb,
 	ULONG cxDelta = cxRow - bmi.bmiHeader.biWidth;
 	Gdiplus::ARGB *pargbMask = static_cast<Gdiplus::ARGB *>(pvBits);
 
-	for (ULONG y = bmi.bmiHeader.biHeight; y; --y)
-	{
-		for (ULONG x = bmi.bmiHeader.biWidth; x; --x)
-		{
-			if (*pargbMask++)
-			{
+	for (ULONG y = bmi.bmiHeader.biHeight; y; --y) {
+		for (ULONG x = bmi.bmiHeader.biWidth; x; --x) {
+			if (*pargbMask++) {
 				// transparent pixel
 				*pargb++ = 0;
 			}
-			else
-			{
+			else {
 				// opaque pixel
 				*pargb++ |= 0xFF000000;
 			}
@@ -274,8 +291,7 @@ FN_LoadIconWithScaleDown IconBitmapUtils::_GetLoadIconWithScaleDownPtr()
 	{
 		///> 避免库中途被卸载，所以每次都重新获取
 		hModule = ::GetModuleHandleW(L"Comctl32.dll");
-		if (NULL == hModule)
-		{
+		if (NULL == hModule) {
 			break;
 		}
 

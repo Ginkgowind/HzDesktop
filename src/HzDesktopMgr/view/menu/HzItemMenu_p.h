@@ -18,15 +18,15 @@ public:
 
 	void appendMenuItem(HMENU menu, UINT id, UINT uIcon = 0);
 
-	void insertMenuItem(HMENU menu, UINT id, UINT item, UINT uIcon = 0);
+	void insertMenuItem(HMENU menu, UINT item, UINT id, UINT uIcon = 0);
 
 	void appendSeparator(HMENU menu);
 
 	void insertSeparator(HMENU menu, UINT item);
 
-	void addSubMenuItem(HMENU menu, UINT id, HMENU subMenu, UINT uIcon = 0);
+	void addSubMenuItem(HMENU menu, HMENU subMenu, UINT id, UINT uIcon = 0);
 
-	void insertSubMenuItem(HMENU menu, UINT id, HMENU subMenu, UINT item, UINT uIcon = 0);
+	void insertSubMenuItem(HMENU menu, UINT id, UINT item, HMENU subMenu, UINT uIcon = 0);
 
 	void CheckItem(HMENU hMenu, UINT itemID, bool bCheck);
 
