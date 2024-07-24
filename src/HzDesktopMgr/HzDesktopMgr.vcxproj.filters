@@ -36,6 +36,9 @@
     <Filter Include="view\dragdrop">
       <UniqueIdentifier>{86825328-00ff-42a2-9b8a-525f2cb208d9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="include\helper">
+      <UniqueIdentifier>{da0d91ef-facb-47cf-a031-3012d6d9e90e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="HzDesktopMgr.qrc">

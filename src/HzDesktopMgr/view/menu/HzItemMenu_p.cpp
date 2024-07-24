@@ -12,6 +12,7 @@
 #include "windows/UiOperation.h"
 #include "windows/tools.h"
 #include "common/ResourceHelper.h"
+#include "common/ClipboardHelper.h"
 
 MenuHelper::MenuHelper(HINSTANCE resInstance)
 	: m_resInstance(resInstance)
@@ -87,6 +88,12 @@ void MenuHelper::CheckItem(HMENU hMenu, UINT itemID, bool bCheck)
 {
 	UINT state = bCheck ? MF_CHECKED : MF_UNCHECKED;
 	CheckMenuItem(hMenu, itemID, state);
+}
+
+void MenuHelper::EnableItem(HMENU hMenu, UINT itemID, bool bEnable)
+{
+	UINT state = bEnable ? MF_ENABLED : MF_DISABLED;
+	EnableMenuItem(hMenu, itemID, state);
 }
 
 std::vector<PITEMID_CHILD> HzItemMenuPrivate::getDesktopPidcFromPaths(const QStringList& paths)
@@ -202,9 +209,10 @@ HzDesktopBkgMenuPrivate::~HzDesktopBkgMenuPrivate()
 
 void HzDesktopBkgMenuPrivate::updateMenu(HMENU hMenu)
 {
+	HZQ_Q(HzDesktopBkgMenu);
+
 	UINT position = 0;
 
-	// TODO 将以下所有函数的cmdid转移到uicon之前，也就是倒数第二个
 	HMENU hViewMenu = buildViewMenu();
 	m_menuHelper.insertSubMenuItem(hMenu, IDS_VIEW_BKG_MENU, position++, hViewMenu);
 
@@ -217,6 +225,17 @@ void HzDesktopBkgMenuPrivate::updateMenu(HMENU hMenu)
 	m_menuHelper.insertMenuItem(hMenu, position++, IDM_PASTE);
 	m_menuHelper.insertMenuItem(hMenu, position++, IDM_PASTE_SHORTCUT);
 	m_menuHelper.insertSeparator(hMenu, position++);
+
+	LPITEMIDLIST folderPidl = NULL;
+	SHParseDisplayName(q->m_param->dirPath.toStdWString().c_str(), nullptr, &folderPidl, 0, nullptr);
+
+	if (!CanPasteInDirectory(folderPidl, PasteType::Normal)) {
+		m_menuHelper.EnableItem(hMenu, IDM_PASTE, false);
+	}
+	
+	if (!CanPasteInDirectory(folderPidl, PasteType::Shortcut)) {
+		m_menuHelper.EnableItem(hMenu, IDM_PASTE_SHORTCUT, false);
+	}
 
 	HMENU hFunctionMenu = buildFunctionMenu();
 	m_menuHelper.insertMenuItem(hMenu, position++, IDM_ONECLICK_MANAGE, IDI_ICON_MANAGE);

@@ -19,6 +19,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
 
     QApplication a(argc, argv);
+	a.setWindowIcon(QIcon(":/main/view/res/common/HzDesktop.ico"));
 
     // 读取数据库，获取格子数量、位置、内容什么的
 

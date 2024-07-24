@@ -64,27 +64,21 @@ QPixmap HzDesktopIconViewPrivate::renderToPixmap(const QModelIndexList& indexes,
 
 	Q_ASSERT(r);
 	QItemViewPaintPairs paintPairs = draggablePaintPairs(indexes, r);
-	if (paintPairs.isEmpty())
+	if (paintPairs.isEmpty()) {
 		return QPixmap();
-
-	// mac的retina显示才需要考虑此问题
-	//QWindow* window = q->windowHandle(WindowHandleMode::Closest);
-	//const qreal scale = window ? window->devicePixelRatio() : qreal(1);
-	//QPixmap pixmap(r->size() * scale);
-	//pixmap.setDevicePixelRatio(scale);
+	}
 
 	QPixmap pixmap(r->size());
-
 	pixmap.fill(Qt::transparent);
 	QPainter painter(&pixmap);
 	QStyleOptionViewItem option = q->viewOptions();
-	option.state |= QStyle::State_Selected;
 	for (int j = 0; j < paintPairs.count(); ++j) {
 		option.rect = paintPairs.at(j).rect.translated(-r->topLeft());
 		const QModelIndex& current = paintPairs.at(j).index;
 		//adjustViewOptionsForIndex(&option, current);
 		q->itemDelegate(current)->paint(&painter, option, current);
 	}
+
 	return pixmap;
 }
 

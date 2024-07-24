@@ -1,6 +1,7 @@
 #include <QDebug>
 #include <QDateTime>
 #include <QUrl>
+#include <QTimer>
 #include <QMimeData>
 
 #include <Windows.h>
@@ -55,15 +56,13 @@ void HzDesktopItemModel::refreshItems()
 {
 	HZQ_D(HzDesktopItemModel);
 
-	//for (int i = 0; i < rowCount(); ) {
-	//	removeRow(i);
-	//}
+	clear();
 
-	//removeRows(0, rowCount());
-
-	//d->m_systemItemWatcher.refreshSystemAppsInfo();
-
-	//d->m_fileItemWatcher.refreshFileItem();
+	// 延时后再读取
+	QTimer::singleShot(10, this, [d]() {
+		d->m_systemItemWatcher.refreshSystemAppsInfo();
+		d->m_fileItemWatcher.refreshFileItem();
+	});
 }
 
 void HzDesktopItemModel::handleExternalDrop(const QString& oriFilePath, QStandardItem* item)

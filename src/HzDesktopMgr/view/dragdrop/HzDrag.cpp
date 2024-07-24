@@ -165,11 +165,11 @@ Qt::DropAction HzDrag::exec(Qt::DropActions supportedActions)
 
 		SHDRAGIMAGE image;
 		image.sizeDragImage = { m_pixmap.width(), m_pixmap.height() };
-		image.hbmpDragImage = QtWin::toHBITMAP(m_pixmap);
-		image.crColorKey = 0x00FFFFFF;	// TODO 修改
+		image.hbmpDragImage = QtWin::toHBITMAP(m_pixmap, QtWin::HBitmapAlpha);
 		image.ptOffset = { m_hotSpot.x(), m_hotSpot.y() };
 		hr = pDragSourceHelper->InitializeFromBitmap(&image, dataObject.get());
 
+		// TODO 需要释放
 		IDropSource* pDropSource = new DropSource();
 
 		hr = DoDragDrop(

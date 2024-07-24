@@ -30,6 +30,8 @@ public:
 
 	void CheckItem(HMENU hMenu, UINT itemID, bool bCheck);
 
+	void EnableItem(HMENU hMenu, UINT itemID, bool bEnable);
+
 private:
 
 	HINSTANCE m_resInstance;

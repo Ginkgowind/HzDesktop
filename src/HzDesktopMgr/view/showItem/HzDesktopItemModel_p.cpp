@@ -494,14 +494,14 @@ void HzDesktopItemModelPrivate::init()
 	// TODO 确认const在*左右的区别
 	HZQ_Q(HzDesktopItemModel);
 
-	auto refreshedCallback = [&](QList<QStandardItem*> itemList) {
+	auto refreshedCallback = [q](QList<QStandardItem*> itemList) {
 		for (QStandardItem* item : itemList) {
 			// TODO 这里先按顺序来，后面改为读配置
 			q->appendRow(item);
 		}
-		if (++m_initFinishedCnt == 2) {
-			q->sortItemsLayout();
-		}
+		//if (++m_initFinishedCnt == 2) {
+		//	q->sortItemsLayout();
+		//}
 		// TODO 为什么下面这样不行？
 		//hzq_ptr->appendRow(itemList);
 	};
