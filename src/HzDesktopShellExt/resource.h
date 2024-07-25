@@ -4,14 +4,7 @@
 //
 #define IDS_PROJNAME                    100
 #define IDR_HZDESKTOPSHELLEXT           101
-#define IDM_LAUNCH_HZDESKTOP            102
-#define IDM_ONECLICK_MANAGE             103
-#define IDS_MANAGE_FUNCTION             104
-#define IDM_CREATE_GRID                 105
-#define IDM_FOLDER_MAPPING              106
-#define IDM_SETTING_CENTER              107
-#define IDM_EXIT_HZDESKTOP              108
-#define IDS_MAX_VALUE					109
+#define IDM_LAUNCH_HZDESKTOP            70002
 
 // Next default values for new objects
 // 

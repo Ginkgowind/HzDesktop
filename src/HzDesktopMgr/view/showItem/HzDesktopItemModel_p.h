@@ -124,11 +124,6 @@ class HzDesktopItemModelPrivate
 	HZQ_DECLARE_PUBLIC(HzDesktopItemModel)
 
 public:
-	enum { NumColumns = 4 };
-	enum ItemType {
-		SystemAppItem,
-		NormalFileItem
-	};
 
 	HzDesktopItemModelPrivate();
 	~HzDesktopItemModelPrivate();

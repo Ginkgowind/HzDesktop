@@ -48,8 +48,7 @@ HzDesktopIconView::HzDesktopIconView(QWidget* parent)
 
 	//setDropIndicatorShown(true); // 显示拖放位置指示器
 
-	//setStyleSheet("QAbstractItemView {background-color: transparent;}");
-	//setAttribute(Qt::WA_TranslucentBackground, true);
+	setStyleSheet("QAbstractItemView {background-color: transparent;}");
 
 	setDragEnabled(true);
 	setAcceptDrops(true);

@@ -16,7 +16,7 @@ enum class PasteType
 
 std::string ReadBinaryDataFromGlobal(HGLOBAL global);
 
-// TODO �ĺ�������
+// TODO 改名字
 HRESULT GetBlobData_tmpname(IDataObject* dataObject, CLIPFORMAT format, std::string& outputData);
 
 template <typename T>

@@ -66,25 +66,6 @@ public:
 	STDMETHODIMP    GetCommandString(UINT_PTR idCommand, UINT uFlags, UINT* pReserved, PSTR pszName, UINT cchName);
 
 private:
-	void            TweakMenu(HMENU menu);
-
-
-
-	enum MyCmd
-	{
-		CMD_ROOT,
-		CMD_SHOW_FILEPATH,
-		CMD_SHOW_FILEPATHS,
-		CMD_SHOW_DEMO_ABOUT,
-		CMD_END
-	};
-	struct MenuInfo
-	{
-		std::string name;
-		// other infos
-	};
-	// datas
-	std::vector<std::wstring> m_filepaths;        // select files
 };
 
 OBJECT_ENTRY_AUTO(__uuidof(HzDesktopMenuExt), CHzDesktopMenuExt)

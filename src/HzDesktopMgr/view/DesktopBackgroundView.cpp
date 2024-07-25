@@ -1,34 +1,40 @@
 #include <QMouseEvent>
 #include <QMenu>
 #include <QPainter>
+#include <QDebug>
+
+#include <Windows.h>
 
 #include "DesktopBackgroundView.h"
 
 DesktopBackgroundView::DesktopBackgroundView()
 	: m_menu(nullptr)
 {
-	//setWindowFlags(Qt::Tool | Qt::FramelessWindowHint);
+	// 浠ユ瀹炵幇鍙奖鍝嶅綋鍓嶇被鑰屼笉褰卞搷瀛愮被
+	setObjectName("bkgview");
+	setStyleSheet("#bkgview {background: transparent;}");
 
-	//setAttribute(Qt::WA_TranslucentBackground, true);
-
-	//// TODO 单独设置下面这个为什么会变黑
-	//setStyleSheet("background: transparent;");
+	inplace();
 }
 
 DesktopBackgroundView::~DesktopBackgroundView()
 {
 }
 
-void DesktopBackgroundView::paintEvent(QPaintEvent* event)
-{
-	QPainter painter(this);
-
-	painter.setPen(Qt::transparent);
-	painter.setBrush(QColor(0, 0, 0, 1));
-	painter.drawRect(rect());
-
-	QWidget::paintEvent(event);
-}
+//void DesktopBackgroundView::paintEvent(QPaintEvent* event)
+//{
+//	//QPainter painter(this);
+//	//painter.setCompositionMode(QPainter::CompositionMode_Clear);
+//	//painter.fillRect(this->rect(), Qt::transparent);
+//
+//	QPainter painter(this);
+//
+//	painter.setPen(Qt::transparent);
+//	painter.setBrush(QColor(0, 0, 0, 1));
+//	painter.drawRect(rect());
+//
+//	QWidget::paintEvent(event);
+//}
 
 void DesktopBackgroundView::mouseDoubleClickEvent(QMouseEvent* event)
 {
@@ -48,4 +54,68 @@ void DesktopBackgroundView::contextMenuEvent(QContextMenuEvent* event)
 	m_menu->exec(QCursor::pos());
 }
 
-// TODO 这里也画一块透明的
+void DesktopBackgroundView::inplace() 
+{
+	// 鎺ュ叆鍒板浘鏍囧眰
+	HWND background = NULL;
+	HWND worker = NULL;
+
+	// 寰幆鏌ユ壘WorkerW绐楀彛
+	do {
+		worker = FindWindowExA(NULL, worker, "WorkerW", NULL);
+		if (worker != NULL) {
+			qDebug() << "Find WokerW";
+			// 灏濊瘯鎵惧埌SHELLDLL_DefView绐楀彛
+			HWND shelldlldefview = FindWindowExA(worker, NULL, "SHELLDLL_DefView", NULL);
+			if (shelldlldefview != NULL) {
+				qDebug() << "Find SHELLDLL_DefView";
+				// 妫�鏌HELLDLL_DefView鐨勭埗绐楀彛鏄惁涓哄綋鍓嶇殑WorkerW绐楀彛
+				HWND parent = GetParent(shelldlldefview);
+				if (parent != NULL) {
+					qDebug() << "Find SHELLDLL_DefView's Parent";
+					if (parent == worker) {
+						qDebug() << "Right!";
+
+						// 鎵惧埌浜嗘纭殑WorkerW绐楀彛
+						background = shelldlldefview;
+						break; // 缁撴潫寰幆
+					}
+				}
+			}
+		}
+	} while (worker != NULL);
+
+	// 濡傛灉鎵惧埌浜嗘纭殑WorkerW绐楀彛锛岃缃埗绐楀彛
+	if (background == NULL) {
+		HWND pPM = FindWindowA("Progman", "Program Manager");
+		if (pPM != NULL) {
+			qDebug() << "Find Program Manager";
+			// 灏濊瘯鎵惧埌SHELLDLL_DefView绐楀彛
+			HWND shelldlldefview = FindWindowExA(pPM, NULL, "SHELLDLL_DefView", NULL);
+			if (shelldlldefview != NULL) {
+				qDebug() << "Find SHELLDLL_DefView";
+				// 妫�鏌HELLDLL_DefView鐨勭埗绐楀彛鏄惁涓哄綋鍓嶇殑WorkerW绐楀彛
+				HWND parent = GetParent(shelldlldefview);
+				if (parent != NULL) {
+					qDebug() << "Find SHELLDLL_DefView's Parent";
+					if (parent == pPM) {
+						qDebug() << "Right!";
+						// 鎵惧埌浜嗘纭殑WorkerW绐楀彛
+						background = shelldlldefview;// 缁撴潫寰幆
+					}
+				}
+			}
+		}
+	}
+
+
+	if (background != NULL) {
+		SetParent((HWND)winId(), background);
+		SetWindowPos((HWND)winId(), HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
+		SetWindowPos((HWND)winId(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
+		SetFocus((HWND)winId());
+	}
+	else {
+		qDebug() << "Unable to find proper Program manager,Inplacing failed";
+	}
+}

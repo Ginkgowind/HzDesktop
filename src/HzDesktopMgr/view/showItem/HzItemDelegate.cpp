@@ -236,7 +236,7 @@ QPixmap HzItemDelegate::paintIconText(
 
 	if (!option.state.testFlag(QStyle::State_Editing)) {
 		// 绘制显示名字
-		//m_painter->setPen(Qt::white);
+		m_painter->setPen(Qt::white);
 		m_painter->setFont(option.font);
 
 		QRectF textLimitRC(

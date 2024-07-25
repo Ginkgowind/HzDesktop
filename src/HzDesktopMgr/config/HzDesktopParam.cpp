@@ -14,6 +14,9 @@ HzDesktopParam::HzDesktopParam()
 	, sortOrder(Qt::AscendingOrder)
 	, font("Microsoft YaHei")
 {
+	// TODO ±à¼­¿òÎÄ±¾ÏÔÊ¾Æ«×ó
+	font.setPixelSize(16);
+
 	setIconSizeMode(iconMode);
 }
 
