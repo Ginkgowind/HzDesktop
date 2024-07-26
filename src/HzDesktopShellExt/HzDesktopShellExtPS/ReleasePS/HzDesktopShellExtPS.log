@@ -1,8 +1,0 @@
-﻿  Checking for required files
-EXEC : error : MIDL will not generate DLLDATA.C unless you have at least 1 interface in the main project.
-D:\Programs\Learn\Microsoft Visual Studio\2022\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets(156,5): error MSB3073: 命令“if exist dlldata.c goto :END
-D:\Programs\Learn\Microsoft Visual Studio\2022\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets(156,5): error MSB3073: echo Error: MIDL will not generate DLLDATA.C unless you have at least 1 interface in the main project.
-D:\Programs\Learn\Microsoft Visual Studio\2022\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets(156,5): error MSB3073: Exit 1
-D:\Programs\Learn\Microsoft Visual Studio\2022\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets(156,5): error MSB3073: :END
-D:\Programs\Learn\Microsoft Visual Studio\2022\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets(156,5): error MSB3073: 
-D:\Programs\Learn\Microsoft Visual Studio\2022\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets(156,5): error MSB3073: :VCEnd”已退出，代码为 1。

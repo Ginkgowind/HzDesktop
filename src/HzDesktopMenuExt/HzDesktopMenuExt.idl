@@ -1,0 +1,36 @@
+﻿// HzDesktopMenuExt.idl: HzDesktopMenuExt 的 IDL 源
+//
+
+// 此文件将由 MIDL 工具处理以
+// 生成类型库(HzDesktopMenuExt.tlb)和封送处理代码。
+
+import "oaidl.idl";
+import "ocidl.idl";
+
+[
+	object,
+	uuid(4ae74c54-5fc0-452b-ae40-b0d0dbb34573),
+	dual,
+	nonextensible,
+	pointer_default(unique)
+]
+interface IHzDesktopMenuObject : IDispatch
+{
+};
+[
+	uuid(bb7d1490-abca-412a-a175-26e1c150c3fb),
+	version(1.0),
+]
+library HzDesktopMenuExtLib
+{
+	importlib("stdole2.tlb");
+	[
+		uuid(94e8f84e-15de-4897-9100-b4aecc8e8861)
+	]
+	coclass HzDesktopMenuObject
+	{
+		[default] interface IHzDesktopMenuObject;
+	};
+};
+
+import "shobjidl.idl";

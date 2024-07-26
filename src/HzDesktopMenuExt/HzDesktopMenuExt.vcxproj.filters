@@ -14,14 +14,17 @@
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
     <Filter Include="生成的文件">
-      <UniqueIdentifier>{1abe5c63-daad-43bc-8b4d-d4a779ee8d76}</UniqueIdentifier>
+      <UniqueIdentifier>{979ddfed-87af-4193-ac4c-890153d47baf}</UniqueIdentifier>
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
     <Filter Include="include">
-      <UniqueIdentifier>{56e76bda-730d-4cf6-aa13-3394d18190d8}</UniqueIdentifier>
+      <UniqueIdentifier>{7af473ad-f05f-4d53-bd25-55a3eb38b339}</UniqueIdentifier>
     </Filter>
     <Filter Include="include\common">
-      <UniqueIdentifier>{bd48422f-9c60-410d-8efa-fde0db0a308a}</UniqueIdentifier>
+      <UniqueIdentifier>{5abdc4a8-3bdc-41af-800c-41d6e8e94651}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\windows">
+      <UniqueIdentifier>{42b599db-dcc4-4878-a1b5-b1d383a01cb4}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -37,16 +40,13 @@
     <ClInclude Include="dllmain.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="compreg.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="HzDesktopShellExt_i.h">
+    <ClInclude Include="HzDesktopMenuExt_i.h">
       <Filter>生成的文件</Filter>
     </ClInclude>
     <ClInclude Include="pch.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="HzDesktopMenuExt.h">
+    <ClInclude Include="HzDesktopMenuObject.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\common\CommonTools.h">
@@ -58,24 +58,24 @@
     <ClInclude Include="..\..\include\common\ResourceHelper.h">
       <Filter>include\common</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\windows\IconBitmapUtils.h">
+      <Filter>include\windows</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="HzDesktopShellExt.cpp">
+    <ClCompile Include="HzDesktopMenuExt.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="dllmain.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="compreg.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="HzDesktopShellExt_i.c">
+    <ClCompile Include="HzDesktopMenuExt_i.c">
       <Filter>生成的文件</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="HzDesktopMenuExt.cpp">
+    <ClCompile Include="HzDesktopMenuObject.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\..\include\common\CommonTools.cpp">
@@ -87,27 +87,38 @@
     <ClCompile Include="..\..\include\common\ResourceHelper.cpp">
       <Filter>include\common</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\include\windows\IconBitmapUtils.cpp">
+      <Filter>include\windows</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="HzDesktopShellExt.rc">
+    <ResourceCompile Include="HzDesktopMenuExt.rc">
       <Filter>资源文件</Filter>
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="HzDesktopShellExt.rgs">
+    <None Include="HzDesktopMenuExt.rgs">
       <Filter>资源文件</Filter>
     </None>
-    <None Include="HzDesktopShellExt.def">
+    <None Include="HzDesktopMenuExt.def">
       <Filter>源文件</Filter>
     </None>
-    <None Include="HzDesktopMenuExt.rgs">
+    <None Include="HzDesktopMenuObject.rgs">
       <Filter>资源文件</Filter>
     </None>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Midl Include="HzDesktopShellExt.idl">
+    <Midl Include="HzDesktopMenuExt.idl">
       <Filter>源文件</Filter>
     </Midl>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\HzDesktop.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\launch.ico">
+      <Filter>资源文件</Filter>
+    </Image>
   </ItemGroup>
 </Project>

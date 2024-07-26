@@ -3,11 +3,10 @@
 #include "pch.h"
 #include "framework.h"
 #include "resource.h"
-#include "HzDesktopShellExt_i.h"
+#include "HzDesktopMenuExt_i.h"
 #include "dllmain.h"
-#include "compreg.h"
 
-CHzDesktopShellExtModule _AtlModule;
+CHzDesktopMenuExtModule _AtlModule;
 
 HINSTANCE g_hInsDll = NULL;
 

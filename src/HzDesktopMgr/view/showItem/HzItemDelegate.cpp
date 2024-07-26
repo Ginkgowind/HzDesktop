@@ -2,13 +2,19 @@
 #include <QFileInfo>
 #include <QDebug>
 #include <QAbstractItemView>
-#include <QHBoxLayout>
+#include <QGraphicsScene>
+#include <QGraphicsTextItem>
+#include <QGraphicsDropShadowEffect>
 
 #include "HzItemDelegate.h"
 #include "HzItemTextEditor.h"
 #include "../HzDesktopIconView.h"
 #include "HzDesktopItemModel.h"
 #include "windows/UiOperation.h"
+
+#define TEXT_BLUR_RADIUS		2
+#define TEXT_BLUR_WIDTH_DELTA	4
+#define TEXT_BLUR_DRAW_COUNT	3
 
 HzItemDelegate::HzItemDelegate(QObject* parent, HzDesktopParam* param)
 	: QStyledItemDelegate(parent)
@@ -172,16 +178,17 @@ void HzItemDelegate::paintBackground(
 	painter->setPen(Qt::NoPen);
 
 	//255, 255, 255,
-#define CUSTOM_COLOR 41, 144, 255
+//#define CUSTOM_COLOR 41, 144, 255
+#define CUSTOM_COLOR 255, 255, 255
 	if (option.state.testFlag(QStyle::State_Selected)
 		&& option.state.testFlag(QStyle::State_MouseOver)) {
-		painter->setBrush(QColor(CUSTOM_COLOR, 140));
+		painter->setBrush(QColor(CUSTOM_COLOR, 180));
 	}
 	else if (option.state.testFlag(QStyle::State_Selected)) {
-		painter->setBrush(QColor(CUSTOM_COLOR, 110));
+		painter->setBrush(QColor(CUSTOM_COLOR, 140));
 	}
 	else if (option.state.testFlag(QStyle::State_MouseOver)) {
-		painter->setBrush(QColor(CUSTOM_COLOR, 60));
+		painter->setBrush(QColor(CUSTOM_COLOR, 80));
 	}
 	else {
 		painter->setBrush(Qt::transparent);
@@ -236,8 +243,8 @@ QPixmap HzItemDelegate::paintIconText(
 
 	if (!option.state.testFlag(QStyle::State_Editing)) {
 		// 绘制显示名字
-		m_painter->setPen(Qt::white);
 		m_painter->setFont(option.font);
+		m_painter->setPen(Qt::white);
 
 		QRectF textLimitRC(
 			QPoint(0, option.rect.width()),
@@ -262,11 +269,38 @@ QPixmap HzItemDelegate::paintIconText(
 			}
 		}
 
-		m_painter->drawText(
-			textShowRC,
-			displayText,
-			m_textOption
-		);
+		// 宽度略微加宽
+		textShowRC.setWidth(textShowRC.width() + TEXT_BLUR_WIDTH_DELTA);
+
+		// 创建一个临时的 QImage，并绘制文本
+		QImage tempImage(textShowRC.size(), QImage::Format_ARGB32);
+		tempImage.fill(Qt::transparent);
+		QPainter tempPainter(&tempImage);
+		tempPainter.setFont(option.font);
+		tempPainter.setPen(Qt::black);
+		tempPainter.drawText(QRect(QPoint(0, 0), textShowRC.size()), displayText, m_textOption);
+
+		// 创建模糊效果
+		QGraphicsScene scene;
+		QGraphicsPixmapItem* pixmapItem = new QGraphicsPixmapItem(QPixmap::fromImage(tempImage));
+		QGraphicsBlurEffect* blurEffect = new QGraphicsBlurEffect();
+		blurEffect->setBlurRadius(TEXT_BLUR_RADIUS);
+		pixmapItem->setGraphicsEffect(blurEffect);
+		scene.addItem(pixmapItem);
+
+		// 渲染场景到另一个 QImage
+		QImage blurTextPixmap(textShowRC.size(), QImage::Format_ARGB32);
+		blurTextPixmap.fill(Qt::transparent);
+		QPainter imagePainter(&blurTextPixmap);
+		scene.render(&imagePainter);
+
+		// 将模糊后的 QImage 绘制到窗口，多绘制几次增加颜色深度
+		for (int i = 0; i < TEXT_BLUR_DRAW_COUNT; i++) {
+			m_painter->drawImage(textShowRC.topLeft(), blurTextPixmap);
+		}
+
+		// 再绘制真正的文本
+		m_painter->drawText(textShowRC, displayText, m_textOption);
 	}
 
 	// 绘制结束

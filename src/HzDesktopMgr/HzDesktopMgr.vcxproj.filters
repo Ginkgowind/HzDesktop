@@ -123,6 +123,9 @@
     <ClCompile Include="..\..\include\windows\IconBitmapUtils.cpp">
       <Filter>include\windows</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\include\common\MenuHelper.cpp">
+      <Filter>include\common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HzDesktopMgr.h" />
@@ -174,6 +177,9 @@
     </ClInclude>
     <ClInclude Include="..\..\include\windows\IconBitmapUtils.h">
       <Filter>include\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\common\MenuHelper.h">
+      <Filter>include\common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

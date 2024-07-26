@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <wil/com.h>
 
 #include "spdlog/spdlog.h"
 
@@ -10,4 +9,6 @@
 namespace HZ
 {
 	bool isHzDesktopRunning();
+
+	bool launchHzDesktop();
 }

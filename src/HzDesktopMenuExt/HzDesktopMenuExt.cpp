@@ -1,4 +1,4 @@
-﻿// HzDesktopShellExt.cpp: DLL 导出的实现。
+﻿// HzDesktopMenuExt.cpp: DLL 导出的实现。
 
 //
 // 注意:  COM+ 1.0 信息: 
@@ -8,9 +8,8 @@
 #include "pch.h"
 #include "framework.h"
 #include "resource.h"
-#include "HzDesktopShellExt_i.h"
+#include "HzDesktopMenuExt_i.h"
 #include "dllmain.h"
-#include "compreg.h"
 
 
 using namespace ATL;

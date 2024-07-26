@@ -19,12 +19,12 @@
 extern "C"   {
 #endif
 
-EXTERN_PROXY_FILE( HzDesktopShellExt )
+EXTERN_PROXY_FILE( HzDesktopMenuExt )
 
 
 PROXYFILE_LIST_START
 /* Start of list */
-  REFERENCE_PROXY_FILE( HzDesktopShellExt ),
+  REFERENCE_PROXY_FILE( HzDesktopMenuExt ),
 /* End of list */
 PROXYFILE_LIST_END
 

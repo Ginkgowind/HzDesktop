@@ -13,6 +13,10 @@
 #include <QDir>
 #include <QDebug>
 
+#include <QGraphicsScene>
+#include <QGraphicsTextItem>
+#include <QGraphicsDropShadowEffect>
+
 #include <winrt/base.h>
 
 #include "HzDesktopIconView.h"

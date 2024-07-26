@@ -9,27 +9,46 @@ MenuHelper::MenuHelper(HINSTANCE resInstance)
 {
 }
 
-void MenuHelper::appendMenuItem(HMENU menu, UINT id)
+void MenuHelper::appendMenuItem(HMENU menu, UINT id, UINT uIcon)
 {
-	insertMenuItem(menu, id, GetMenuItemCount(menu));
+	insertMenuItem(menu, GetMenuItemCount(menu), id, uIcon);
 }
 
-void MenuHelper::insertMenuItem(HMENU menu, UINT id, UINT item)
+void MenuHelper::insertMenuItem(HMENU menu, UINT item, UINT id, UINT uIcon)
 {
-	std::wstring text = ResourceHelper::LoadStringFromRC(m_resInstance, id);
-	UINT fMask = MIIM_ID | MIIM_STRING;
-	//if (hBitmap) { 获取成功就加此标志位
-	//	fMask |= MIIM_BITMAP;
-	//}
-
-	// 查看是否含有ico资源
-
-
 	MENUITEMINFO menuItemInfo = {};
 	menuItemInfo.cbSize = sizeof(menuItemInfo);
-	menuItemInfo.fMask = fMask;
+	menuItemInfo.fMask = MIIM_ID | MIIM_STRING;
 	menuItemInfo.wID = id;
-	//menuItemInfo.hbmpItem = hBitmap;
+
+	// 查看是否含有ico资源
+	if (uIcon > 0) {
+		menuItemInfo.fMask |= MIIM_BITMAP;
+		menuItemInfo.hbmpItem = m_bitmapUtils.LoadAndResizeFirstIcon(
+			m_resInstance, uIcon, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON));
+	}
+
+	std::wstring text = ResourceHelper::LoadStringFromRC(m_resInstance, id);
+	menuItemInfo.dwTypeData = const_cast<LPWSTR>(text.c_str());
+
+	InsertMenuItem(menu, item, TRUE, &menuItemInfo);
+}
+
+void MenuHelper::insertMenuItem2(HMENU menu, UINT item, UINT id, UINT strId, UINT uIcon)
+{
+	MENUITEMINFO menuItemInfo = {};
+	menuItemInfo.cbSize = sizeof(menuItemInfo);
+	menuItemInfo.fMask = MIIM_ID | MIIM_STRING;
+	menuItemInfo.wID = id;
+
+	// 查看是否含有ico资源
+	if (uIcon > 0) {
+		menuItemInfo.fMask |= MIIM_BITMAP;
+		menuItemInfo.hbmpItem = m_bitmapUtils.LoadAndResizeFirstIcon(
+			m_resInstance, uIcon, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON));
+	}
+
+	std::wstring text = ResourceHelper::LoadStringFromRC(m_resInstance, strId);
 	menuItemInfo.dwTypeData = const_cast<LPWSTR>(text.c_str());
 
 	InsertMenuItem(menu, item, TRUE, &menuItemInfo);
@@ -49,13 +68,12 @@ void MenuHelper::insertSeparator(HMENU menu, UINT item)
 	InsertMenuItem(menu, item, TRUE, &menuItemInfo);
 }
 
-
-void MenuHelper::addSubMenuItem(HMENU menu, UINT id, HMENU subMenu)
+void MenuHelper::addSubMenuItem(HMENU menu, HMENU subMenu, UINT id, UINT uIcon)
 {
-	insertSubMenuItem(menu, id, subMenu, GetMenuItemCount(menu));
+	insertSubMenuItem(menu, id, GetMenuItemCount(menu), subMenu, uIcon);
 }
 
-void MenuHelper::insertSubMenuItem(HMENU menu, UINT id, HMENU subMenu, UINT item)
+void MenuHelper::insertSubMenuItem(HMENU menu, UINT id, UINT item, HMENU subMenu, UINT uIcon)
 {
 	std::wstring text = ResourceHelper::LoadStringFromRC(m_resInstance, id);
 
@@ -65,6 +83,14 @@ void MenuHelper::insertSubMenuItem(HMENU menu, UINT id, HMENU subMenu, UINT item
 	menuItemInfo.wID = id;
 	menuItemInfo.dwTypeData = const_cast<LPWSTR>(text.c_str());
 	menuItemInfo.hSubMenu = subMenu;
+
+	// 查看是否含有ico资源
+	if (uIcon > 0) {
+		menuItemInfo.fMask |= MIIM_BITMAP;
+		menuItemInfo.hbmpItem = m_bitmapUtils.LoadAndResizeFirstIcon(
+			m_resInstance, uIcon, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON));
+	}
+
 	InsertMenuItem(menu, item, TRUE, &menuItemInfo);
 }
 
@@ -72,4 +98,10 @@ void MenuHelper::CheckItem(HMENU hMenu, UINT itemID, bool bCheck)
 {
 	UINT state = bCheck ? MF_CHECKED : MF_UNCHECKED;
 	CheckMenuItem(hMenu, itemID, state);
+}
+
+void MenuHelper::EnableItem(HMENU hMenu, UINT itemID, bool bEnable)
+{
+	UINT state = bEnable ? MF_ENABLED : MF_DISABLED;
+	EnableMenuItem(hMenu, itemID, state);
 }

@@ -1,0 +1,36 @@
+HKCR
+{
+	HzDesktopMenu.1 = s 'HzDesktopMenuObject class'
+	{
+		CLSID = s '{94e8f84e-15de-4897-9100-b4aecc8e8861}'
+	}
+	HzDesktopMenu = s 'HzDesktopMenuObject class'
+	{		
+		CurVer = s 'HzDesktopMenu.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {94e8f84e-15de-4897-9100-b4aecc8e8861} = s 'HzDesktopMenuObject class'
+		{
+			ProgID = s 'HzDesktopMenu.1'
+			VersionIndependentProgID = s 'HzDesktopMenu'
+			ForceRemove Programmable
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Apartment'
+			}
+			TypeLib = s '{bb7d1490-abca-412a-a175-26e1c150c3fb}'
+			Version = s '1.0'
+		}
+	}
+    NoRemove DesktopBackground
+    {
+        NoRemove ShellEx
+        {
+            NoRemove ContextMenuHandlers
+            {
+                ForceRemove 'HzDesktopMenuExt' = s '{94e8f84e-15de-4897-9100-b4aecc8e8861}'
+            }
+        }
+    }
+}
