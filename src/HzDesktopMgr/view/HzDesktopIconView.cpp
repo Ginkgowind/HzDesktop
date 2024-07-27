@@ -607,9 +607,9 @@ void HzDesktopIconView::paintEvent(QPaintEvent* e)
 	if (m_insertRow >= 0 && !isIndexHidden(m_itemModel->index(m_insertRow, 0))) {
 		painter.save();
 		// 计算出插入线的位置
-		QPoint TMP_DELTA(0, -5);
+		QPoint TMP_DELTA(0, -10);
 		QRect rect = visualRect(model()->index(m_insertRow, 0));
-		painter.setPen(QPen(Qt::blue, 2));
+		painter.setPen(QPen(Qt::white, 3));
 		painter.drawLine(rect.topLeft() + TMP_DELTA, rect.topRight() + TMP_DELTA);
 		painter.restore();
 	}

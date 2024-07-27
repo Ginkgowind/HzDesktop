@@ -81,6 +81,7 @@
     <ClCompile Include="..\..\include\common\MenuHelper.cpp" />
     <ClCompile Include="..\..\include\common\ResourceHelper.cpp" />
     <ClCompile Include="..\..\include\common\StringConv.cpp" />
+    <ClCompile Include="..\..\include\helper\DragDropHelpers.cpp" />
     <ClCompile Include="..\..\include\windows\FileUtils.cpp" />
     <ClCompile Include="..\..\include\windows\IconBitmapUtils.cpp" />
     <ClCompile Include="..\..\include\windows\tools.cpp" />
@@ -108,6 +109,7 @@
     <ClInclude Include="..\..\include\common\QtpqReimp.h" />
     <ClInclude Include="..\..\include\common\ResourceHelper.h" />
     <ClInclude Include="..\..\include\common\StringConv.h" />
+    <ClInclude Include="..\..\include\helper\DragDropHelpers.h" />
     <ClInclude Include="..\..\include\windows\EnsureCleanup.h" />
     <ClInclude Include="..\..\include\windows\FileUtils.h" />
     <ClInclude Include="..\..\include\windows\IconBitmapUtils.h" />

@@ -1,79 +1,119 @@
-//#pragma once
-//
-//#include <QRasterWindow>
-//#include <QPainter>
-//
-//#include <shlobj.h>
-//
-//#include "HzDrag.h"
-//#include "windows/QWindowsComBase.h"
-//
-///*!
-//    \class QWindowsDragCursorWindow
-//    \brief A toplevel window showing the drag icon in case of touch drag.
-//
-//    \sa QWindowsOleDropSource
-//    \internal
-//    \ingroup qt-lighthouse-win
-//*/
-//
-//class QWindowsDragCursorWindow : public QRasterWindow
-//{
-//public:
-//    explicit QWindowsDragCursorWindow(QWindow* parent = nullptr);
-//
-//    void setPixmap(const QPixmap& p);
-//
-//protected:
-//    void paintEvent(QPaintEvent*) override
-//    {
-//        QPainter painter(this);
-//        painter.drawPixmap(0, 0, m_pixmap);
-//    }
-//
-//private:
-//    QPixmap m_pixmap;
-//};
-//
-//class QWindowsOleDropSource : public QWindowsComBase<IDropSource>
-//{
-//public:
-//    enum Mode {
-//        MouseDrag,
-//        TouchDrag // Mouse cursor suppressed, use window as cursor.
-//    };
-//
-//    explicit QWindowsOleDropSource(HzDrag* drag);
-//    ~QWindowsOleDropSource() override;
-//
-//    void createCursors();
-//
-//    // IDropSource methods
-//    STDMETHOD(QueryContinueDrag)(BOOL fEscapePressed, DWORD grfKeyState);
-//    STDMETHOD(GiveFeedback)(DWORD dwEffect);
-//
-//private:
-//    struct CursorEntry {
-//        CursorEntry() : cacheKey(0) {}
-//        CursorEntry(const QPixmap& p, qint64 cK, const CursorHandlePtr& c, const QPoint& h) :
-//            pixmap(p), cacheKey(cK), cursor(c), hotSpot(h) {}
-//
-//        QPixmap pixmap;
-//        qint64 cacheKey; // Cache key of cursor
-//        CursorHandlePtr cursor;
-//        QPoint hotSpot;
-//    };
-//
-//    typedef QMap<Qt::DropAction, CursorEntry> ActionCursorMap;
-//
-//    Mode m_mode;
-//    QWindowsDrag* m_drag;
-//    QPointer<QWindow> m_windowUnderMouse;
-//    Qt::MouseButtons m_currentButtons;
-//    ActionCursorMap m_cursors;
-//    QWindowsDragCursorWindow* m_touchDragWindow;
-//
-//#ifndef QT_NO_DEBUG_STREAM
-//    friend QDebug operator<<(QDebug, const QWindowsOleDropSource::CursorEntry&);
-//#endif
-//};
+#pragma once
+
+#include <windows.h>
+#include <shlwapi.h>
+#include <shlobj.h>
+
+#include "HzDrag.h"
+#include "helper/DragDropHelpers.h"
+
+// 仅适用于桌面
+class HzDragPrivate 
+    : public HzDesktopPrivate
+    , public HzDragDropHelper
+{
+	HZQ_DECLARE_PUBLIC(HzDrag)
+
+public:
+	HRESULT GetDataObject(IShellItemArray* psiaItems, SHDRAGIMAGE& image, IDataObject** ppdtobj);
+
+    HRESULT CDataObject_CreateInstance(REFIID riid, void** ppv);
+
+    virtual HRESULT OnDrop(IShellItemArray* psia, DWORD /* grfKeyState */)
+    {
+        // TODO 
+        return S_OK;
+        //HRESULT hr = _CopyShellItemArray(psia, &_psiaDrop);
+        //if (SUCCEEDED(hr))
+        //{
+        //    _BindUI();
+        //}
+        //return hr;
+    }
+};
+
+class HzDataObject : public IDataObject
+{
+public:
+    HzDataObject() : _cRef(1), _pdtobjShell(NULL)
+    {
+    }
+
+    // IUnknown
+    IFACEMETHODIMP QueryInterface(REFIID riid, void** ppv)
+    {
+        static const QITAB qit[] = {
+            QITABENT(HzDataObject, IDataObject),
+            { 0 },
+        };
+        return QISearch(this, qit, riid, ppv);
+    }
+
+    IFACEMETHODIMP_(ULONG) AddRef()
+    {
+        return InterlockedIncrement(&_cRef);
+    }
+
+    IFACEMETHODIMP_(ULONG) Release()
+    {
+        long cRef = InterlockedDecrement(&_cRef);
+        if (0 == cRef)
+        {
+            delete this;
+        }
+        return cRef;
+    }
+
+    // IDataObject
+    IFACEMETHODIMP GetData(FORMATETC* pformatetcIn, STGMEDIUM* pmedium);
+
+    IFACEMETHODIMP GetDataHere(FORMATETC* /* pformatetc */, STGMEDIUM* /* pmedium */)
+    {
+        return E_NOTIMPL;
+    }
+
+    IFACEMETHODIMP QueryGetData(FORMATETC* pformatetc);
+
+    IFACEMETHODIMP GetCanonicalFormatEtc(FORMATETC* pformatetcIn, FORMATETC* pFormatetcOut)
+    {
+        *pFormatetcOut = *pformatetcIn;
+        pFormatetcOut->ptd = NULL;
+        return DATA_S_SAMEFORMATETC;
+    }
+    IFACEMETHODIMP SetData(FORMATETC* pformatetc, STGMEDIUM* pmedium, BOOL fRelease);
+    IFACEMETHODIMP EnumFormatEtc(DWORD dwDirection, IEnumFORMATETC** ppenumFormatEtc);
+
+    IFACEMETHODIMP DAdvise(FORMATETC* /* pformatetc */, DWORD /* advf */, IAdviseSink* /* pAdvSnk */, DWORD* /* pdwConnection */)
+    {
+        return E_NOTIMPL;
+    }
+
+    IFACEMETHODIMP DUnadvise(DWORD /* dwConnection */)
+    {
+        return E_NOTIMPL;
+    }
+
+    IFACEMETHODIMP EnumDAdvise(IEnumSTATDATA** /* ppenumAdvise */)
+    {
+        return E_NOTIMPL;
+    }
+
+private:
+    ~HzDataObject()
+    {
+        if (_pdtobjShell) {
+            _pdtobjShell->Release();
+        }
+    }
+
+    HRESULT _EnsureShellDataObject()
+    {
+        // the shell data object imptlements ::SetData() in a way that will store any format
+        // this code delegates to that implementation to avoid having to implement ::SetData()
+        return _pdtobjShell ? S_OK : SHCreateDataObject(NULL, 0, NULL, NULL, IID_PPV_ARGS(&_pdtobjShell));
+    }
+
+    long _cRef;
+
+    IDataObject* _pdtobjShell;
+};

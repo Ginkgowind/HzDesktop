@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QObject>
-#include <QWidget>
 
 /*
  * Qt源码里的p、q指针，在QObject的构造函数中需要是

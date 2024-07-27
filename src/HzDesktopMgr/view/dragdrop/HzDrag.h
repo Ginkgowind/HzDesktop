@@ -3,7 +3,13 @@
 #include <QObject>
 #include <QPixmap>
 
-class HzDrag  : public QObject
+#include "common/QtpqReimp.h"
+
+class HzDragPrivate;
+
+class HzDrag  
+	: public QObject
+	, public HzDesktopPublic
 {
 	Q_OBJECT
 
@@ -31,4 +37,8 @@ private:
 	QPoint m_hotSpot;
 
 	static QObject* s_source;
+
+private:
+	HZQ_DECLARE_PRIVATE(HzDrag)
+	Q_DISABLE_COPY(HzDrag)
 };

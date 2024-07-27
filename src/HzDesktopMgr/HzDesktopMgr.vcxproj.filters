@@ -126,6 +126,9 @@
     <ClCompile Include="..\..\include\common\MenuHelper.cpp">
       <Filter>include\common</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\include\helper\DragDropHelpers.cpp">
+      <Filter>include\helper</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HzDesktopMgr.h" />
@@ -180,6 +183,9 @@
     </ClInclude>
     <ClInclude Include="..\..\include\common\MenuHelper.h">
       <Filter>include\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\helper\DragDropHelpers.h">
+      <Filter>include\helper</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

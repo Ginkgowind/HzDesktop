@@ -8,102 +8,13 @@
 #include <QWidget>
 #include <QtWinExtras/QtWin>
 
-#include "HzDrag.h"
 #include "HzDrag_p.h"
-
-class DropSource : public IDropSource
-{
-public:
-
-	DropSource();
-
-	HRESULT		__stdcall	QueryInterface(REFIID iid, void** ppvObject);
-	ULONG		__stdcall	AddRef();
-	ULONG		__stdcall	Release();
-
-	HRESULT _stdcall	QueryContinueDrag(BOOL fEscapePressed, DWORD grfKeyState);
-	HRESULT _stdcall	GiveFeedback(DWORD dwEffect);
-
-private:
-
-	LONG		m_lRefCount;
-};
-
-DropSource::DropSource()
-{
-	m_lRefCount = 1;
-}
-
-/* IUnknown interface members. */
-HRESULT __stdcall DropSource::QueryInterface(REFIID iid, void** ppvObject)
-{
-	*ppvObject = NULL;
-
-	if (iid == IID_IDropSource ||
-		iid == IID_IUnknown)
-	{
-		*ppvObject = this;
-	}
-
-	if (*ppvObject)
-	{
-		AddRef();
-		return S_OK;
-	}
-
-	return E_NOINTERFACE;
-}
-
-ULONG __stdcall DropSource::AddRef()
-{
-	return InterlockedIncrement(&m_lRefCount);
-}
-
-ULONG __stdcall DropSource::Release()
-{
-	LONG lCount = InterlockedDecrement(&m_lRefCount);
-
-	if (lCount == 0)
-	{
-		delete this;
-		return 0;
-	}
-
-	return lCount;
-}
-
-
-HRESULT _stdcall DropSource::QueryContinueDrag(BOOL fEscapePressed, DWORD grfKeyState)
-{
-	DWORD dwStopButton = 0;
-
-	if ((grfKeyState & MK_LBUTTON) == 0)
-	{
-		return DRAGDROP_S_DROP;
-	}
-
-	dwStopButton = MK_RBUTTON;
-
-	if (fEscapePressed == TRUE || grfKeyState & dwStopButton)
-	{
-		return DRAGDROP_S_CANCEL;
-	}
-
-	return S_OK;
-}
-
-HRESULT _stdcall DropSource::GiveFeedback(DWORD dwEffect)
-{
-	UNREFERENCED_PARAMETER(dwEffect);
-
-	//return S_OK;
-	return DRAGDROP_S_USEDEFAULTCURSORS;
-}
 
 QObject* HzDrag::s_source = nullptr;
 
 HzDrag::HzDrag(QObject *parent)
 	: QObject(parent)
+	, HzDesktopPublic(new HzDragPrivate())
 {
 	s_source = parent;
 }
@@ -130,6 +41,8 @@ void HzDrag::setHotSpot(const QPoint& hotspot)
 
 Qt::DropAction HzDrag::exec(Qt::DropActions supportedActions)
 {
+	HZQ_D(HzDrag);
+
 	DWORD finalEffect = DROPEFFECT_NONE;
 	std::vector<LPCITEMIDLIST> selectedItemPidls;
 
@@ -146,7 +59,6 @@ Qt::DropAction HzDrag::exec(Qt::DropActions supportedActions)
 			selectedItemPidls.push_back(pidl);
 		}
 
-		wil::com_ptr_nothrow<IDataObject> dataObject;
 		wil::com_ptr_nothrow<IShellItemArray> shellItemArray;
 		hr = SHCreateShellItemArrayFromIDLists(static_cast<UINT>(selectedItemPidls.size()),
 			selectedItemPidls.data(), &shellItemArray);
@@ -154,26 +66,19 @@ Qt::DropAction HzDrag::exec(Qt::DropActions supportedActions)
 			break;
 		}
 
-		hr = shellItemArray->BindToHandler(nullptr, BHID_DataObject, IID_PPV_ARGS(&dataObject));
-		if (FAILED(hr)) {
-			break;
-		}
-
-		IDragSourceHelper* pDragSourceHelper = nullptr;
-		CoCreateInstance(CLSID_DragDropHelper, nullptr, CLSCTX_ALL,
-			IID_PPV_ARGS(&pDragSourceHelper));
-
 		SHDRAGIMAGE image;
 		image.sizeDragImage = { m_pixmap.width(), m_pixmap.height() };
 		image.hbmpDragImage = QtWin::toHBITMAP(m_pixmap, QtWin::HBitmapAlpha);
 		image.ptOffset = { m_hotSpot.x(), m_hotSpot.y() };
-		hr = pDragSourceHelper->InitializeFromBitmap(&image, dataObject.get());
 
-		// TODO ÐèÒªÊÍ·Å
-		IDropSource* pDropSource = new DropSource();
+		wil::com_ptr_nothrow<IDataObject> dataObject;
+		hr = d->GetDataObject(shellItemArray.get(), image, wil::out_param(dataObject));
+		if (FAILED(hr)) {
+			break;
+		}
 
-		hr = DoDragDrop(
-			dataObject.get(), pDropSource,
+		hr = SHDoDragDrop(
+			NULL, dataObject.get(), NULL,
 			supportedActions, &finalEffect);
 		if (FAILED(hr)) {
 			break;

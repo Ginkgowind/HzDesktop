@@ -179,22 +179,22 @@ void HzItemDelegate::paintBackground(
 
 	//255, 255, 255,
 //#define CUSTOM_COLOR 41, 144, 255
-#define CUSTOM_COLOR 255, 255, 255
+#define CUSTOM_COLOR 245, 255, 255
 	if (option.state.testFlag(QStyle::State_Selected)
 		&& option.state.testFlag(QStyle::State_MouseOver)) {
-		painter->setBrush(QColor(CUSTOM_COLOR, 180));
+		painter->setBrush(QColor(CUSTOM_COLOR, 200));
 	}
 	else if (option.state.testFlag(QStyle::State_Selected)) {
-		painter->setBrush(QColor(CUSTOM_COLOR, 140));
+		painter->setBrush(QColor(CUSTOM_COLOR, 160));
 	}
 	else if (option.state.testFlag(QStyle::State_MouseOver)) {
-		painter->setBrush(QColor(CUSTOM_COLOR, 80));
+		painter->setBrush(QColor(CUSTOM_COLOR, 100));
 	}
 	else {
 		painter->setBrush(Qt::transparent);
 	}
 
-	painter->drawRect(option.rect);
+	painter->drawRoundedRect(option.rect, 5, 5);
 }
 
 QPixmap HzItemDelegate::paintIconText(
