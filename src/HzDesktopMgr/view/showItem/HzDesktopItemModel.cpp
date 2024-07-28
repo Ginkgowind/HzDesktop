@@ -1,6 +1,7 @@
 #include <QDebug>
 #include <QDateTime>
 #include <QUrl>
+#include <QDir>
 #include <QTimer>
 #include <QMimeData>
 
@@ -142,6 +143,11 @@ bool HzDesktopItemModel::setData(const QModelIndex& index, const QVariant& value
 		QString oldPath = filePath(index);
 		ItemHelper::setDisplayName(oldPath, value.toString());
 		removePixmapCache(oldPath);
+	}
+
+	if (role == CustomRoles::FilePathRole) {
+		QString nativePath = QDir::toNativeSeparators(value.toString());
+		return QStandardItemModel::setData(index, nativePath, role);
 	}
 
 	return QStandardItemModel::setData(index, value, role);

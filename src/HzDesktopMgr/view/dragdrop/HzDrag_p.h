@@ -10,26 +10,17 @@
 // 仅适用于桌面
 class HzDragPrivate 
     : public HzDesktopPrivate
-    , public HzDragDropHelper
 {
 	HZQ_DECLARE_PUBLIC(HzDrag)
 
 public:
+
+    HzDragPrivate();
+    ~HzDragPrivate();
+
 	HRESULT GetDataObject(IShellItemArray* psiaItems, SHDRAGIMAGE& image, IDataObject** ppdtobj);
 
-    HRESULT CDataObject_CreateInstance(REFIID riid, void** ppv);
-
-    virtual HRESULT OnDrop(IShellItemArray* psia, DWORD /* grfKeyState */)
-    {
-        // TODO 
-        return S_OK;
-        //HRESULT hr = _CopyShellItemArray(psia, &_psiaDrop);
-        //if (SUCCEEDED(hr))
-        //{
-        //    _BindUI();
-        //}
-        //return hr;
-    }
+    HRESULT HzDataObject_CreateInstance(REFIID riid, void** ppv);
 };
 
 class HzDataObject : public IDataObject

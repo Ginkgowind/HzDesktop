@@ -41,5 +41,78 @@ HRESULT CreateItemFromObject(IUnknown* punk, REFIID riid, void** ppv)
             pdo->Release();
         }
     }
+
     return hr;
+}
+
+HRESULT HzDragDropWindow::OnDragInWindow(IDataObject* dataObject, DWORD grfKeyState, POINTL ptl, DWORD* pdwEffect)
+{
+	DropTargetInfo targetInfo = getCurrentDropTarget();
+	if (m_previousInterface && m_previousInterface->targetInfo != targetInfo
+		&& m_previousInterface->pDropTarget && m_previousInterface->bInitialised) {
+		m_previousInterface->pDropTarget->DragLeave();
+		m_previousInterface.reset();
+	}
+
+	DropTargetInterface dropTargetInterface = getDropTargetInterface(targetInfo);
+    m_previousInterface = dropTargetInterface;
+
+    if (!dropTargetInterface.pDropTarget) {
+        return S_FALSE;
+    }
+
+	if (dropTargetInterface.bInitialised) {
+        dropTargetInterface.pDropTarget->DragOver(grfKeyState, ptl, pdwEffect);
+	}
+    else {
+        dropTargetInterface.pDropTarget->DragEnter(dataObject, grfKeyState, ptl, pdwEffect);
+    }
+
+    dropTargetInterface.bInitialised = true;
+
+    return S_OK;
+}
+
+DropTargetInterface HzDragDropWindow::getDropTargetInterface(const DropTargetInfo& targetInfo)
+{
+    if (m_previousInterface && m_previousInterface->targetInfo == targetInfo) {
+        return *m_previousInterface;
+    }
+
+    wil::com_ptr_nothrow<IDropTarget> pDropTarget;
+	if (targetInfo.type == FileOrFolder) {
+		pDropTarget = GetDropTargetForPath(targetInfo.info.toString().toStdWString());
+	}
+
+    return { targetInfo, pDropTarget, false };
+}
+
+wil::com_ptr_nothrow<IDropTarget> HzDragDropWindow::GetDropTargetForPath(const std::wstring& path)
+{
+    wil::com_ptr_nothrow<IDropTarget> pDropTarget;
+
+    do
+    {
+        PIDLIST_ABSOLUTE pidl = nullptr;
+        HRESULT hr = SHParseDisplayName(path.c_str(), nullptr, &pidl, 0, nullptr);
+        if (FAILED(hr)) {
+            break;
+        }
+
+        wil::com_ptr_nothrow<IShellFolder> parent;
+        PCITEMID_CHILD child;
+        hr = SHBindToParent(pidl, IID_PPV_ARGS(&parent), &child);
+        if (FAILED(hr)) {
+            break;
+        }
+
+        hr = parent->GetUIObjectOf(NULL, 1, &child, __uuidof(*pDropTarget),
+            nullptr, IID_PPV_ARGS_Helper(&pDropTarget));
+        if (FAILED(hr)) {
+            break;
+        }
+
+    } while (false);
+
+    return pDropTarget;
 }

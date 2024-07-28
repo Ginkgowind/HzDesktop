@@ -1,36 +1,62 @@
 #include <strsafe.h>
 #include <QtWinExtras/QtWin>
+#include <wil/com.h>
 
 #include "HzDrag_p.h"
+
+HzDragPrivate::HzDragPrivate()
+{
+    //CoCreateInstance(CLSID_DragDropHelper, NULL, CLSCTX_INPROC, IID_PPV_ARGS(&_pdth));
+}
+
+HzDragPrivate::~HzDragPrivate()
+{
+}
 
 HRESULT HzDragPrivate::GetDataObject(IShellItemArray* psiaItems, SHDRAGIMAGE& image, IDataObject** ppdtobj)
 {
     HZQ_Q(HzDrag);
 
     HRESULT hr = S_OK;
-    hr = CDataObject_CreateInstance(IID_PPV_ARGS(ppdtobj));
-    if (SUCCEEDED(hr))
+
+    do 
     {
-        IDragSourceHelper2* pdsh;
-        if (SUCCEEDED(GetDragDropHelper(IID_PPV_ARGS(&pdsh))))
-        {
-            hr = psiaItems->BindToHandler(NULL, BHID_DataObject, IID_PPV_ARGS(ppdtobj));
+        // 实测不需要下面这里获取，直接从psiaItems获取也是可以的
+		hr = HzDataObject_CreateInstance(IID_PPV_ARGS(ppdtobj));
+		if (FAILED(hr)) {
+			break;
+		}
 
-            // enable drop tips
-            pdsh->SetFlags(DSH_ALLOWDROPDESCRIPTIONTEXT);
+        wil::com_ptr_nothrow<IDropTargetHelper> pdth;
+        hr = CoCreateInstance(CLSID_DragDropHelper, NULL, CLSCTX_INPROC, IID_PPV_ARGS(&pdth));
+		if (FAILED(hr)) {
+			break;
+		}
 
-            // note that InitializeFromBitmap() takes ownership of the hbmp
-            // so we should not free it by calling DeleteObject()
-            pdsh->InitializeFromBitmap(&image, *ppdtobj);
+        wil::com_ptr_nothrow<IDragSourceHelper2> pdsh;
+        hr = pdth->QueryInterface(IID_PPV_ARGS(&pdsh));
+		if (FAILED(hr)) {
+			break;
+		}
 
-            pdsh->Release();
-        }
-    }
+        hr = psiaItems->BindToHandler(NULL, BHID_DataObject, IID_PPV_ARGS(ppdtobj));
+		if (FAILED(hr)) {
+			break;
+		}
+
+		// enable drop tips
+		pdsh->SetFlags(DSH_ALLOWDROPDESCRIPTIONTEXT);
+
+		// note that InitializeFromBitmap() takes ownership of the hbmp
+			// so we should not free it by calling DeleteObject()
+		pdsh->InitializeFromBitmap(&image, *ppdtobj);
+
+    } while (false);
 
     return hr;
 }
 
-HRESULT HzDragPrivate::CDataObject_CreateInstance(REFIID riid, void** ppv)
+HRESULT HzDragPrivate::HzDataObject_CreateInstance(REFIID riid, void** ppv)
 {
     *ppv = NULL;
     HzDataObject* p = new (std::nothrow) HzDataObject();

@@ -51,7 +51,6 @@ Qt::DropAction HzDrag::exec(Qt::DropActions supportedActions)
 		HRESULT hr = S_OK;
 		for (auto& path : m_pathList) {
 			LPITEMIDLIST pidl = NULL;
-			path.replace('/', '\\');
 			hr = SHParseDisplayName(path.toStdWString().c_str(), nullptr, &pidl, 0, nullptr);
 			if (FAILED(hr)) {
 				continue;

@@ -29,8 +29,9 @@
 #include "windows/tools.h"
 #include "windows/FileUtils.h"
 
-HzDesktopIconView::HzDesktopIconView(QWidget* parent)
+HzDesktopIconView::HzDesktopIconView(QWidget* parent, const std::wstring& dirPath)
 	: QAbstractItemView(parent)
+	, HzDragDropWindow(dirPath, reinterpret_cast<HWND>(winId()))
 	, HzDesktopPublic(new HzDesktopIconViewPrivate())
 	, m_ctrlDragSelectionFlag(QItemSelectionModel::NoUpdate)
 {
@@ -69,6 +70,8 @@ HzDesktopIconView::HzDesktopIconView(QWidget* parent)
 	new HzWindowsMimeIdl();
 
 	setFont(m_param.font);
+
+	InitializeDragDropHelper(reinterpret_cast<HWND>(winId()));
 }
 
 HzDesktopIconView::~HzDesktopIconView()
@@ -176,8 +179,7 @@ void HzDesktopIconView::initSignalAndSlot()
 
 void HzDesktopIconView::initParam()
 {
-	m_param.dirPath = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
-	m_param.dirPath.replace('/', '\\');
+	m_param.dirPath = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation).replace('/', '\\');
 }
 
 QRect HzDesktopIconView::visualRect(const QModelIndex& index) const
@@ -193,6 +195,7 @@ QRect HzDesktopIconView::visualRect(const QModelIndex& index) const
 
 	QStyleOptionViewItem option = viewOptions();
 	option.rect = QRect(QPoint(0, 0), m_param.iconSize + 2 * m_param.iconMargin);
+	// TODO 下面这一行==有崩溃 other是0x7
 	option.state.setFlag(QStyle::State_On, index == m_singleCheckedIndex);
 
 	return QRect(showPos, m_itemDelegate->sizeHint(option, index));
@@ -281,6 +284,7 @@ QRegion HzDesktopIconView::visualRegionForSelection(const QItemSelection& select
 
 bool HzDesktopIconView::isIndexHidden(const QModelIndex& index) const
 {
+	// TODO 这里使用itemFromIndex会不会有问题？不过前面已经判断了isValid，应该没问题
 	return !index.isValid() || !m_itemModel->itemFromIndex(index)->isEnabled();
 }
 
@@ -316,6 +320,7 @@ void HzDesktopIconView::mousePressEvent(QMouseEvent* e)
 	m_pressedPos = e->pos();
 
 	QModelIndex index = indexAt(m_pressedPos);
+	// TODO 所有单独使用index.isValid()的地方，都要检查一下是否与isIndexHidden冲突？
 	if (index.isValid()) {
 		QItemSelectionModel::SelectionFlags command = selectionCommand(index, e);
 		if (command.testFlag(QItemSelectionModel::Toggle)) {
@@ -643,6 +648,45 @@ bool HzDesktopIconView::edit(const QModelIndex& index, EditTrigger trigger, QEve
 	return false;
 }
 
+IFACEMETHODIMP HzDesktopIconView::QueryInterface(REFIID riid, void** ppv)
+{
+	static const QITAB qit[] =
+	{
+		QITABENT(HzDesktopIconView, IDropTarget),
+		{ 0 },
+	};
+	return QISearch(this, qit, riid, ppv);
+}
+
+IFACEMETHODIMP_(ULONG) HzDesktopIconView::AddRef()
+{
+	return InterlockedIncrement(&_cRef);
+}
+
+IFACEMETHODIMP_(ULONG) HzDesktopIconView::Release()
+{
+	long cRef = InterlockedDecrement(&_cRef);
+	if (!cRef)
+		delete this;
+	return cRef;
+}
+
+DropTargetInfo HzDesktopIconView::getCurrentDropTarget()
+{
+	DropTargetInfo targetInfo = { FileOrFolder };
+	QPoint pos = mapFromGlobal(QCursor::pos());
+
+	QModelIndex index = indexAt(pos);
+	if (isIndexHidden(index)) {
+		targetInfo.info = m_param.dirPath;
+	}
+	else {
+		targetInfo.info = m_itemModel->filePath(index);
+	}
+
+	return targetInfo;
+}
+
 QStringList HzDesktopIconView::getSelectedPaths()
 {
 	QStringList pathList;
@@ -844,6 +888,7 @@ QModelIndexList HzDesktopIconView::intersectingSet(const QRect& area) const
 
 	int rowCount = model()->rowCount();
 	for (int i = 0; i < rowCount; ++i) {
+		// TODO 这里有崩溃
 		QModelIndex index = model()->index(i, 0);
 		if (area.intersects(visualRect(index))) {
 			ret.push_back(index);

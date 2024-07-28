@@ -28,7 +28,7 @@ void ItemHelper::setDisplayName(const QString& filePath, const QString& name)
 	do 
 	{
 		wil::unique_cotaskmem_ptr<ITEMIDLIST> idl;
-		hr = SHParseDisplayName(QString(filePath).replace('/', '\\').toStdWString().c_str(),
+		hr = SHParseDisplayName(filePath.toStdWString().c_str(),
 			nullptr, wil::out_param(idl), 0, nullptr);
 		if (FAILED(hr)) {
 			break;
@@ -379,7 +379,7 @@ QStandardItem* DesktopFileItemWatcher::genQStandardItem(const QFileInfo& fileInf
 
 	newItem->setIcon(itemIcon);
 	newItem->setText(displayName);
-	newItem->setData(fileInfo.absoluteFilePath(), CustomRoles::FilePathRole);
+	newItem->setData(QDir::toNativeSeparators(fileInfo.absoluteFilePath()), CustomRoles::FilePathRole);
 	newItem->setData(fileInfo.size(), CustomRoles::FileSizeRole);
 	newItem->setData(fileInfo.suffix(), CustomRoles::FileTypeRole);
 	newItem->setData(fileInfo.lastModified(), CustomRoles::FileLastModifiedRole);
@@ -405,7 +405,7 @@ void DesktopFileItemWatcher::handleObserveResult(const QString& strWatchDirector
 	QString strFileName = QString::fromStdWString(
 		std::wstring(pNotification->FileName,
 			pNotification->FileNameLength / sizeof(wchar_t)));
-	QString strFileAbsPath = QDir(strWatchDirectory).absoluteFilePath(strFileName);
+	QString strFileAbsPath = QDir::toNativeSeparators(QDir(strWatchDirectory).absoluteFilePath(strFileName));
 	
 	DWORD cbOffset = 0;
 	QString strRenameOldFilePath;

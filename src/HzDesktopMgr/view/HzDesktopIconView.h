@@ -6,6 +6,7 @@
 #include "showItem/HzDesktopItemModel.h"
 #include "menu/HzItemMenu.h"
 #include "common/QtpqReimp.h"
+#include "helper/DragDropHelpers.h"
 
 QT_BEGIN_NAMESPACE
 class QSortFilterProxyModel;
@@ -19,11 +20,12 @@ class HzDesktopIconViewPrivate;
 class HzDesktopIconView  
 	: public QAbstractItemView
 	, public HzDesktopPublic
+	, public HzDragDropWindow
 {
 	Q_OBJECT
 
 public:
-	HzDesktopIconView(QWidget *parent);
+	HzDesktopIconView(QWidget *parent, const std::wstring& dirPath);
 	~HzDesktopIconView();
 
 	const HzDesktopParam& getParam() const {
@@ -87,6 +89,14 @@ protected:
 
 	bool edit(const QModelIndex& index, EditTrigger trigger, QEvent* event) override;
 
+	IFACEMETHODIMP QueryInterface(REFIID riid, void** ppv) override;
+
+	IFACEMETHODIMP_(ULONG) AddRef() override;
+
+	IFACEMETHODIMP_(ULONG) Release() override;
+
+	DropTargetInfo getCurrentDropTarget() override;
+
 private:
 	QStringList getSelectedPaths();
 
@@ -134,6 +144,8 @@ private:
 	QPersistentModelIndex m_hoverIndex;
 	QPersistentModelIndex m_singleCheckedIndex;
 	QItemSelectionModel::SelectionFlag m_ctrlDragSelectionFlag;
+
+	long _cRef;
 
 private:
 	HZQ_DECLARE_PRIVATE(HzDesktopIconView)

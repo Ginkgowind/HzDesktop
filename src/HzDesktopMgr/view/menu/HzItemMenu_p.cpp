@@ -39,10 +39,7 @@ std::vector<PITEMID_CHILD> HzItemMenuPrivate::getDesktopPidcFromPaths(const QStr
 		ULONG uFetched = 1;
 		wil::unique_cotaskmem_ptr<ITEMID_CHILD> pidlItem;
 
-		QStringList tmpPaths;
-		for (QString path : paths) {
-			tmpPaths.push_back(path.replace('/', '\\'));
-		}
+		QStringList tmpPaths = paths;
 		while (pEnumIDList->Next(1, wil::out_param(pidlItem), &uFetched) == S_OK
 			&& (uFetched == 1))
 		{

@@ -1,4 +1,5 @@
 #include <QScreen>
+#include <QStandardPaths>
 #include <QGuiApplication>
 
 #include "DesktopViewMgr.h"
@@ -12,7 +13,9 @@ DesktopViewMgr::DesktopViewMgr()
 	m_bkgView->setGeometry(availableRect);
 	//m_bkgView->setGeometry(200, 200, 1200, 800);
 
-	m_desktopIconView = new HzDesktopIconView(m_bkgView);
+	std::wstring desktopPath = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation)
+		.replace('/', '\\').toStdWString();
+	m_desktopIconView = new HzDesktopIconView(m_bkgView, desktopPath);
 
 	m_systemTray = new HzSystemTray(m_bkgView);
 
