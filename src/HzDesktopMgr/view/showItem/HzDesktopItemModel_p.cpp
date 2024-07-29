@@ -270,9 +270,12 @@ void DesktopFileItemWatcher::run()
 				m_observerInfos[watchInfoIndex].hDirectory,
 				m_observerInfos[watchInfoIndex].notifyDataBuf,
 				OBSERVE_DIR_BUFFER_SIZE,
-				TRUE, dwNotifyFilter, NULL,
-				&m_observerInfos[watchInfoIndex].overlapped, NULL) == FALSE
-				) {
+				FALSE, 
+				dwNotifyFilter, 
+				NULL,
+				&m_observerInfos[watchInfoIndex].overlapped, 
+				NULL 
+			) == FALSE) {
 				//LOG_ERROR_W("ReadDirectoryChangesW failed.Dir path:%ws err:%d",
 				//	m_observeDirPaths[watchInfoIndex].c_str(), ::GetLastError());
 			}
@@ -338,11 +341,12 @@ bool DesktopFileItemWatcher::initWatcher(DWORD dwNotifyFilter)
 			observer.hDirectory,
 			observer.notifyDataBuf,
 			OBSERVE_DIR_BUFFER_SIZE,
-			TRUE,
+			FALSE,
 			dwNotifyFilter,
 			NULL,
 			&observer.overlapped,
-			NULL) == FALSE)
+			NULL
+		) == FALSE)
 		{
 			//LOG_ERROR_W("ReadDirectoryChangesW failed.Dir path:%ws err:%d",
 			//	mVecAppLinkRootDir[i].c_str(), ::GetLastError());

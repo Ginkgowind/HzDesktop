@@ -129,6 +129,9 @@
     <ClCompile Include="..\..\include\helper\DragDropHelpers.cpp">
       <Filter>include\helper</Filter>
     </ClCompile>
+    <ClCompile Include="view\HzDragDrogWindow.cpp">
+      <Filter>view</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HzDesktopMgr.h" />
@@ -186,6 +189,9 @@
     </ClInclude>
     <ClInclude Include="..\..\include\helper\DragDropHelpers.h">
       <Filter>include\helper</Filter>
+    </ClInclude>
+    <ClInclude Include="view\HzDragDrogWindow.h">
+      <Filter>view</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

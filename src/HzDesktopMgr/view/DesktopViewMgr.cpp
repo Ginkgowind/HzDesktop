@@ -15,7 +15,7 @@ DesktopViewMgr::DesktopViewMgr()
 
 	std::wstring desktopPath = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation)
 		.replace('/', '\\').toStdWString();
-	m_desktopIconView = new HzDesktopIconView(m_bkgView, desktopPath);
+	m_desktopIconView = new HzDesktopIconView(desktopPath, m_bkgView);
 
 	m_systemTray = new HzSystemTray(m_bkgView);
 

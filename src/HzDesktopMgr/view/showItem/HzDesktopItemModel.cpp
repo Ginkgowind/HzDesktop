@@ -152,3 +152,8 @@ bool HzDesktopItemModel::setData(const QModelIndex& index, const QVariant& value
 
 	return QStandardItemModel::setData(index, value, role);
 }
+
+Qt::DropActions HzDesktopItemModel::supportedDropActions() const
+{
+	return Qt::CopyAction | Qt::MoveAction | Qt::LinkAction;
+}

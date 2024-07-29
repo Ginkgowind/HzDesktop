@@ -7,10 +7,11 @@
 
 #pragma once
 
+#include <QVariant>
+#include <ShlObj_core.h>
 #include <strsafe.h>
 #include <commoncontrols.h>
 #include <wil/com.h>
-#include <QVariant>
 
 enum DropTargetType {
     FileOrFolder = 0,
@@ -109,25 +110,20 @@ HRESULT CreateItemFromObject(IUnknown* punk, REFIID riid, void** ppv);
 //      5) add the delaration and implementation of OnDrop() to your class, this
 //         gets called when the drop happens
 
-class HzDragDropWindow : public IDropTarget
+class HzDragDropInterface 
+    : public IDropTarget
 {
 public:
-    HzDragDropWindow(const std::wstring& dirpath, HWND hwnd) 
+    HzDragDropInterface(const std::wstring& dirpath) 
         : _pdth(NULL)
         , m_pdtobj(NULL)
-        , _hrOleInit(OleInitialize(0))
         , _hwndRegistered(NULL)
-        , _dropImageType(DROPIMAGE_LABEL)
-        , _pszDropTipTemplate(NULL)
-        , m_dirPath(dirpath)
+        , _hrOleInit(OleInitialize(0))
     {
         CoCreateInstance(CLSID_DragDropHelper, NULL, CLSCTX_INPROC, IID_PPV_ARGS(&_pdth));
-    
-        //auto hr = RegisterDragDrop(hwnd, this);
-        //int a = 1;
     }
 
-    ~HzDragDropWindow()
+    ~HzDragDropInterface()
     {
         if (_pdth) {
             _pdth->Release();
@@ -139,18 +135,10 @@ public:
 
 	void InitializeDragDropHelper(HWND hwnd)
 	{
-		if (SUCCEEDED(RegisterDragDrop(hwnd, this)))
-		{
-			_hwndRegistered = hwnd;
+		if (SUCCEEDED(RegisterDragDrop(hwnd, this))) {
+            _hwndRegistered = hwnd;
 		}
 	}
-
-    virtual DropTargetInfo getCurrentDropTarget() = 0;
-
-    void SetDropTipTemplate(PCWSTR pszDropTipTemplate)
-    {
-        _pszDropTipTemplate = pszDropTipTemplate;
-    }
 
     HRESULT GetDragDropHelper(REFIID riid, void **ppv)
     {
@@ -165,58 +153,13 @@ public:
     }
 
     // IDropTarget
-    IFACEMETHODIMP DragEnter(IDataObject *pdtobj, DWORD grfKeyState, POINTL ptl, DWORD *pdwEffect)
-    {
-		if (_pdth) {
-			POINT pt = { ptl.x, ptl.y };
-			_pdth->DragEnter(_hwndRegistered, pdtobj, &pt, *pdwEffect);
-		}
+    IFACEMETHODIMP DragEnter(IDataObject* pdtobj, DWORD grfKeyState, POINTL ptl, DWORD* pdwEffect) override;
 
-        m_pdtobj = pdtobj;
-        return OnDragInWindow(pdtobj, grfKeyState, ptl, pdwEffect);
-    }
+    IFACEMETHODIMP DragOver(DWORD grfKeyState, POINTL ptl, DWORD* pdwEffect) override;
 
-    IFACEMETHODIMP DragOver(DWORD grfKeyState, POINTL ptl, DWORD *pdwEffect)
-    {
-		if (_pdth) {
-			POINT pt = { ptl.x, ptl.y };
-			_pdth->DragOver(&pt, *pdwEffect);
-		}
+    IFACEMETHODIMP DragLeave() override;
 
-        return OnDragInWindow(m_pdtobj, grfKeyState, ptl, pdwEffect);
-    }
-
-    IFACEMETHODIMP DragLeave()
-    {
-        if (_pdth) {
-            _pdth->DragLeave();
-        }
-        ClearDropTip(m_pdtobj);
-        if (m_pdtobj) {
-            m_pdtobj->Release();
-        }
-        return S_OK;
-    }
-
-    IFACEMETHODIMP Drop(IDataObject *pdtobj, DWORD grfKeyState, POINTL pt, DWORD *pdwEffect)
-    {
-        if (_pdth) {
-            POINT ptT = { pt.x, pt.y };
-            _pdth->Drop(pdtobj, &ptT, *pdwEffect);
-        }
-
-        IShellItemArray *psia;
-        HRESULT hr = SHCreateShellItemArrayFromDataObject(m_pdtobj, IID_PPV_ARGS(&psia));
-        if (SUCCEEDED(hr)) {
-            //OnDrop(psia, grfKeyState);
-            psia->Release();
-        }
-        else {
-            OnDropError(m_pdtobj);
-        }
-
-        return S_OK;
-    }
+    IFACEMETHODIMP Drop(IDataObject* pdtobj, DWORD grfKeyState, POINTL pt, DWORD* pdwEffect) override;
 
     HRESULT OnDragInWindow(IDataObject* dataObject, DWORD grfKeyState, POINTL pt, DWORD* pdwEffect);
 
@@ -224,22 +167,20 @@ public:
 
     wil::com_ptr_nothrow<IDropTarget> GetDropTargetForPath(const std::wstring& path);
 
+    void resetDropState();
+
 protected:
     // client provides
-    //virtual HRESULT OnDrop(IShellItemArray *psia, DWORD grfKeyState) = 0;
-    virtual HRESULT OnDropError(IDataObject * /* pdtobj */)
-    {
-        return S_OK;
-    }
+	virtual DropTargetInfo getCurrentDropTarget() = 0;
+
+    virtual bool filterThisDrag(const DropTargetInfo& targetInfo) = 0;
 
     IDropTargetHelper *_pdth;
-    DROPIMAGETYPE _dropImageType;
-    PCWSTR _pszDropTipTemplate;
-    HWND _hwndRegistered;
     HRESULT _hrOleInit;
 
+    HWND _hwndRegistered;
     IDataObject* m_pdtobj;
     // TODO 详细了解std::optional用法
     std::optional<DropTargetInterface> m_previousInterface;
-    std::wstring m_dirPath;
+    DropTargetInfo m_draggedTargetInfo;
 };

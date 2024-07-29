@@ -29,9 +29,8 @@
 #include "windows/tools.h"
 #include "windows/FileUtils.h"
 
-HzDesktopIconView::HzDesktopIconView(QWidget* parent, const std::wstring& dirPath)
-	: QAbstractItemView(parent)
-	, HzDragDropWindow(dirPath, reinterpret_cast<HWND>(winId()))
+HzDesktopIconView::HzDesktopIconView(const std::wstring& dirPath, QWidget* parent)
+	: HzDragDrogWindow(dirPath, parent)
 	, HzDesktopPublic(new HzDesktopIconViewPrivate())
 	, m_ctrlDragSelectionFlag(QItemSelectionModel::NoUpdate)
 {
@@ -71,6 +70,7 @@ HzDesktopIconView::HzDesktopIconView(QWidget* parent, const std::wstring& dirPat
 
 	setFont(m_param.font);
 
+	// TODO 优化下这里的逻辑，为什么放在父类构造函数里就会崩溃？
 	InitializeDragDropHelper(reinterpret_cast<HWND>(winId()));
 }
 
@@ -418,8 +418,8 @@ void HzDesktopIconView::startDrag(Qt::DropActions supportedActions)
 		return;
 	}
 
-	// 这里没有使用QDrag而是使用的自定义的HzDrag，是因为根据索引渲染出的pixmap在拖拽途中无法改变
-	// 但是在拖拽到任务栏上时，希望隐藏掉pixmap而显示系统的行为，使用QDrag不满足需求
+	m_draggedTargetInfo = getCurrentDropTarget();
+
 	QRect rect;
 	QModelIndexList indexes = selectedIndexes();
 	QPixmap pixmap = d->renderToPixmap(indexes, &rect);
@@ -436,11 +436,8 @@ void HzDesktopIconView::startDrag(Qt::DropActions supportedActions)
 
 void HzDesktopIconView::dragEnterEvent(QDragEnterEvent* e)
 {
-	e->accept();
-
 	//qDebug() << e->mimeData()->urls()[0];
 
-	// TODO 如果这里不接收但是dragmove里接受会怎么样？是不是应该只在这里接受？
 	if (HzDrag::source() == this) {
 
 	}
@@ -452,9 +449,6 @@ void HzDesktopIconView::dragEnterEvent(QDragEnterEvent* e)
 void HzDesktopIconView::dragMoveEvent(QDragMoveEvent* e)
 {
 	QAbstractItemView::dragMoveEvent(e);
-	
-	e->setDropAction(Qt::MoveAction);
-	e->accept();
 
 	const QPoint pos = e->pos();	// TODO 后续再统一处理offset
 
@@ -483,13 +477,15 @@ void HzDesktopIconView::dragLeaveEvent(QDragLeaveEvent* e)
 	QAbstractItemView::dragLeaveEvent(e);
 
 	m_insertRow = -1;
-
-	e->accept();
 	//qDebug() << e->proposedAction() << e->pos() << m_hoverIndex.row();
 }
 
 void HzDesktopIconView::dropEvent(QDropEvent* e)
 {
+	if (m_insertRow < 0) {
+		return;
+	}
+
 	if (HzDrag::source() == this) {
 		handleInternalDrop(e);
 	}
@@ -685,6 +681,17 @@ DropTargetInfo HzDesktopIconView::getCurrentDropTarget()
 	}
 
 	return targetInfo;
+}
+
+bool HzDesktopIconView::filterThisDrag(const DropTargetInfo& targetInfo)
+{
+	bool bInternalMove =
+		(targetInfo.type == FileOrFolder) &&
+		(targetInfo.info.toString() == m_param.dirPath);
+
+	bool bSameItem = (targetInfo == m_draggedTargetInfo);
+
+	return bInternalMove || bSameItem;
 }
 
 QStringList HzDesktopIconView::getSelectedPaths()

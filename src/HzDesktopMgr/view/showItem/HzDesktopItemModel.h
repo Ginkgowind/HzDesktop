@@ -44,8 +44,7 @@ protected:
 	//QMimeData* mimeData(const QModelIndexList& indexes) const override;
 	//bool dropMimeData(const QMimeData* data, Qt::DropAction action,
 	//	int row, int column, const QModelIndex& parent) override;
-	//Qt::DropActions supportedDropActions() const override;
-	//return Qt::CopyAction | Qt::MoveAction | Qt::LinkAction;
+	Qt::DropActions supportedDropActions() const override;
 
 signals:
 	void onFileCreated(const QModelIndex& index);

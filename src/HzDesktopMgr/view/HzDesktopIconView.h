@@ -1,15 +1,13 @@
 #pragma once
 
 #include <QMimeData>
-#include <QAbstractItemView>
 
+#include "HzDragDrogWindow.h"
 #include "showItem/HzDesktopItemModel.h"
 #include "menu/HzItemMenu.h"
 #include "common/QtpqReimp.h"
-#include "helper/DragDropHelpers.h"
 
 QT_BEGIN_NAMESPACE
-class QSortFilterProxyModel;
 class QStandardItemModel;
 class QDrag;
 QT_END_NAMESPACE
@@ -18,14 +16,13 @@ class HzItemDelegate;
 class HzDesktopIconViewPrivate;
 
 class HzDesktopIconView  
-	: public QAbstractItemView
+	: public HzDragDrogWindow
 	, public HzDesktopPublic
-	, public HzDragDropWindow
 {
 	Q_OBJECT
 
 public:
-	HzDesktopIconView(QWidget *parent, const std::wstring& dirPath);
+	HzDesktopIconView(const std::wstring& dirPath, QWidget* parent);
 	~HzDesktopIconView();
 
 	const HzDesktopParam& getParam() const {
@@ -96,6 +93,8 @@ protected:
 	IFACEMETHODIMP_(ULONG) Release() override;
 
 	DropTargetInfo getCurrentDropTarget() override;
+
+	bool filterThisDrag(const DropTargetInfo& targetInfo) override;
 
 private:
 	QStringList getSelectedPaths();
