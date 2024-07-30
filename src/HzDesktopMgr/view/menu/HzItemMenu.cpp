@@ -292,7 +292,9 @@ void HzDesktopBkgMenu::handleCustomMenuItem(UINT cmd)
 		emit onHide();
 		break;
 	case IDM_VIEW_LNK_ARROW:
-
+		QPixmapCache::clear();
+		m_param->bShowLnkArrow = !m_param->bShowLnkArrow;
+		qobject_cast<QWidget*>(parent())->update();
 		break;
 	case IDM_SORT_BY_NAME:
 		setItemSortRole(Qt::DisplayRole);

@@ -22,7 +22,6 @@
 #include "HzDesktopIconView.h"
 #include "HzDesktopIconView_p.h"
 #include "showItem/HzItemDelegate.h"
-#include "showItem/HzFileItem.h"
 #include "dragdrop/HzDrag.h"
 #include "dragdrop/HzWindowsMimeIdl.h"
 #include "windows/UiOperation.h"
@@ -106,8 +105,8 @@ void HzDesktopIconView::initSignalAndSlot()
 		[this]() {m_itemMenu->handleDelete(getSelectedPaths()); });
 
 	// 刷新，默认为F5
-	//new QShortcut(QKeySequence(QKeySequence::Refresh),
-	//	this, SLOT(handleRefreshFile()), nullptr, Qt::WidgetWithChildrenShortcut);
+	connect(new QShortcut(QKeySequence::Refresh, this), &QShortcut::activated,
+		m_itemModel, &HzDesktopItemModel::refreshItems);
 
 	// 重命名，F2
 	connect(new QShortcut(QKeySequence(Qt::Key_F2), this), &QShortcut::activated,
@@ -118,6 +117,8 @@ void HzDesktopIconView::initSignalAndSlot()
 		d, &HzDesktopIconViewPrivate::handleOpen);
 	connect(new QShortcut(QKeySequence(Qt::Key_Enter), this), &QShortcut::activated,
 		d, &HzDesktopIconViewPrivate::handleOpen);
+
+
 
 	// item右键菜单
 	connect(m_itemMenu, &HzItemMenu::onOpen, d, &HzDesktopIconViewPrivate::handleOpen);
@@ -450,6 +451,9 @@ void HzDesktopIconView::dragMoveEvent(QDragMoveEvent* e)
 {
 	QAbstractItemView::dragMoveEvent(e);
 
+	static QModelIndex s_lastHoverIndex;
+	static int s_lastInsertRow = 0;
+
 	const QPoint pos = e->pos();	// TODO 后续再统一处理offset
 
 	m_hoverIndex = indexAt(pos);
@@ -467,6 +471,14 @@ void HzDesktopIconView::dragMoveEvent(QDragMoveEvent* e)
 		m_insertRow = -1;
 	}
 
+	// TODO 先整个刷新，后续再优化，优化时要考虑下insert指示线的刷新，比较特殊
+	if (m_hoverIndex != s_lastHoverIndex || m_insertRow != s_lastInsertRow) {
+		viewport()->update();
+	}
+
+	s_lastHoverIndex = m_hoverIndex;
+	s_lastInsertRow = m_insertRow;
+
 	qDebug()
 		<< m_hoverIndex.row()
 		<< m_insertRow;
@@ -475,6 +487,8 @@ void HzDesktopIconView::dragMoveEvent(QDragMoveEvent* e)
 void HzDesktopIconView::dragLeaveEvent(QDragLeaveEvent* e)
 {
 	QAbstractItemView::dragLeaveEvent(e);
+
+	viewport()->update();
 
 	m_insertRow = -1;
 	//qDebug() << e->proposedAction() << e->pos() << m_hoverIndex.row();
@@ -627,6 +641,11 @@ void HzDesktopIconView::paintEvent(QPaintEvent* e)
 	}
 }
 
+void HzDesktopIconView::focusOutEvent(QFocusEvent* event)
+{
+	clearSelection();
+}
+
 //void HzDesktopIconView::doItemsLayout()
 //{
 //}
@@ -642,29 +661,6 @@ bool HzDesktopIconView::edit(const QModelIndex& index, EditTrigger trigger, QEve
 	}
 
 	return false;
-}
-
-IFACEMETHODIMP HzDesktopIconView::QueryInterface(REFIID riid, void** ppv)
-{
-	static const QITAB qit[] =
-	{
-		QITABENT(HzDesktopIconView, IDropTarget),
-		{ 0 },
-	};
-	return QISearch(this, qit, riid, ppv);
-}
-
-IFACEMETHODIMP_(ULONG) HzDesktopIconView::AddRef()
-{
-	return InterlockedIncrement(&_cRef);
-}
-
-IFACEMETHODIMP_(ULONG) HzDesktopIconView::Release()
-{
-	long cRef = InterlockedDecrement(&_cRef);
-	if (!cRef)
-		delete this;
-	return cRef;
 }
 
 DropTargetInfo HzDesktopIconView::getCurrentDropTarget()
@@ -683,15 +679,28 @@ DropTargetInfo HzDesktopIconView::getCurrentDropTarget()
 	return targetInfo;
 }
 
-bool HzDesktopIconView::filterThisDrag(const DropTargetInfo& targetInfo)
+bool HzDesktopIconView::filterDragDrop(const DropTargetInfo& targetInfo, bool bIsDrop)
 {
-	bool bInternalMove =
-		(targetInfo.type == FileOrFolder) &&
-		(targetInfo.info.toString() == m_param.dirPath);
+	bool bIsMainDesktop = true;
+	bool bInternalDrop = false;
+	if (bIsDrop && m_draggedTargetInfo.type == FileOrFolder && targetInfo.type == FileOrFolder) {
+		QString draggedPath = m_draggedTargetInfo.info.toString();
+		QString draggedParentPath = draggedPath.left(draggedPath.lastIndexOf('\\'));
+		bInternalDrop =
+			draggedParentPath == m_param.dirPath &&
+			targetInfo.info.toString() == m_param.dirPath;
 
-	bool bSameItem = (targetInfo == m_draggedTargetInfo);
+		if (!bInternalDrop && bIsMainDesktop) {
+			static QString s_publicDesktopPath = HZ::getPublicDesktopPath();
+			bInternalDrop = (draggedParentPath == s_publicDesktopPath);
+		}
+	}
 
-	return bInternalMove || bSameItem;
+	// 如果当前落点是拖拽的项其中一个，则也不处理
+	bool bSubItem = getSelectedPaths().contains(targetInfo.info.toString());
+	qDebug() << "filter" << bSubItem;
+
+	return bInternalDrop || bSubItem;
 }
 
 QStringList HzDesktopIconView::getSelectedPaths()

@@ -101,7 +101,6 @@
     <ClCompile Include="view\menu\HzItemMenu_p.cpp" />
     <ClCompile Include="view\showItem\HzDesktopItemModel.cpp" />
     <ClCompile Include="view\showItem\HzDesktopItemModel_p.cpp" />
-    <ClCompile Include="view\showItem\HzFileItem.cpp" />
     <ClCompile Include="view\showItem\HzItemDelegate.cpp" />
     <ClCompile Include="view\showItem\HzItemTextEditor.cpp" />
     <ClInclude Include="..\..\include\common\ClipboardHelper.h" />
@@ -133,7 +132,6 @@
     <ClInclude Include="view\dragdrop\HzDrag_p.h" />
     <ClInclude Include="view\dragdrop\HzWindowsMimeIdl.h" />
     <ClInclude Include="view\HzDragDrogWindow.h" />
-    <ClInclude Include="view\showItem\HzFileItem.h" />
     <QtMoc Include="view\HzDesktopIconView.h" />
     <QtMoc Include="view\DesktopBackgroundView.h" />
     <QtRcc Include="HzDesktopMgr.qrc" />

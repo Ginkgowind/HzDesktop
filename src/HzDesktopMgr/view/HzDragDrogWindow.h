@@ -29,7 +29,15 @@ protected:
 
     IFACEMETHODIMP Drop(IDataObject* pdtobj, DWORD grfKeyState, POINTL ptl, DWORD* pdwEffect) override;
 
+    // IUnknown
+	IFACEMETHODIMP QueryInterface(REFIID riid, void** ppv) override;
+
+	IFACEMETHODIMP_(ULONG) AddRef() override;
+
+	IFACEMETHODIMP_(ULONG) Release() override;
+
 private:
     QMimeData* m_emptyData;
+    long _cRef;
 };
 

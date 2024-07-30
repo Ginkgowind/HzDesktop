@@ -73,13 +73,12 @@ IFACEMETHODIMP HzDragDropInterface::DragLeave()
 	}
 
 	if (m_previousInterface && m_previousInterface->pDropTarget
-		&& m_previousInterface->bInitialised)
-	{
+		&& m_previousInterface->bInitialised) {
 		m_previousInterface->pDropTarget->DragLeave();
 		m_previousInterface.reset();
 	}
 
-	//resetDropState();
+	resetDropState();
 
 	ClearDropTip(m_pdtobj);
 
@@ -94,12 +93,18 @@ IFACEMETHODIMP HzDragDropInterface::Drop(IDataObject* pdtobj, DWORD grfKeyState,
 	}
     
 	DropTargetInfo targetInfo = getCurrentDropTarget();
-	if (filterThisDrag(targetInfo)) {
+	if (filterDragDrop(targetInfo, true)) {
 		*pdwEffect = DROPEFFECT_NONE;
 		return S_OK;
 	}
 
 	DropTargetInterface dropTargetInterface = getDropTargetInterface(targetInfo);
+
+    if (!dropTargetInterface.pDropTarget) {
+        *pdwEffect = DROPEFFECT_NONE;
+        return S_OK;
+    }
+
 	if (targetInfo.type == FileOrFolder) {
 		dropTargetInterface.pDropTarget->Drop(pdtobj, grfKeyState, pt, pdwEffect);
 	}
@@ -114,10 +119,16 @@ HRESULT HzDragDropInterface::OnDragInWindow(IDataObject* dataObject, DWORD grfKe
 		m_previousInterface.reset();
 	}
 
+    if (filterDragDrop(targetInfo, false)) {
+        *pdwEffect = DROPEFFECT_MOVE;
+        return S_OK;
+    }
+
 	DropTargetInterface dropTargetInterface = getDropTargetInterface(targetInfo);
     m_previousInterface = dropTargetInterface;
 
     if (!dropTargetInterface.pDropTarget) {
+        *pdwEffect = DROPEFFECT_NONE;
         return S_FALSE;
     }
 

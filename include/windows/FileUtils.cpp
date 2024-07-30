@@ -107,4 +107,31 @@ namespace HZ
 	{
 		return false;
 	}
+
+	qint64 getDirSize(const QString& dirPath)
+    {
+		qint64 size = 0;
+
+		// 获取文件夹中的所有文件和子文件夹
+		QFileInfoList list = QDir(dirPath).entryInfoList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System);
+
+		foreach(QFileInfo fileInfo, list) {
+			if (fileInfo.isDir()) {
+				// 递归调用
+				size += getDirSize(fileInfo.absoluteFilePath());
+			}
+			else {
+				size += fileInfo.size();
+			}
+		}
+
+		return size;
+	}
+
+    bool isShortCutSuffix(const QString& suffix)
+    {
+        return suffix == "lnk"
+            || suffix == "url"
+            || suffix == "pif";
+    }
 }

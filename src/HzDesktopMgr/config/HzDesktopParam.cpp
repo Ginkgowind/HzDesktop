@@ -1,5 +1,3 @@
-#include <QPixmapCache>
-
 #include "HzDesktopParam.h"
 
 HzDesktopParam::HzDesktopParam()
@@ -9,6 +7,7 @@ HzDesktopParam::HzDesktopParam()
 	, bEnableDoubleClick(true)
 	, bAutoArrange(false)
 	//, bAutoArrange(true)
+	, bShowLnkArrow(false)
 	, iconMode(MediumIcon)
 	, sortRole(Qt::DisplayRole)
 	, sortOrder(Qt::AscendingOrder)

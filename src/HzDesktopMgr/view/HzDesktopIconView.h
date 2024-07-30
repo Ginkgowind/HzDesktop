@@ -82,19 +82,15 @@ protected:
 
 	void paintEvent(QPaintEvent* e) override;
 
+	void focusOutEvent(QFocusEvent* event) override;
+
 	//void doItemsLayout() override;
 
 	bool edit(const QModelIndex& index, EditTrigger trigger, QEvent* event) override;
 
-	IFACEMETHODIMP QueryInterface(REFIID riid, void** ppv) override;
-
-	IFACEMETHODIMP_(ULONG) AddRef() override;
-
-	IFACEMETHODIMP_(ULONG) Release() override;
-
 	DropTargetInfo getCurrentDropTarget() override;
 
-	bool filterThisDrag(const DropTargetInfo& targetInfo) override;
+	bool filterDragDrop(const DropTargetInfo& targetInfo, bool bIsDrop) override;
 
 private:
 	QStringList getSelectedPaths();
@@ -143,8 +139,6 @@ private:
 	QPersistentModelIndex m_hoverIndex;
 	QPersistentModelIndex m_singleCheckedIndex;
 	QItemSelectionModel::SelectionFlag m_ctrlDragSelectionFlag;
-
-	long _cRef;
 
 private:
 	HZQ_DECLARE_PRIVATE(HzDesktopIconView)

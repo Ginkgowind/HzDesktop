@@ -83,7 +83,9 @@ __inline void SetDropTip(IDataObject *pdtobj, DROPIMAGETYPE type, PCWSTR pszMsg,
 
 __inline void ClearDropTip(IDataObject *pdtobj)
 {
-    SetDropTip(pdtobj, DROPIMAGE_INVALID, L"", NULL);
+    if (pdtobj) {
+        SetDropTip(pdtobj, DROPIMAGE_INVALID, L"", NULL);
+    }
 }
 
 // helper to convert a data object with HIDA format or folder into a shell item
@@ -173,7 +175,7 @@ protected:
     // client provides
 	virtual DropTargetInfo getCurrentDropTarget() = 0;
 
-    virtual bool filterThisDrag(const DropTargetInfo& targetInfo) = 0;
+    virtual bool filterDragDrop(const DropTargetInfo& targetInfo, bool bIsDrop) = 0;
 
     IDropTargetHelper *_pdth;
     HRESULT _hrOleInit;

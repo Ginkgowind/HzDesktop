@@ -11,6 +11,7 @@
 #include "../HzDesktopIconView.h"
 #include "HzDesktopItemModel.h"
 #include "windows/UiOperation.h"
+#include "windows/FileUtils.h"
 
 #define TEXT_BLUR_RADIUS		2
 #define TEXT_BLUR_WIDTH_DELTA	4
@@ -239,6 +240,17 @@ QPixmap HzItemDelegate::paintIconText(
 			param.iconSize.width(), param.iconSize.height()
 		);
 		m_painter->restore();
+	}
+
+	// 使用SHGFI_LINKOVERLAY获取到的图标里箭头太大，故此处选择添加资源文件直接绘制
+	if (param.bShowLnkArrow && HZ::isShortCutSuffix(item->data(CustomRoles::FileTypeRole).toString())) {
+		QPixmap lnkArrow(":/main/view/res/qrc/lnk_arrow.png");
+		lnkArrow = lnkArrow.scaled(param.iconSize / 6, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+		QPoint arrowPos(
+			param.iconMargin.width(),
+			param.iconMargin.height() + param.iconSize.height() - lnkArrow.height()
+		);
+		m_painter->drawPixmap(arrowPos, lnkArrow);
 	}
 
 	if (!option.state.testFlag(QStyle::State_Editing)) {

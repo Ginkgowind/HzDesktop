@@ -14,6 +14,7 @@
 #include "windows/tools.h"
 #include "common/CommonTools.h"
 #include "windows/UiOperation.h"
+#include "windows/FileUtils.h"
 
 // 控制系统图标的显示与隐藏，此处从简，只监听显示与隐藏
 #define SYSTEM_ICON_REG_SUBPATH \
@@ -380,17 +381,18 @@ QStandardItem* DesktopFileItemWatcher::genQStandardItem(const QFileInfo& fileInf
 	
 	QIcon itemIcon = HZ::getUltimateIcon(fileInfo.absoluteFilePath());
 	QString displayName = QFileInfo(QString::fromStdWString(shFileInfo.szDisplayName)).fileName();
+	qint64 fileSize = fileInfo.isFile() ? fileInfo.size() : HZ::getDirSize(fileInfo.absoluteFilePath());
 
 	newItem->setIcon(itemIcon);
 	newItem->setText(displayName);
 	newItem->setData(QDir::toNativeSeparators(fileInfo.absoluteFilePath()), CustomRoles::FilePathRole);
-	newItem->setData(fileInfo.size(), CustomRoles::FileSizeRole);
+	newItem->setData(fileSize, CustomRoles::FileSizeRole);
 	newItem->setData(fileInfo.suffix(), CustomRoles::FileTypeRole);
 	newItem->setData(fileInfo.lastModified(), CustomRoles::FileLastModifiedRole);
 	QString toolTip = displayName
 		+ QStringLiteral("\n类型：") + QString::fromStdWString(shFileInfo.szTypeName)
 		+ QStringLiteral("\n修改日期：") + fileInfo.lastModified().toString(Qt::LocalDate)
-		+ QStringLiteral("\n大小：") + formatFileSize(fileInfo.size());
+		+ QStringLiteral("\n大小：") + formatFileSize(fileSize);
 	newItem->setToolTip(toolTip);
 
 	// TODO 了解utf8 unicode char wchar 的区别，以及此处用string就会乱码的问题

@@ -59,6 +59,8 @@ void HzDesktopItemModel::refreshItems()
 
 	clear();
 
+	// TODO 一直按F5，会导致延时任务刷新出来多个，可能把图标添加了多倍的
+
 	// 延时后再读取
 	QTimer::singleShot(10, this, [d]() {
 		d->m_systemItemWatcher.refreshSystemAppsInfo();

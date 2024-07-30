@@ -57,9 +57,6 @@
     <ClCompile Include="view\HzDesktopIconView.cpp">
       <Filter>view</Filter>
     </ClCompile>
-    <ClCompile Include="view\showItem\HzFileItem.cpp">
-      <Filter>view\model</Filter>
-    </ClCompile>
     <ClCompile Include="view\HzSystemTray.cpp">
       <Filter>view</Filter>
     </ClCompile>
@@ -135,9 +132,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HzDesktopMgr.h" />
-    <ClInclude Include="view\showItem\HzFileItem.h">
-      <Filter>view\model</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\windows\UiOperation.h">
       <Filter>include\windows</Filter>
     </ClInclude>

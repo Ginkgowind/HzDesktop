@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QFontMetrics>
+#include <QPixmapCache>
 #include <QSize>
 #include <QDateTime>
 
