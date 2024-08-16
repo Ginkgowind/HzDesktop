@@ -4,3 +4,5 @@
 放一张预览图如下，完全实现了媲美原生桌面的视觉效果与交互效果
 
 ![image](https://github.com/user-attachments/assets/64653207-7233-4d0f-9152-106d8caabc79)
+
+![image](https://github.com/user-attachments/assets/d92209ba-9bb7-4571-98da-a25dc584c378)
